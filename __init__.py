@@ -1,5 +1,5 @@
 """
-optimade
+OPTiMaDe
 
 AiiDA Lab App that implements an OPTiMaDe client
 """

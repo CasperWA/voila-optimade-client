@@ -1,4 +1,6 @@
 {
+    "title": "OPTiMaDe client",
     "description": "AiiDA Lab App that implements an OPTiMaDe client",
-    "title": "OPTiMaDe"
+    "authors": "AiiDA Team",
+    "state": "development"
 }
