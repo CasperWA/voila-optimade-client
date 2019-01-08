@@ -5,17 +5,7 @@ from __future__ import print_function
 
 # Imports
 import requests # pylint: disable=import-error
-
-
-class ApiVersionError(Exception):
-    """
-    API Version Error
-
-    The API version does not have the correct semantic.
-    The API version cannot be recognized.
-    """
-    pass
-
+from .exceptions import ApiVersionError
 
 class OptimadeImporter():
     """

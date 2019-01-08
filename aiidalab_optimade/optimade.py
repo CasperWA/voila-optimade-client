@@ -1,27 +1,49 @@
-# -*- coding: utf-8 -*-
+# -*- CODing: utf-8 -*-
 
 # Python 2/3 compatibility
 from __future__ import print_function
 from __future__ import absolute_import
 
 # Imports
-# import requests
 # pylint: disable=import-error
+import requests
 import tempfile
 import ipywidgets as ipw
 import nglview
 import ase.io
-from aiida.orm.data.structure import StructureData #, Kind
+from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
+from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
+from aiida.orm.querybuilder import QueryBuilder
+from .importer import OptimadeImporter
+from .exceptions import ApiVersionError
 
 
 class OptimadeWidget(ipw.VBox):
 
-    DATA_FORMATS = ('StructureData', 'CifData')
+    DATA_FORMATS = ("StructureData", "CifData")
+
+    DATABASES = [
+        ("Crystallography Open Database (COD)",{
+            "name": "cod",
+            "url": "http://www.crystallography.net/cod/optimade",
+            "importer": None
+        }),
+        ("AiiDA @ localhost:5000",{
+            "name": "aiida",
+            "url": "http://127.0.0.1:5000/optimade",
+            "importer": None
+        }),
+        ("Custom",{
+            "name": "custom",
+            "url": "http://26c3722d.ngrok.io/optimade",
+            "importer": None
+        })
+    ]
 
     def __init__(self, node_class=None, **kwargs):
         """ OPTiMaDe Structure Retrieval Widget
-        Upload a structure according to OPTiMaDe API, mininmum v0.9.7a
+        Upload a structure according to OPTiMaDe API, mininmum v0.9.5 (v0.9.7a)
 
         :param text: Text to display on upload button
         :type text: str
@@ -30,13 +52,27 @@ class OptimadeWidget(ipw.VBox):
             Note: If your workflows require a specific node class, better fix it here.
         """
 
-        self.viewer = nglview.NGLWidget()
-        self.btn_store = ipw.Button(
-            description='Store in AiiDA', disabled=True)
-        self.structure_description = ipw.Text(
-            placeholder="Description (optional)")
-        self.filename = "test"
+        # Initial settings
+        self.query_db = self.DATABASES[0][1]    # COD is default
+        self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
 
+        # self.atoms = None
+        self._clear_structures_dropdown()       # Set self.structure to 'select structure'
+
+        self.layout = ipw.Layout(width="400px")
+
+        # Sub-widgets / UI
+        self.viewer = nglview.NGLWidget()
+
+        self.btn_store = ipw.Button(
+            description="Store in AiiDA",
+            disabled=True
+        )
+        self.structure_description = ipw.Text(
+            placeholder="Description (optional)"
+        )
+        
+        self.filename = None
         self.structure_ase = None
         self.structure_node = None
         self.data_format = ipw.RadioButtons(
@@ -54,17 +90,130 @@ class OptimadeWidget(ipw.VBox):
             self.data_format.value = node_class
             store = ipw.HBox([self.btn_store, self.structure_description])
 
-        children = [self.viewer, store]
-
-        super(OptimadeWidget, self).__init__(
-            children=children, **kwargs)
+        super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
 
         self.btn_store.on_click(self._on_click_store)
 
+        # Load AiiDA database
         from aiida import load_dbenv, is_dbenv_loaded
         from aiida.backends import settings
         if not is_dbenv_loaded():
             load_dbenv(profile=settings.AIIDADB_PROFILE)
+
+    def _create_ui(self, store):
+        """
+        :param store: HBox widget based on specified AiiDA node class for storing
+        :return: children widgets for initialization of main widget
+        """
+        # head_dbs = ipw.HTML("OPTiMaDe database:")
+        drop_dbs = ipw.Dropdown(
+            description="OPTiMaDe database:",
+            options=self.DATABASES,
+            layout=self.layout
+        )
+        drop_dbs.observe(self._on_change_db, names="value")
+
+        head_host = ipw.HTML("Custom host:")
+        self.inp_host = ipw.Text(
+            description="http://",
+            value="26c3722d.ngrok.io",
+            placeholder="e.g.: localhost:5000",
+            layout=self.layout,
+            disabled=True
+        )
+        txt_host = ipw.HTML("/optimade")
+
+        # Filters
+        head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
+        self.inp_id = ipw.Text(
+            description="id:",
+            value="",
+            placeholder='e.g. 9009008',
+            layout=self.layout
+        )
+
+        btn_query = ipw.Button(description='Query in DB')
+        btn_query.on_click(self._on_click_query)
+
+        self.query_message = ipw.HTML("Waiting for input...")
+
+        # Select structure - List of results (structures dropdown)
+        self.drop_structure = ipw.Dropdown(
+            description="Results:",
+            options=self.structures,
+            layout=self.layout
+        )
+        self.drop_structure.observe(self._on_change_struct, names='value')
+
+        # Display
+        children = [
+            # ipw.HBox([head_dbs, drop_dbs]),
+            drop_dbs,
+            ipw.HBox([head_host, self.inp_host, txt_host]),
+            head_filters,
+            ipw.HBox([self.inp_id, btn_query]),
+            self.query_message,
+            self.drop_structure,
+            ipw.HBox([self.viewer]),
+            store
+        ]
+
+        return children
+
+    def _on_change_db(self, dbs):
+        """ Update database to be queried
+        :param dbs: Dropdown widget containing list of OPTiMaDe databases
+        """
+        self.query_db = dbs['new']
+        
+        # Allow editing of text-field if "Custom" database is chosen
+        if self.query_db["name"] == "custom":
+            self.inp_host.disabled = False
+        else:
+            self.inp_host.disabled = True
+
+    def _on_change_struct(self, structs):
+        """ Update "result view" to chosen structure
+        :param structs: Dropdown widget containing list of structure entries
+        """
+        # indx = structs['owner'].index
+        new_element = structs['new']
+        if new_element['status'] is False:
+            return
+        atoms = new_element['cif']
+        formula = atoms.get_ase().get_chemical_formula()
+        
+        # search for existing calculations using chosen structure
+        qb = QueryBuilder()
+        qb.append(StructureData)
+        qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
+        qb.order_by({Calculation:{'ctime':'desc'}})
+        for n in qb.iterall():
+            calc = n[0]
+            print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
+            # thumbnail = b64decode(calc.get_extra("thumbnail"))
+            # display(Image(data=thumbnail))
+        # struct_url = new_element['url'].split('.cif')[0]+'.html'
+        # if new_element['url'] != "":
+        #     self.link.value='<a href="{}" target="_blank">{} entry {}</a>'.format(struct_url, self.query_db["name"], new_element['id'])
+        # else:
+        #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
+        self.refresh_structure_view(atoms)
+
+    def refresh_structure_view(self, atoms):
+        viewer = self.viewer
+        if hasattr(viewer, "component_0"):
+            viewer.clear_representations()
+            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            viewer.component_0.remove_unitcell()        # pylint: disable=no-member
+            cid = viewer.component_0.id                 # pylint: disable=no-member
+            viewer.remove_component(cid)
+
+        viewer.add_component(nglview.ASEStructure(atoms.get_ase())) # adds ball+stick
+        viewer.add_unitcell() # pylint: disable=no-member
+        viewer.center()
 
     # pylint: disable=unused-argument
     def _on_file_upload(self, change):
@@ -98,7 +247,7 @@ class OptimadeWidget(ipw.VBox):
             return None
         if len(traj) > 1:
             print(
-                "Warning: Uploaded file {} contained more than one structure. I take the first one."
+                "Warning: Uploaded file {} contained more than one structure. The first one will be taken."
                 .format(fname))
         return traj[0]
 
@@ -115,7 +264,7 @@ class OptimadeWidget(ipw.VBox):
 
         viewer.add_component(nglview.ASEStructure(
             self.structure_ase))  # adds ball+stick
-        # viewer.add_unitcell()
+        viewer.add_unitcell() # pylint: disable=no-member
 
     # pylint: disable=unused-argument
     def _on_click_store(self, change):
@@ -172,51 +321,194 @@ class OptimadeWidget(ipw.VBox):
     def node_class(self, value):
         self.data_format.value = value
 
+    def query(self, idn=None, formula=None):
+        importer = self.query_db["importer"]
+        if importer is None:
+            importer = OptimadeImporter(**self.query_db)
+            self.query_db["importer"] = importer
+        
+        filter_ = dict()
+        
+        if idn is not None:
+            filter_["id"] = idn
+        if formula is not None:
+            filter_["formula"] = formula  # TODO: Implement 'filter' queries
+        
+        return importer.query(filter_), importer.api_version
 
+    def _clear_structures_dropdown(self):
+        """ Reset dropdown of structure results """
+        self.structures = [("select structure",{"status":False})]
 
-# for entry in response["data"]:
-#     if not valid:
-#         ### Not a valid API version: too old API version ###
-#         # While there may be several entries in response["data"]
-#         # they will not be considered here, since there is no guarantee
-#         # that they are readable/parseable
-#         # So break, do not continue.
-#         break
+    def _valid_entry(self, entry):
+        """ Check if OPTiMaDe structure entry is valid
+        Validity is decided according to the existence of partial occupancies,
+        since ASE cannot deal with this.
+        :param entry: OPTiMaDe structure entry from queried response
+        :return: boolean
+        """
+
+        # Initialization
+        attr = entry["attributes"]
+
+        # Check for "vacancy" in chemical symbols of species
+        for kind in attr["species"].values():
+            for symbol in kind["chemical_symbols"]:
+                if symbol == "vacancy":
+                    return False
+
+        return True
+
+    def get_structure(self, entry):
+        """ Get StructureData from OPTiMaDe structure entry
+        :param entry: OPTiMaDe structure entry from queried response
+        :return: StructureData
+        """
+
+        # Initialization
+        attr = entry["attributes"]
+        s = StructureData(cell=attr["lattice_vectors"])
+
+        # Add Kinds
+        for kind in attr["species"].values():
+            s.append_kind(Kind(
+                symbols=kind["chemical_symbols"],
+                weights=kind["concentration"],
+                mass=kind["mass"],
+                name=kind["original_name"]
+            ))
         
-#     elif old:
-#         ### API version 0.9.5 (specifically for CoD) ###
+        # Add Sites
+        for idx in range(len(attr["cartesian_site_positions"])):
+            # range() to ensure 1-to-1 between kind and site
+            s.append_site(Site(
+                kind_name=attr["species_at_sites"][idx],
+                position=attr["cartesian_site_positions"][idx]
+            ))
+
+        return s
+
+    # pylint: disable=too-many-locals
+    def _on_click_query(self, b):
+        """ Query database
+        :param b: 'Query in DB' button widget
+        """
+        # Clear list of structures (previously found) in dropdown widget
+        self._clear_structures_dropdown()
+
+        # Get 'id' user-input
+        idn = None
+        formula = None
+        try:
+            idn = int(self.inp_id.value)
+        except ValueError:
+            formula = str(self.inp_id.value)  # Not yet implemented
         
-#         cif_url = entry["links"]["self"]
-#         fn = requests.get(cif_url)
-#         with tempfile.NamedTemporaryFile(mode='w+') as f:
-#             f.write(fn.text)
-#             f.flush()
-#             entry_cif = CifData(file=f.name, parse_policy='lazy')
+        # Define custom host URL
+        # NB! There are no checks on the host input by user, only if empty or not.
+        if self.query_db["name"] == "custom":
+            if self.inp_host.value == "":
+                # No host specified as input
+                self.query_message.value = "You must specify a host URL, e.g. 'localhost:5000'"
+                return
+            self.query_db["url"] = "http://{}/optimade".format(self.inp_host.value)
+        
+        # Update status message and query database
+        self.query_message.value = "Quering the database ... "
+        response, api_version = self.query(idn=idn, formula=formula)
+        
+        # API version check
+        old = False
+        valid = api_version >= self.min_api_version
+        if api_version < self.min_api_version:
+            self.query_message.value = "OPTiMaDe API {} is not supported. " \
+                                "Must be at least {}.".format(self.ver_to_str(api_version), self.ver_to_str(self.min_api_version))
+        elif api_version == self.min_api_version:
+            old = True
+
+        # Initialization
+        count = 0               # Count of structures found
+        non_valid_count = 0     # Count of structures with partial occupancies found (not allowed due to ASE)
+        
+        # Go through data entries
+        for entry in response["data"]:
+            if not valid:
+                ## Not a valid API version: too old API version
+                # While there may be several entries in response["data"]
+                # they will not be considered here, since there is no guarantee
+                # that they are readable/parseable
+                # So break, do not continue.
+                break
+                
+            elif old:
+                ## API version 0.9.5 (specifically for COD)
+                
+                cif_url = entry["links"]["self"]
+                fn = requests.get(cif_url)
+                with tempfile.NamedTemporaryFile(mode='w+') as f:
+                    f.write(fn.text)
+                    f.flush()
+                    entry_cif = CifData(file=f.name, parse_policy='lazy')
+                    
+                formula = entry_cif.get_ase().get_chemical_formula()
+                
+            else:
+                ## API version 0.9.7a
+                
+                if self._valid_entry:
+                    structure = self.get_structure(entry)
+                else:
+                    count += 1
+                    non_valid_count += 1
+                    continue
+                
+                entry_cif = structure._get_cif()  # pylint: disable=protected-access
+                formula = structure.get_formula()
+                cif_url = ""
+                
             
-#         formula = entry_cif.get_ase().get_chemical_formula()
+            idn = entry["id"]
+            entry_name = "{} (id: {})".format(formula, idn)
+            entry_add = (entry_name,
+                            {
+                                "status": True,
+                                "cif": entry_cif,
+                                "url": cif_url,
+                                "id": idn,
+                            }
+                        )
+            self.structures.append(entry_add)
+            count += 1
         
-#     else:
-#         ### API version 0.9.7a ###
+        if valid:
+            self.query_message.value = "Quering the database ... {} structure(s) found" \
+                                       " ... {} non-valid structure(s) found " \
+                                       "(partial occupancies are not allowed)".format(count, non_valid_count)
+
+        self.drop_structure.options = self.structures
+        if len(self.structures) > 1:
+            self.drop_structure.value = self.structures[1][1]
+
+    @staticmethod
+    def ver_to_str(api_version):
+        """
+        Convert api_version from tuple of integers to string.
         
-#         attr = entry["attributes"]
-#         valid_entry = True
+        :param api_version: Tuple of integers representing API version: (MAJOR,MINOR,PATCH)
+        :return: String representing API version: "vMAJOR.MINOR.PATCH"
+        """
         
-#         s = StructureData(cell=attr["lattice_vectors"])
-#         # Add Kinds
-#         for kind in attr["species"].values():
-#             # ASE cannot handle vacancies, therefore:
-#             #     if a vacancy is present, the structure will be skipped,
-#             #     and a message will be relayed
-#             for i in range(len(kind["chemical_symbols"])):
-#                 symbol = kind["chemical_symbols"][i]
-#                 if symbol == "vacancy": # Not allowed in AiiDA
-#                     valid_entry = False
-#                     kind["chemical_symbols"].pop(i)
-#                     kind["concentration"].pop(i)
-            
-#             s.append_kind(Kind(
-#                 symbols=kind["chemical_symbols"],
-#                 weights=kind["concentration"],
-#                 mass=kind["mass"],
-#                 name=kind["original_name"]
-#             ))
+        # Perform check(s)
+        if not isinstance(api_version, tuple):
+            raise TypeError("api_version must be of type 'tuple'.")
+        if len(api_version) > 3:  # Shouldn't be necessary to check
+            raise ApiVersionError("Too many arguments for api_version. "
+                                "API version is defined as maximum (MAJOR,MINOR,PATCH).")
+        if len(api_version) == 1 and api_version[0] == 0:  # Shouldn't be necessary to check
+            raise ApiVersionError("When API MAJOR version is 0, MINOR version MUST be specified.")
+        
+        # Convert
+        version = "v"
+        version += ".".join([str(v) for v in api_version])
+        
+        return version
