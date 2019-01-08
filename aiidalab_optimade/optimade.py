@@ -364,19 +364,18 @@ class OptimadeWidget(ipw.Accordion):
             self.drop_structure.value = self.structures[1][1]
 
     def refresh_structure_view(self, atoms):
-        viewer = self.viewer
-        if hasattr(viewer, "component_0"):
-            viewer.clear_representations()
-            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            viewer.component_0.remove_unitcell()        # pylint: disable=no-member
-            cid = viewer.component_0.id                 # pylint: disable=no-member
-            viewer.remove_component(cid)
+        if hasattr(self.viewer, "component_0"):
+            self.viewer.clear_representations()
+            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+            self.viewer.component_0.remove_unitcell()        # pylint: disable=no-member
+            cid = self.viewer.component_0.id                 # pylint: disable=no-member
+            self.viewer.remove_component(cid)
 
-        viewer.add_component(nglview.ASEStructure(atoms.get_ase())) # adds ball+stick
-        viewer.add_unitcell() # pylint: disable=no-member
-        viewer.center()
+        self.viewer.add_component(nglview.ASEStructure(atoms.get_ase())) # adds ball+stick
+        self.viewer.add_unitcell() # pylint: disable=no-member
+        self.viewer.center()
 
     def _on_change_struct(self, structs):
         """ Update "result view" to chosen structure
