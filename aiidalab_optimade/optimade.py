@@ -4,8 +4,16 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+# Load AiiDA database
+# pylint: disable=import-error
+from aiida import load_dbenv, is_dbenv_loaded
+from aiida.backends import settings
+if not is_dbenv_loaded():
+    load_dbenv(profile=settings.AIIDADB_PROFILE)
+
 # Imports
 # pylint: disable=import-error
+# pylint: disable=wrong-import-position
 import requests
 import tempfile
 import ipywidgets as ipw
@@ -93,12 +101,6 @@ class OptimadeWidget(ipw.VBox):
         super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
 
         self.btn_store.on_click(self._on_click_store)
-
-        # Load AiiDA database
-        from aiida import load_dbenv, is_dbenv_loaded
-        from aiida.backends import settings
-        if not is_dbenv_loaded():
-            load_dbenv(profile=settings.AIIDADB_PROFILE)
 
     def _create_ui(self, store):
         """
