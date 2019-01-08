@@ -6,6 +6,7 @@ from __future__ import print_function
 # Imports
 import requests # pylint: disable=import-error
 
+
 class ApiVersionError(Exception):
     """
     API Version Error
