@@ -27,7 +27,7 @@ from .importer import OptimadeImporter
 from .exceptions import ApiVersionError
 
 
-class OptimadeWidget(ipw.Accordion):
+class OptimadeWidget(ipw.VBox): # Accordion
 
     DATA_FORMATS = ("StructureData", "CifData")
 
@@ -98,9 +98,9 @@ class OptimadeWidget(ipw.Accordion):
             self.data_format.value = node_class
             store = ipw.HBox([self.btn_store, self.structure_description])
         
-        # Set accordion titles
-        self.set_title(0, "Query OPTiMaDe Database")
-        self.set_title(1, "Inspect Structures")
+        # # Set accordion titles
+        # self.set_title(0, "Query OPTiMaDe Database")
+        # self.set_title(1, "Inspect Structures")
 
         super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
 
@@ -152,23 +152,34 @@ class OptimadeWidget(ipw.Accordion):
         self.drop_structure.observe(self._on_change_struct, names='value')
 
         # Display
-        step_one = ipw.VBox(children=[
-            # ipw.HBox([head_dbs, drop_dbs]),
+        # step_one = ipw.VBox(children=[
+        #     # ipw.HBox([head_dbs, drop_dbs]),
+        #     drop_dbs,
+        #     ipw.HBox([head_host, self.inp_host, txt_host]),
+        #     head_filters,
+        #     ipw.HBox([self.inp_id, btn_query]),
+        #     self.query_message,
+        # ])
+        # step_two = ipw.VBox(children=[
+        #     self.drop_structure,
+        #     self.viewer,
+        #     store
+        # ])
+
+        # children = [
+        #     step_one,
+        #     step_two
+        # ]
+
+        children = [
             drop_dbs,
             ipw.HBox([head_host, self.inp_host, txt_host]),
             head_filters,
             ipw.HBox([self.inp_id, btn_query]),
             self.query_message,
-        ])
-        step_two = ipw.VBox(children=[
             self.drop_structure,
             self.viewer,
             store
-        ])
-
-        children = [
-            step_one,
-            step_two
         ]
 
         return children
