@@ -21,8 +21,8 @@ import nglview
 import ase.io
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
-from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
-from aiida.orm.querybuilder import QueryBuilder
+# from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
+# from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError
 
@@ -113,7 +113,7 @@ class OptimadeWidget(ipw.Accordion):
         """
         # head_dbs = ipw.HTML("OPTiMaDe database:")
         drop_dbs = ipw.Dropdown(
-            description="OPTiMaDe database:",
+            # description="",
             # layout=self.layout,
             options=self.DATABASES
         )
@@ -162,7 +162,7 @@ class OptimadeWidget(ipw.Accordion):
         ])
         step_two = ipw.VBox(children=[
             self.drop_structure,
-            ipw.HBox([self.viewer]),
+            self.viewer,
             store
         ])
 
@@ -184,35 +184,7 @@ class OptimadeWidget(ipw.Accordion):
             self.inp_host.disabled = False
         else:
             self.inp_host.disabled = True
-
-    def _on_change_struct(self, structs):
-        """ Update "result view" to chosen structure
-        :param structs: Dropdown widget containing list of structure entries
-        """
-        # indx = structs['owner'].index
-        new_element = structs['new']
-        if new_element['status'] is False:
-            return
-        atoms = new_element['cif']
-        formula = atoms.get_ase().get_chemical_formula()
-        
-        # search for existing calculations using chosen structure
-        qb = QueryBuilder()
-        qb.append(StructureData)
-        qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
-        qb.order_by({Calculation:{'ctime':'desc'}})
-        for n in qb.iterall():
-            calc = n[0]
-            print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
-            # thumbnail = b64decode(calc.get_extra("thumbnail"))
-            # display(Image(data=thumbnail))
-        # struct_url = new_element['url'].split('.cif')[0]+'.html'
-        # if new_element['url'] != "":
-        #     self.link.value='<a href="{}" target="_blank">{} entry {}</a>'.format(struct_url, self.query_db["name"], new_element['id'])
-        # else:
-        #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
-        self.refresh_structure_view(atoms)
-
+            
     def refresh_structure_view(self, atoms):
         viewer = self.viewer
         if hasattr(viewer, "component_0"):
@@ -227,6 +199,34 @@ class OptimadeWidget(ipw.Accordion):
         viewer.add_component(nglview.ASEStructure(atoms.get_ase())) # adds ball+stick
         viewer.add_unitcell() # pylint: disable=no-member
         viewer.center()
+
+    def _on_change_struct(self, structs):
+        """ Update "result view" to chosen structure
+        :param structs: Dropdown widget containing list of structure entries
+        """
+        # indx = structs['owner'].index
+        new_element = structs['new']
+        if new_element['status'] is False:
+            return
+        atoms = new_element['cif']
+        formula = atoms.get_ase().get_chemical_formula()
+        
+        # search for existing calculations using chosen structure
+        # qb = QueryBuilder()
+        # qb.append(StructureData)
+        # qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
+        # qb.order_by({Calculation:{'ctime':'desc'}})
+        # for n in qb.iterall():
+            # calc = n[0]
+            # print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
+            # thumbnail = b64decode(calc.get_extra("thumbnail"))
+            # display(Image(data=thumbnail))
+        # struct_url = new_element['url'].split('.cif')[0]+'.html'
+        # if new_element['url'] != "":
+        #     self.link.value='<a href="{}" target="_blank">{} entry {}</a>'.format(struct_url, self.query_db["name"], new_element['id'])
+        # else:
+        #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
+        self.refresh_structure_view(atoms)
 
     # pylint: disable=unused-argument
     def _on_file_upload(self, change):
@@ -468,7 +468,7 @@ class OptimadeWidget(ipw.Accordion):
             else:
                 ## API version 0.9.7a
                 
-                if self._valid_entry:
+                if self._valid_entry(entry):
                     structure = self.get_structure(entry)
                 else:
                     count += 1
@@ -497,6 +497,7 @@ class OptimadeWidget(ipw.Accordion):
             self.query_message.value = "Quering the database ... {} structure(s) found" \
                                        " ... {} non-valid structure(s) found " \
                                        "(partial occupancies are not allowed)".format(count, non_valid_count)
+            self.selected_index = 1
 
         self.drop_structure.options = self.structures
         if len(self.structures) > 1:
