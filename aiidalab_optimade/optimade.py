@@ -67,7 +67,7 @@ class OptimadeWidget(ipw.VBox):
         # self.atoms = None
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
 
-        self.layout = ipw.Layout(width="400px")
+        # self.layout = ipw.Layout(width="400px")
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
@@ -110,8 +110,8 @@ class OptimadeWidget(ipw.VBox):
         # head_dbs = ipw.HTML("OPTiMaDe database:")
         drop_dbs = ipw.Dropdown(
             description="OPTiMaDe database:",
-            options=self.DATABASES,
-            layout=self.layout
+            # layout=self.layout,
+            options=self.DATABASES
         )
         drop_dbs.observe(self._on_change_db, names="value")
 
@@ -120,7 +120,7 @@ class OptimadeWidget(ipw.VBox):
             description="http://",
             value="26c3722d.ngrok.io",
             placeholder="e.g.: localhost:5000",
-            layout=self.layout,
+            # layout=self.layout,
             disabled=True
         )
         txt_host = ipw.HTML("/optimade")
@@ -130,8 +130,8 @@ class OptimadeWidget(ipw.VBox):
         self.inp_id = ipw.Text(
             description="id:",
             value="",
-            placeholder='e.g. 9009008',
-            layout=self.layout
+            # layout=self.layout,
+            placeholder='e.g. 9009008'
         )
 
         btn_query = ipw.Button(description='Query in DB')
@@ -142,8 +142,8 @@ class OptimadeWidget(ipw.VBox):
         # Select structure - List of results (structures dropdown)
         self.drop_structure = ipw.Dropdown(
             description="Results:",
-            options=self.structures,
-            layout=self.layout
+            # layout=self.layout,
+            options=self.structures
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
 
