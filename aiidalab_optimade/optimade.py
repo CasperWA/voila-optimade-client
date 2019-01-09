@@ -144,7 +144,7 @@ class OptimadeStructureImport():
         btn_query.button_style = 'primary'
         btn_query.on_click(self._on_click_query)
 
-        self.query_message = ipw.HTML("Waiting for input ...")
+        self.query_message = ipw.HTML("")
 
         # Select structure - List of results (structures dropdown)
         self.drop_structure = ipw.Dropdown(
@@ -157,8 +157,7 @@ class OptimadeStructureImport():
         # Database header
         header = ipw.VBox([
             head_dbs,
-            drop_dbs,
-            self.custom_host_widgets,
+            ipw.HBox([drop_dbs, self.custom_host_widgets]),
         ])
 
         # Database search filters
