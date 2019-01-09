@@ -45,7 +45,7 @@ class OptimadeStructureImport():
             "url": "http://127.0.0.1:5000/optimade",
             "importer": None
         }),
-        ("Custom",{
+        ("Custom host:",{
             "name": "custom",
             "url": "cc4f821d.ngrok.io",
             "importer": None
@@ -118,7 +118,6 @@ class OptimadeStructureImport():
         )
         drop_dbs.observe(self._on_change_db, names="value")
 
-        head_host = ipw.HTML("Custom host:")
         self.inp_host = ipw.Text(
             description="http://",
             value=self.DATABASES[-1][-1]["url"],
@@ -128,7 +127,7 @@ class OptimadeStructureImport():
         txt_host = ipw.HTML("/optimade")
 
         self.custom_host_widgets = ipw.HBox(
-            children=[head_host, self.inp_host, txt_host],
+            children=[self.inp_host, txt_host],
             layout=ipw.Layout(visibility="hidden")
         )
 
