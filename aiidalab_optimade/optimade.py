@@ -73,6 +73,7 @@ class OptimadeStructureImport():
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
+        self.viewer.layout.width = "50%"
 
         self.btn_store = ipw.Button(
             description="Store in AiiDA",
