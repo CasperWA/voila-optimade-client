@@ -150,12 +150,14 @@ class OptimadeWidget(ipw.VBox): # Accordion
         ]
 
         # Database search filters
-        search_filters = ipw.Accordion(children=ipw.VBox(children=[
+        search_filters = ipw.VBox(children=[
             self.inp_id,
             btn_query,
-            self.query_message,
-        ]))
+            self.query_message
+        ])
+        search_filters = ipw.Accordion(children=[search_filters, ipw.HTML("Test")])
         search_filters.set_title(0, "Search for Structure")
+        search_filters.set_title(1, "Test")
         search_filters.selected_index = None    # Close Accordion
 
         # Select (and store) structure
