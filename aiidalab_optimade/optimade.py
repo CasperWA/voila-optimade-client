@@ -73,7 +73,6 @@ class OptimadeStructureImport():
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
-        self.viewer.layout.width = "50%"
 
         self.btn_store = ipw.Button(
             description="Store in AiiDA",
@@ -149,8 +148,8 @@ class OptimadeStructureImport():
         self.drop_structure.observe(self._on_change_struct, names='value')
 
         self.data_output = ipw.Output(layout=ipw.Layout(
-            visibility="hidden",
-            width="100%"
+            visibility="hidden"
+            # width="100%"
         ))
         
         # Store structure
@@ -177,9 +176,9 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            ipw.HBox([self.data_output, self.viewer]),
-            # self.data_output,
-            # self.viewer,
+            # ipw.HBox([self.data_output, self.viewer]),
+            self.data_output,
+            self.viewer,
             store,
             self.store_out
         ])
@@ -489,6 +488,8 @@ class OptimadeStructureImport():
         Show dict defined in self.structure_data in an Output widget next to the nglview
         :param structure: new structure to be displayed (None if from COD)
         """
+        # TODO: Make keys static, only change values
+        
         self._update_structure_data(structure)
 
         with self.data_output:
