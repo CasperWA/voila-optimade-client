@@ -199,10 +199,12 @@ class OptimadeStructureImport():
         # Allow editing of text-field if "Custom" database is chosen
         if self.query_db["name"] == "custom":
             self.inp_host.disabled = False
-            self.custom_host_widgets.visible = True
+            for widget in self.custom_host_widgets.children:
+                widget.visible = True
         else:
             self.inp_host.disabled = True
-            self.custom_host_widgets.visible = False
+            for widget in self.custom_host_widgets.children:
+                widget.visible = False
 
     def query(self, idn=None, formula=None):
         importer = self.query_db["importer"]
