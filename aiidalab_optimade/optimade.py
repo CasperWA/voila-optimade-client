@@ -338,7 +338,8 @@ class OptimadeStructureImport():
         more_data = response["meta"]["more_data_available"]
         if more_data:
             avail = response["meta"]["data_available"]
-            extra_msg = "<br/>{} results found, only providing the first {}".format(avail, self.RESPONSE_LIMIT)
+            extra_msg = "<br/>{} results found, only providing the first {}. " \
+                        "Please use filters to reduce the number of results found.".format(avail, self.RESPONSE_LIMIT)
 
         # Initialization
         count = 0               # Count of structures found
@@ -400,7 +401,7 @@ class OptimadeStructureImport():
             count += 1
         
         if valid:
-            self.query_message.value = "Quering the database ... {} structure(s) found" \
+            self.query_message.value = "{} structure(s) found" \
                                        " ... {} non-valid structure(s) found " \
                                        "(partial occupancies are not allowed)".format(count, non_valid_count)
         if more_data:
