@@ -27,6 +27,7 @@ from .importer import OptimadeImporter
 from .exceptions import ApiVersionError
 
 
+# NB! The nglview is not displayed in an Accordion
 class OptimadeWidget(ipw.VBox): # Accordion
 
     DATA_FORMATS = ("StructureData", "CifData")
@@ -44,17 +45,15 @@ class OptimadeWidget(ipw.VBox): # Accordion
         }),
         ("Custom",{
             "name": "custom",
-            "url": "http://26c3722d.ngrok.io/optimade",
+            "url": "cc4f821d.ngrok.io",
             "importer": None
         })
     ]
 
     def __init__(self, node_class=None, **kwargs):
         """ OPTiMaDe Structure Retrieval Widget
-        Upload a structure according to OPTiMaDe API, mininmum v0.9.5 (v0.9.7a)
+        Upload a structure according to OPTiMaDe API, mininmum v0.9.7a (v0.9.5 accepted for COD)
 
-        :param text: Text to display on upload button
-        :type text: str
         :param node_class: AiiDA node class for storing the structure.
             Possible values: 'StructureData', 'CifData' or None (let the user decide).
             Note: If your workflows require a specific node class, better fix it here.
@@ -63,11 +62,7 @@ class OptimadeWidget(ipw.VBox): # Accordion
         # Initial settings
         self.query_db = self.DATABASES[0][1]    # COD is default
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
-
-        # self.atoms = None
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
-
-        # self.layout = ipw.Layout(width="400px")
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
@@ -97,10 +92,6 @@ class OptimadeWidget(ipw.VBox): # Accordion
         else:
             self.data_format.value = node_class
             store = ipw.HBox([self.btn_store, self.structure_description])
-        
-        # # Set accordion titles
-        # self.set_title(0, "Query OPTiMaDe Database")
-        # self.set_title(1, "Inspect Structures")
 
         super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
 
@@ -111,10 +102,11 @@ class OptimadeWidget(ipw.VBox): # Accordion
         :param store: HBox widget based on specified AiiDA node class for storing
         :return: children widgets for initialization of main widget
         """
-        # head_dbs = ipw.HTML("OPTiMaDe database:")
+        ## UI
+        # Header - list of OPTiMaDe databases
+        head_dbs = ipw.HTML("<h4><strong>OPTiMaDe database:</strong></h4>")
         drop_dbs = ipw.Dropdown(
-            # description="",
-            # layout=self.layout,
+            description="",
             options=self.DATABASES
         )
         drop_dbs.observe(self._on_change_db, names="value")
@@ -122,65 +114,61 @@ class OptimadeWidget(ipw.VBox): # Accordion
         head_host = ipw.HTML("Custom host:")
         self.inp_host = ipw.Text(
             description="http://",
-            value="26c3722d.ngrok.io",
+            value=self.DATABASES[-1][-1]["url"],
             placeholder="e.g.: localhost:5000",
-            # layout=self.layout,
             disabled=True
         )
         txt_host = ipw.HTML("/optimade")
 
-        # Filters
-        head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
+        # Filters - Accordion
+        # head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
         self.inp_id = ipw.Text(
             description="id:",
             value="",
-            # layout=self.layout,
             placeholder='e.g. 9009008'
         )
 
         btn_query = ipw.Button(description='Query in DB')
+        btn_query.button_style = 'primary'
         btn_query.on_click(self._on_click_query)
 
-        self.query_message = ipw.HTML("Waiting for input...")
+        self.query_message = ipw.HTML("Waiting for input ...")
 
         # Select structure - List of results (structures dropdown)
         self.drop_structure = ipw.Dropdown(
             description="Results:",
-            # layout=self.layout,
             options=self.structures
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
 
-        # Display
-        # step_one = ipw.VBox(children=[
-        #     # ipw.HBox([head_dbs, drop_dbs]),
-        #     drop_dbs,
-        #     ipw.HBox([head_host, self.inp_host, txt_host]),
-        #     head_filters,
-        #     ipw.HBox([self.inp_id, btn_query]),
-        #     self.query_message,
-        # ])
-        # step_two = ipw.VBox(children=[
-        #     self.drop_structure,
-        #     self.viewer,
-        #     store
-        # ])
-
-        # children = [
-        #     step_one,
-        #     step_two
-        # ]
-
-        children = [
+        ## Display
+        # Database header
+        header = [
+            head_dbs,
             drop_dbs,
             ipw.HBox([head_host, self.inp_host, txt_host]),
-            head_filters,
-            ipw.HBox([self.inp_id, btn_query]),
+        ]
+
+        # Database search filters
+        search_filters = ipw.Accordion(children=ipw.VBox(children=[
+            self.inp_id,
+            btn_query,
             self.query_message,
+        ]))
+        search_filters.set_title(0, "Search for Structure")
+        search_filters.selected_index = None    # Close Accordion
+
+        # Select (and store) structure
+        select_structure = [
             self.drop_structure,
             self.viewer,
             store
         ]
+
+        # Summarize to single list of VBox children
+        children = header
+        children.append(search_filters)
+        children.append(select_structure)
 
         return children
 
@@ -368,7 +356,6 @@ class OptimadeWidget(ipw.VBox): # Accordion
             self.query_message.value = "Quering the database ... {} structure(s) found" \
                                        " ... {} non-valid structure(s) found " \
                                        "(partial occupancies are not allowed)".format(count, non_valid_count)
-            self.selected_index = 1
 
         self.drop_structure.options = self.structures
         if len(self.structures) > 1:
