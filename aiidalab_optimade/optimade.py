@@ -27,12 +27,13 @@ from aiida.orm.data.cif import CifData
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError
 
+# TODO: Implement:
+#       - Awareness of pagination
 
 # NB! The nglview is not displayed in an Accordion
 class OptimadeStructureImport():
 
     DATA_FORMATS = ("StructureData", "CifData")
-
     DATABASES = [
         ("Crystallography Open Database (COD)",{
             "name": "cod",
@@ -50,6 +51,7 @@ class OptimadeStructureImport():
             "importer": None
         })
     ]
+    RESPONSE_LIMIT = 25
 
     def __init__(self, node_class=None):
         """ OPTiMaDe Structure Retrieval Widget
@@ -212,7 +214,15 @@ class OptimadeStructureImport():
         if formula is not None:
             filter_["formula"] = formula  # TODO: Implement 'filter' queries
         
-        return importer.query(filter_), importer.api_version
+        # OPTiMaDe URI queries
+        optimade_queries = dict(
+            format_ = "json",
+            email = None,
+            fields = None,
+            limit = self.RESPONSE_LIMIT
+        )
+
+        return importer.query(filter_, **optimade_queries), importer.api_version
 
     def _clear_structures_dropdown(self):
         """ Reset dropdown of structure results """
@@ -329,7 +339,10 @@ class OptimadeStructureImport():
                     f.flush()
                     entry_cif = CifData(file=f.name, parse_policy='lazy')
                     
-                formula = entry_cif.get_ase().get_chemical_formula()
+                try:
+                    formula = entry_cif.get_ase().get_chemical_formula()
+                except IndexError:
+                    formula = "Unknown"
                 
             else:
                 ## API version 0.9.7a

@@ -45,10 +45,24 @@ class OptimadeImporter():
         
         return _api_version
     
-    def query(self, filter_=None):
-        # Type check
+    def query(self, filter_=None, **kwargs):
+        """ Perform query of database
+        :param filter_: dict: k,v-pairs of filters
+        :param limit: int: "response_limit" query parameter
+        """
+        # Get OPTiMaDe queries if they are provided
+        format_ = kwargs["format_"] if "format_"    in kwargs else None
+        email   = kwargs["email"]   if "email"      in kwargs else None
+        fields  = kwargs["fields"]  if "fields"     in kwargs else None
+        limit   = kwargs["limit"]   if "limit"      in kwargs else None
+
+        # Type checks
         if not isinstance(filter_, dict):
-            raise TypeError("'filter' should be a dict")
+            raise TypeError("filter_ must be a dict")
+        if format_ is not None and not isinstance(format_, str):
+            raise TypeError("format_ must be a string")
+        if limit is not None and not isinstance(limit, int):
+            raise TypeError("limit must be an integer")
         
         # Initiate
         query_str = ""
@@ -69,7 +83,19 @@ class OptimadeImporter():
         # Write query
         if idn:
             query_str = "/{}".format(idn)
-        
+        else:
+            queries = list()
+            if format_:
+                queries.append("response_format={}".format(format_))
+            if email:
+                queries.append("email_address={}".format(email))
+            if fields:
+                queries.append("response_fields={}".format(fields))
+            if limit:
+                queries.append("response_limit={}".format(limit))
+            
+            query_str = "?{}".format("&".join(queries))
+    
         # Make query - get data
         url = ''.join([self.db_baseurl, endpoint, query_str])
         r = requests.get(url)
