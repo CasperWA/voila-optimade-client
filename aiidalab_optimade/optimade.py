@@ -488,7 +488,13 @@ class OptimadeStructureImport():
 
         with self.data_output:
             clear_output()
-            print(self.structure_data)
+            
+            for k, v in self.structure_data.items():
+                key = str(k).capitalize()
+                
+                out = ipw.HTML("<b>{}</b>: {}<br/>".format(key, v))
+
+                display(out)
 
     def refresh_structure_view(self):
         # pylint: disable=protected-access
