@@ -18,6 +18,7 @@ import requests
 import tempfile
 import ipywidgets as ipw
 import nglview
+from IPython.display import display
 # import ase.io
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
@@ -28,7 +29,7 @@ from .exceptions import ApiVersionError
 
 
 # NB! The nglview is not displayed in an Accordion
-class OptimadeWidget(ipw.VBox): # Accordion
+class OptimadeStructureImport():
 
     DATA_FORMATS = ("StructureData", "CifData")
 
@@ -50,7 +51,7 @@ class OptimadeWidget(ipw.VBox): # Accordion
         })
     ]
 
-    def __init__(self, node_class=None, **kwargs):
+    def __init__(self, node_class=None):
         """ OPTiMaDe Structure Retrieval Widget
         Upload a structure according to OPTiMaDe API, mininmum v0.9.7a (v0.9.5 accepted for COD)
 
@@ -93,7 +94,8 @@ class OptimadeWidget(ipw.VBox): # Accordion
             self.data_format.value = node_class
             store = ipw.HBox([self.btn_store, self.structure_description])
 
-        super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
+        self._create_ui(store)
+        # super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
 
         # self.btn_store.on_click(self._on_click_store)
 
@@ -155,9 +157,8 @@ class OptimadeWidget(ipw.VBox): # Accordion
             btn_query,
             self.query_message
         ])
-        search_filters = ipw.Accordion(children=[search_filters, ipw.HTML("Test")])
+        search_filters = ipw.Accordion(children=[search_filters])
         search_filters.set_title(0, "Search for Structure")
-        search_filters.set_title(1, "Test")
         search_filters.selected_index = None    # Close Accordion
 
         # Select (and store) structure
@@ -168,11 +169,15 @@ class OptimadeWidget(ipw.VBox): # Accordion
         ]
 
         # Summarize to single list of VBox children
-        children = header
-        children.append(search_filters)
-        children.append(select_structure)
+        # children = header
+        # children.append(search_filters)
+        # children.append(select_structure)
 
-        return children
+        display(
+            header,
+            search_filters,
+            select_structure
+        )
 
     @property
     def node_class(self):
