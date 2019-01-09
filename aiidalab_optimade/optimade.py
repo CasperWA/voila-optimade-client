@@ -69,12 +69,15 @@ class OptimadeStructureImport():
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
+        self.structure_data = ipw.HTML()
 
         self.btn_store = ipw.Button(
             description="Store in AiiDA",
-            disabled=True
+            disabled=True,
+            button_style="primary"
         )
         self.structure_description = ipw.Text(
+            description="",
             placeholder="Description (optional)"
         )
         
@@ -124,6 +127,8 @@ class OptimadeStructureImport():
         )
         txt_host = ipw.HTML("/optimade")
 
+        self.custom_host_widgets = ipw.HBox([head_host, self.inp_host, txt_host], visible=False)
+
         # Filters - Accordion
         # head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
         self.inp_id = ipw.Text(
@@ -150,7 +155,7 @@ class OptimadeStructureImport():
         header = ipw.VBox([
             head_dbs,
             drop_dbs,
-            ipw.HBox([head_host, self.inp_host, txt_host]),
+            self.custom_host_widgets,
         ])
 
         # Database search filters
@@ -166,15 +171,11 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            self.viewer,
+            ipw.HBox([self.structure_data, self.viewer]),
             store
         ])
 
-        # Summarize to single list of VBox children
-        # children = header
-        # children.append(search_filters)
-        # children.append(select_structure)
-
+        # Show it - stitch it together
         display(
             header,
             search_filters,
@@ -198,8 +199,10 @@ class OptimadeStructureImport():
         # Allow editing of text-field if "Custom" database is chosen
         if self.query_db["name"] == "custom":
             self.inp_host.disabled = False
+            self.custom_host_widgets.visible = True
         else:
             self.inp_host.disabled = True
+            self.custom_host_widgets.visible = False
 
     def query(self, idn=None, formula=None):
         importer = self.query_db["importer"]
