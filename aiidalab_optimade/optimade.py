@@ -404,7 +404,7 @@ class OptimadeStructureImport():
                                        " ... {} non-valid structure(s) found " \
                                        "(partial occupancies are not allowed)".format(count, non_valid_count)
         if more_data:
-            self.query_message.value.__add__(extra_msg)
+            self.query_message.value += extra_msg
 
         self._update_drop_structure()
 
