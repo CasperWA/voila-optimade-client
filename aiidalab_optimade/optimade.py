@@ -18,12 +18,12 @@ import requests
 import tempfile
 import ipywidgets as ipw
 import nglview
-from IPython.display import display
+from IPython.display import display, clear_output
 # import ase.io
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
-# from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
-# from aiida.orm.querybuilder import QueryBuilder
+from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
+from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError
 
@@ -66,6 +66,7 @@ class OptimadeStructureImport():
         self.query_db = self.DATABASES[0][1]    # COD is default
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
+        self.atoms = None                       # Selected structure
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
@@ -81,7 +82,6 @@ class OptimadeStructureImport():
             placeholder="Description (optional)"
         )
         
-        self.filename = None
         self.structure_ase = None
         self.structure_node = None
         self.data_format = ipw.RadioButtons(
@@ -100,9 +100,6 @@ class OptimadeStructureImport():
             store = ipw.HBox([self.btn_store, self.structure_description])
 
         self._create_ui(store)
-        # super(OptimadeWidget, self).__init__(children=self._create_ui(store), **kwargs)
-
-        # self.btn_store.on_click(self._on_click_store)
 
     def _create_ui(self, store):
         """
@@ -150,6 +147,10 @@ class OptimadeStructureImport():
             options=self.structures
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
+        
+        # Store structure
+        self.btn_store.on_click(self._on_click_store)
+        self.store_out = ipw.Output()
 
         ## Display
         # Database header
@@ -172,7 +173,8 @@ class OptimadeStructureImport():
             self.query_message,
             self.drop_structure,
             ipw.HBox([self.structure_data, self.viewer]),
-            store
+            store,
+            self.store_out
         ])
 
         # Show it - stitch it together
@@ -410,17 +412,20 @@ class OptimadeStructureImport():
 
         self._update_drop_structure()
 
-    def refresh_structure_view(self, atoms):
-        if hasattr(self.viewer, "component_0"):
-            self.viewer.clear_representations()
-            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-            self.viewer.component_0.remove_unitcell()        # pylint: disable=no-member
-            cid = self.viewer.component_0.id                 # pylint: disable=no-member
-            self.viewer.remove_component(cid)
+    def refresh_structure_view(self):
+        # pylint: disable=protected-access
+        for comp_id in self.viewer._ngl_component_ids:
+            self.viewer.remove_component(comp_id)
+        # if hasattr(self.viewer, "component_0"):
+        #     self.viewer.clear_representations()
+        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
+        #     self.viewer.component_0.remove_unitcell()        # pylint: disable=no-member
+        #     cid = self.viewer.component_0.id                 # pylint: disable=no-member
+        #     self.viewer.remove_component(cid)
 
-        self.viewer.add_component(nglview.ASEStructure(atoms.get_ase())) # adds ball+stick
+        self.viewer.add_component(nglview.ASEStructure(self.atoms.get_ase())) # adds ball+stick
         self.viewer.add_unitcell() # pylint: disable=no-member
         self.viewer.center()
 
@@ -432,17 +437,17 @@ class OptimadeStructureImport():
         new_element = structs['new']
         if new_element['status'] is False:
             return
-        atoms = new_element['cif']
-        # formula = atoms.get_ase().get_chemical_formula()
+        self.atoms = new_element['cif']
+        formula = self.atoms.get_ase().get_chemical_formula()
         
         # search for existing calculations using chosen structure
-        # qb = QueryBuilder()
-        # qb.append(StructureData)
-        # qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
-        # qb.order_by({Calculation:{'ctime':'desc'}})
-        # for n in qb.iterall():
-        #     calc = n[0]
-        #     print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
+        qb = QueryBuilder()
+        qb.append(StructureData)
+        qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
+        qb.order_by({Calculation:{'ctime':'desc'}})
+        for n in qb.iterall():
+            calc = n[0]
+            print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
         #     thumbnail = b64decode(calc.get_extra("thumbnail"))
         #     display(Image(data=thumbnail))
         # struct_url = new_element['url'].split('.cif')[0]+'.html'
@@ -450,16 +455,7 @@ class OptimadeStructureImport():
         #     self.link.value='<a href="{}" target="_blank">{} entry {}</a>'.format(struct_url, self.query_db["name"], new_element['id'])
         # else:
         #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
-        self.refresh_structure_view(atoms)
-
-    # # pylint: disable=unused-argument
-    # def _on_file_upload(self, change):
-    #     self.tmp_folder = tempfile.mkdtemp()
-    #     # tmp = self.tmp_folder + '/' + self.file_upload.filename
-    #     # with open(tmp, 'w') as f:
-    #     #     f.write(self.file_upload.data)
-    #     # self.select_structure(name=self.file_upload.filename)
-    #     self.select_structure(name=self.filename)
+        self.refresh_structure_view()
 
     # def select_structure(self, name):
     #     structure_ase = self.get_ase(self.tmp_folder + '/' + name)
@@ -488,67 +484,65 @@ class OptimadeStructureImport():
     #             .format(fname))
     #     return traj[0]
 
-    # def get_description(self, structure_ase, name):
-    #     formula = structure_ase.get_chemical_formula()
-    #     return "{} ({})".format(formula, name)
-
-    # def refresh_view(self):
-    #     viewer = self.viewer
-    #     # Note: viewer.clear() only removes the 1st component
-    #     # pylint: disable=protected-access
-    #     for comp_id in viewer._ngl_component_ids:
-    #         viewer.remove_component(comp_id)
-
-    #     viewer.add_component(nglview.ASEStructure(
-    #         self.structure_ase))  # adds ball+stick
-    #     viewer.add_unitcell() # pylint: disable=no-member
-
     # pylint: disable=unused-argument
-    # def _on_click_store(self, change):
-    #     self.store_structure(
-    #         self.filename,
-    #         # self.file_upload.filename,
-    #         description=self.structure_description.value)
+    def _on_click_store(self, change):
+        self.store_structure(
+            description=self.structure_description.value)
 
-    # def store_structure(self, name, description=None):
-    #     structure_ase = self.get_ase(self.tmp_folder + '/' + name)
-    #     if structure_ase is None:
-    #         return
+    def store_structure(self, description=None):
+        with self.store_out:
+            clear_output()
+            if self.atoms is None:
+                print ("Specify a structure first!")
+                return
+            
+            if self.data_format.value == "CifData":
+                s=self.atoms.copy()
+            elif self.data_format.value == "StructureData":
+                s = StructureData(ase=self.atoms.get_ase())
+                # ensure that tags got correctly translated into kinds 
+                for t1, k in zip(self.atoms.get_ase().get_tags(), s.get_site_kindnames()):
+                    t2 = int(k[-1]) if k[-1].isnumeric() else 0
+                    assert t1==t2
 
-    #     # determine data source
-    #     if name.endswith('.cif'):
-    #         source_format = 'CIF'
-    #     else:
-    #         source_format = 'ASE'
+                # Description
+                if description is None:
+                    s.description = self.structure_ase.get_chemical_formula()
+                else:
+                    s.description = description
+            
+            s.store()
+            print("Stored in AiiDA: "+repr(s))
 
-    #     # perform conversion
-    #     if self.data_format.value == 'CifData':
-    #         if source_format == 'CIF':
-    #             structure_node = CifData(
-    #                 file=self.tmp_folder + '/' + name,
-    #                 scan_type='flex',
-    #                 parse_policy='lazy')
-    #         else:
-    #             structure_node = CifData()
-    #             structure_node.set_ase(structure_ase)
-    #     else:  # Target format is StructureData
-    #         structure_node = StructureData(ase=structure_ase)
+        # # determine data source
+        # if name.endswith('.cif'):
+        #     source_format = 'CIF'
+        # else:
+        #     source_format = 'ASE'
 
-    #         #TODO: Figure out whether this is still necessary for StructureData
-    #         # ensure that tags got correctly translated into kinds
-    #         for t1, k in zip(structure_ase.get_tags(),
-    #                          structure_node.get_site_kindnames()):
-    #             t2 = int(k[-1]) if k[-1].isnumeric() else 0
-    #             assert t1 == t2
-    #     if description is None:
-    #         structure_node.description = self.get_description(
-    #             structure_ase, name)
-    #     else:
-    #         structure_node.description = description
-    #     structure_node.label = ".".join(name.split('.')[:-1])
-    #     structure_node.store()
-    #     self.structure_node = structure_node
-    #     print("Stored in AiiDA: " + repr(structure_node))
+        # # perform conversion
+        # if self.data_format.value == 'CifData':
+        #     if source_format == 'CIF':
+        #         structure_node = CifData(
+        #             file=self.tmp_folder + '/' + name,
+        #             scan_type='flex',
+        #             parse_policy='lazy')
+        #     else:
+        #         structure_node = CifData()
+        #         structure_node.set_ase(structure_ase)
+        # else:  # Target format is StructureData
+        #     structure_node = StructureData(ase=structure_ase)
+
+        #     #TODO: Figure out whether this is still necessary for StructureData
+        #     # ensure that tags got correctly translated into kinds
+        #     for t1, k in zip(structure_ase.get_tags(),
+        #                      structure_node.get_site_kindnames()):
+        #         t2 = int(k[-1]) if k[-1].isnumeric() else 0
+        #         assert t1 == t2
+        # structure_node.label = ".".join(name.split('.')[:-1])
+        # structure_node.store()
+        # self.structure_node = structure_node
+        # print("Stored in AiiDA: " + repr(structure_node))
 
     @staticmethod
     def ver_to_str(api_version):
