@@ -122,7 +122,6 @@ class OptimadeStructureImport():
             description="http://",
             value=self.DATABASES[-1][-1]["url"],
             placeholder="e.g.: localhost:5000",
-            disabled=True
         )
         txt_host = ipw.HTML("/optimade")
 
@@ -199,10 +198,8 @@ class OptimadeStructureImport():
         
         # Allow editing of text-field if "Custom" database is chosen
         if self.query_db["name"] == "custom":
-            self.inp_host.disabled = False
             self.custom_host_widgets.layout.visibility = "visible"
         else:
-            self.inp_host.disabled = True
             self.custom_host_widgets.layout.visibility = "hidden"
 
     def query(self, idn=None, formula=None):
