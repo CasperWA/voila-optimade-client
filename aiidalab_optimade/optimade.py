@@ -147,28 +147,28 @@ class OptimadeStructureImport():
 
         ## Display
         # Database header
-        header = [
+        header = ipw.VBox([
             head_dbs,
             drop_dbs,
             ipw.HBox([head_host, self.inp_host, txt_host]),
-        ]
+        ])
 
         # Database search filters
-        search_filters = ipw.VBox(children=[
-            self.inp_id,
-            btn_query,
-            self.query_message
+        search_filters = ipw.VBox([
+            self.inp_id
         ])
         search_filters = ipw.Accordion(children=[search_filters])
         search_filters.set_title(0, "Search for Structure")
         search_filters.selected_index = None    # Close Accordion
 
         # Select (and store) structure
-        select_structure = [
+        select_structure = ipw.VBox([
+            btn_query,
+            self.query_message,
             self.drop_structure,
             self.viewer,
             store
-        ]
+        ])
 
         # Summarize to single list of VBox children
         # children = header
