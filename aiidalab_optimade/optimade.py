@@ -436,7 +436,9 @@ class OptimadeStructureImport():
         # indx = structs['owner'].index
         new_element = structs['new']
         if new_element['status'] is False:
+            self.btn_store.disabled = True
             return
+        self.btn_store.disabled = False
         self.atoms = new_element['cif']
         formula = self.atoms.get_ase().get_chemical_formula()
         
