@@ -147,7 +147,10 @@ class OptimadeStructureImport():
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
 
-        self.data_output = ipw.Output(layout=ipw.Layout(visibility="hidden"))
+        self.data_output = ipw.Output(layout=ipw.Layout(
+            visibility="hidden",
+            width="100%"
+        ))
         
         # Store structure
         self.btn_store.on_click(self._on_click_store)
@@ -173,9 +176,9 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            # ipw.HBox([self.viewer, self.data_output]),
-            self.data_output,
-            self.viewer,
+            ipw.HBox([self.data_output, self.viewer]),
+            # self.data_output,
+            # self.viewer,
             store,
             self.store_out
         ])
