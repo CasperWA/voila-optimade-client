@@ -326,7 +326,7 @@ class OptimadeStructureImport():
         else:
             uc_matrix = ""
         
-        out.update(unit_cell = uc_matrix)
+        out.update(unit_cell=uc_matrix)
 
         return out
 
@@ -491,11 +491,25 @@ class OptimadeStructureImport():
             for k, v in self.structure_data.items():
                 if k != "unit_cell":
                     key = str(k).replace("_", " ")
-                    capitalize(key)
 
-                    out = ipw.HTML("<b>{}</b>: {}<br/>".format(key, v))
+                    out = ipw.HTML("<b>{}</b>: {}<br/>".format(key.capitalize(), v))
 
                     display(out)
+            
+            # Unit cell
+            uc = self.structure_data["unit_cell"]
+            out = r"<b>Unit Cell</b>: \begin{bmatrix} "
+            for i in range(len(uc[0])-1):
+                for vector in uc:
+                    out += r" & ".join(vector[i])
+                    out += r" \\ "
+            for vector in uc:
+                out += r" & ".join(vector[-1])
+            out += r" \end{bmatrix}"
+            
+            out = ipw.HTMLMath(out)
+            display(out)
+
 
     def refresh_structure_view(self):
         # pylint: disable=protected-access
