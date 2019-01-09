@@ -173,8 +173,7 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            self.data_output,
-            self.viewer,
+            ipw.HBox([self.viewer, self.data_output]),
             store,
             self.store_out
         ])
@@ -477,7 +476,7 @@ class OptimadeStructureImport():
             self.structure_data.update(structure)
         else:
             # COD
-            self.structure_data.update(self._init_structure_data)
+            self.structure_data.update(self._init_structure_data())
 
     def refresh_structure_data(self, structure):
         """ Output structure data
@@ -490,11 +489,13 @@ class OptimadeStructureImport():
             clear_output()
             
             for k, v in self.structure_data.items():
-                key = str(k).capitalize()
-                
-                out = ipw.HTML("<b>{}</b>: {}<br/>".format(key, v))
+                if k != "unit_cell":
+                    key = str(k).replace("_", " ")
+                    capitalize(key)
 
-                display(out)
+                    out = ipw.HTML("<b>{}</b>: {}<br/>".format(key, v))
+
+                    display(out)
 
     def refresh_structure_view(self):
         # pylint: disable=protected-access
