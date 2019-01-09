@@ -47,7 +47,7 @@ class OptimadeStructureImport():
         }),
         ("Custom host:",{
             "name": "custom",
-            "url": "cc4f821d.ngrok.io",
+            "url": "",
             "importer": None
         })
     ]
@@ -120,8 +120,8 @@ class OptimadeStructureImport():
 
         self.inp_host = ipw.Text(
             description="http://",
-            value=self.DATABASES[-1][-1]["url"],
-            placeholder="e.g.: localhost:5000",
+            value="cc4f821d.ngrok.io",  # TODO: Possibly remove later
+            placeholder="e.g. localhost:5000",
         )
         txt_host = ipw.HTML("/optimade")
 
@@ -135,7 +135,7 @@ class OptimadeStructureImport():
         self.inp_id = ipw.Text(
             description="id:",
             value="",
-            placeholder='e.g. 9009008'
+            placeholder='e.g. 9009008 or 16'
         )
 
         btn_query = ipw.Button(description='Query in DB')
