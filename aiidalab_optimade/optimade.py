@@ -127,7 +127,10 @@ class OptimadeStructureImport():
         )
         txt_host = ipw.HTML("/optimade")
 
-        self.custom_host_widgets = ipw.HBox([head_host, self.inp_host, txt_host], visible=False)
+        self.custom_host_widgets = ipw.HBox(
+            children=[head_host, self.inp_host, txt_host],
+            layout=ipw.Layout(visibility="hidden")
+        )
 
         # Filters - Accordion
         # head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
@@ -199,12 +202,10 @@ class OptimadeStructureImport():
         # Allow editing of text-field if "Custom" database is chosen
         if self.query_db["name"] == "custom":
             self.inp_host.disabled = False
-            for widget in self.custom_host_widgets.children:
-                widget.visible = True
+            self.custom_host_widgets.layout.visibility = "visible"
         else:
             self.inp_host.disabled = True
-            for widget in self.custom_host_widgets.children:
-                widget.visible = False
+            self.custom_host_widgets.layout.visibility = "hidden"
 
     def query(self, idn=None, formula=None):
         importer = self.query_db["importer"]
