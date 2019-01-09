@@ -276,6 +276,35 @@ class OptimadeStructureImport():
 
         return s
 
+    def _update_custom_url(self):
+        """ Update "url" key for custom host """
+        if self.inp_host.value == "":
+            # No host specified as input
+            self.query_message.value = "You must specify a host URL, e.g. 'localhost:5000'"
+            return
+        self.query_db["url"] = "http://{}/optimade".format(self.inp_host.value)
+
+    def _check_api_version(self, api_version):
+        """ Check validity of returned OPTiMaDe API version
+        :param api_version: tuple: integers, e.g. (0,9,5)
+        :return: valid, old: booleans
+        """
+        old = False
+        valid = api_version >= self.min_api_version
+        if api_version < self.min_api_version:
+            self.query_message.value = "OPTiMaDe API {} is not supported. " \
+                                "Must be at least {}.".format(self.ver_to_str(api_version), self.ver_to_str(self.min_api_version))
+        elif api_version == self.min_api_version:
+            old = True
+        
+        return valid, old
+
+    def _update_drop_structure(self):
+        """ Update dropdown of structures with list of structures in self.structures """
+        self.drop_structure.options = self.structures
+        if len(self.structures) > 1:
+            self.drop_structure.value = self.structures[1][1]
+
     # pylint: disable=too-many-locals
     # pylint: disable=unused-argument
     def _on_click_query(self, b):
@@ -296,24 +325,20 @@ class OptimadeStructureImport():
         # Define custom host URL
         # NB! There are no checks on the host input by user, only if empty or not.
         if self.query_db["name"] == "custom":
-            if self.inp_host.value == "":
-                # No host specified as input
-                self.query_message.value = "You must specify a host URL, e.g. 'localhost:5000'"
-                return
-            self.query_db["url"] = "http://{}/optimade".format(self.inp_host.value)
+            self._update_custom_url()
         
         # Update status message and query database
         self.query_message.value = "Quering the database ... "
         response, api_version = self.query(idn=idn, formula=formula)
         
         # API version check
-        old = False
-        valid = api_version >= self.min_api_version
-        if api_version < self.min_api_version:
-            self.query_message.value = "OPTiMaDe API {} is not supported. " \
-                                "Must be at least {}.".format(self.ver_to_str(api_version), self.ver_to_str(self.min_api_version))
-        elif api_version == self.min_api_version:
-            old = True
+        valid, old = self._check_api_version(api_version)
+
+        # Check number of results
+        more_data = response["meta"]["more_data_available"]
+        if more_data:
+            avail = response["meta"]["data_available"]
+            extra_msg = "<br/>{} results found, only providing the first {}".format(avail, self.RESPONSE_LIMIT)
 
         # Initialization
         count = 0               # Count of structures found
@@ -378,10 +403,10 @@ class OptimadeStructureImport():
             self.query_message.value = "Quering the database ... {} structure(s) found" \
                                        " ... {} non-valid structure(s) found " \
                                        "(partial occupancies are not allowed)".format(count, non_valid_count)
+        if more_data:
+            self.query_message.value.__add__(extra_msg)
 
-        self.drop_structure.options = self.structures
-        if len(self.structures) > 1:
-            self.drop_structure.value = self.structures[1][1]
+        self._update_drop_structure()
 
     def refresh_structure_view(self, atoms):
         if hasattr(self.viewer, "component_0"):
