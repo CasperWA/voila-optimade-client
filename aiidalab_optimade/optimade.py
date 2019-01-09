@@ -158,7 +158,7 @@ class OptimadeStructureImport():
             self.inp_id
         ])
         search_filters = ipw.Accordion(children=[search_filters])
-        search_filters.set_title(0, "Search for Structure")
+        search_filters.set_title(0, "Filters")
         search_filters.selected_index = None    # Close Accordion
 
         # Select (and store) structure
@@ -341,8 +341,10 @@ class OptimadeStructureImport():
                     
                 try:
                     formula = entry_cif.get_ase().get_chemical_formula()
-                except IndexError:
-                    formula = "Unknown"
+                except Exception:
+                    count += 1
+                    non_valid_count += 1
+                    continue
                 
             else:
                 ## API version 0.9.7a
