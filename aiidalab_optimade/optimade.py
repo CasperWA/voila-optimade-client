@@ -502,11 +502,15 @@ class OptimadeStructureImport():
                 uc = self.structure_data["unit_cell"]
                 out += r"\begin{bmatrix} "
                 for i in range(len(uc[0])-1):
+                    row = list()
                     for vector in uc:
-                        out += r" & ".join(vector[i])
-                        out += r" \\ "
+                        row.append(vector[i])
+                    out += r" & ".join(row)
+                    out += r" \\ "
+                row = list()
                 for vector in uc:
-                    out += r" & ".join(vector[-1])
+                    row.append(vector[-1])
+                out += r" & ".join(row)
                 out += r" \end{bmatrix}"
                 
             out = ipw.HTMLMath(out)
