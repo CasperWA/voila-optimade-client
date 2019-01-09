@@ -173,7 +173,9 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            ipw.HBox([self.viewer, self.data_output]),
+            # ipw.HBox([self.viewer, self.data_output]),
+            self.data_output,
+            self.viewer,
             store,
             self.store_out
         ])
@@ -497,21 +499,21 @@ class OptimadeStructureImport():
                     display(out)
             
             # Unit cell
-            out = r"<b>Unit Cell</b>: "
+            out = r"<b>Unit cell</b>: "
             if isinstance(self.structure_data["unit_cell"], list):
                 uc = self.structure_data["unit_cell"]
-                out += r"\begin{bmatrix} "
+                out += r"$\Bigl(\begin{smallmatrix} "
                 for i in range(len(uc[0])-1):
                     row = list()
                     for vector in uc:
                         row.append(vector[i])
-                    out += r" & ".join(row)
+                    out += r" & ".join([str(x) for x in row])
                     out += r" \\ "
                 row = list()
                 for vector in uc:
                     row.append(vector[-1])
-                out += r" & ".join(row)
-                out += r" \end{bmatrix}"
+                out += r" & ".join([str(x) for x in row])
+                out += r" \end{smallmatrix} \Bigr)$"
                 
             out = ipw.HTMLMath(out)
             display(out)
