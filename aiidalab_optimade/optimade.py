@@ -497,16 +497,18 @@ class OptimadeStructureImport():
                     display(out)
             
             # Unit cell
-            uc = self.structure_data["unit_cell"]
-            out = r"<b>Unit Cell</b>: \begin{bmatrix} "
-            for i in range(len(uc[0])-1):
+            out = r"<b>Unit Cell</b>: "
+            if isinstance(self.structure_data["unit_cell"], list):
+                uc = self.structure_data["unit_cell"]
+                out += r"\begin{bmatrix} "
+                for i in range(len(uc[0])-1):
+                    for vector in uc:
+                        out += r" & ".join(vector[i])
+                        out += r" \\ "
                 for vector in uc:
-                    out += r" & ".join(vector[i])
-                    out += r" \\ "
-            for vector in uc:
-                out += r" & ".join(vector[-1])
-            out += r" \end{bmatrix}"
-            
+                    out += r" & ".join(vector[-1])
+                out += r" \end{bmatrix}"
+                
             out = ipw.HTMLMath(out)
             display(out)
 
