@@ -67,26 +67,25 @@ class OptimadeStructureImport():
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
         self.atoms = None                       # Selected structure
+        self.structure_data = self._init_structure_data()  # dict of structure data
+        # self.structure_ase = None
+        # self.structure_node = None
 
         # Sub-widgets / UI
         self.viewer = nglview.NGLWidget()
-        self.structure_data = ipw.HTML()
 
         self.btn_store = ipw.Button(
             description="Store in AiiDA",
             disabled=True,
             button_style="primary"
         )
-        self.structure_description = ipw.Text(
-            description="",
-            placeholder="Description (optional)"
-        )
-        
-        self.structure_ase = None
-        self.structure_node = None
         self.data_format = ipw.RadioButtons(
             options=self.DATA_FORMATS,
             description='Data type:'
+        )
+        self.structure_description = ipw.Text(
+            description="",
+            placeholder="Description (optional)"
         )
 
         if node_class is None:
@@ -147,6 +146,8 @@ class OptimadeStructureImport():
             options=self.structures
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
+
+        self.data_output = ipw.Output(layout=ipw.Layout(visibility="hidden"))
         
         # Store structure
         self.btn_store.on_click(self._on_click_store)
@@ -172,7 +173,7 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            ipw.HBox([self.structure_data, self.viewer]),
+            ipw.HBox([self.data_output, self.viewer]),
             store,
             self.store_out
         ])
@@ -191,6 +192,22 @@ class OptimadeStructureImport():
     @node_class.setter
     def node_class(self, value):
         self.data_format.value = value
+
+    def _init_structure_data(self):
+        """ Initialize structure data
+        A dict output that will be shown in an Output widget next to the nglview
+        :return: Structure data
+        """
+        
+        data = dict(
+            formula="",
+            elements="",
+            number_of_elements="",
+            number_of_sites_in_unit_cell="",
+            unit_cell=""
+        )
+
+        return data
 
     def _on_change_db(self, dbs):
         """ Update database to be queried
@@ -278,6 +295,40 @@ class OptimadeStructureImport():
             ))
 
         return s
+
+    def get_attributes(self, entry):
+        """ Get relevant structure data from entry attributes
+        :param entry: OPTiMaDe structure entry from queried response
+        :return: dict: Relevant attributes for output
+        """
+
+        # Initialization
+        attr = entry["attributes"]
+        out = dict()
+
+        # Get formula, elements, number of elements, and number of sites in unit cell
+        out.update(
+            formula=attr["chemical_formula"],
+            elements=attr["elements"],
+            number_of_elements=int(attr["nelements"]),
+            number_of_sites_in_unit_cell=len(attr["cartesian_site_positions"])
+        )
+
+        # Get unit cell
+        uc = True
+        for dim_type in attr["dimension_types"]:
+            if dim_type != 1:
+                uc = False
+                break
+        
+        if uc:
+            uc_matrix = [vector for vector in attr["lattice_vectors"]]
+        else:
+            uc_matrix = ""
+        
+        out.update(unit_cell = uc_matrix)
+
+        return out
 
     def _update_custom_url(self):
         """ Update "url" key for custom host """
@@ -375,11 +426,14 @@ class OptimadeStructureImport():
                     non_valid_count += 1
                     continue
                 
+                attributes = None
+                
             else:
                 ## API version 0.9.7a
                 
                 if self._valid_entry(entry):
                     structure = self.get_structure(entry)
+                    attributes = self.get_attributes(entry)
                 else:
                     count += 1
                     non_valid_count += 1
@@ -396,6 +450,7 @@ class OptimadeStructureImport():
                             {
                                 "status": True,
                                 "cif": entry_cif,
+                                "structure": attributes,
                                 "url": cif_url,
                                 "id": idn,
                             }
@@ -412,18 +467,32 @@ class OptimadeStructureImport():
 
         self._update_drop_structure()
 
+    def _update_structure_data(self, structure):
+        """ Update structure data output
+        Update dict output that will be shown in an Output widget next to the nglview
+        :param structure: new structure, whose properties will be put into self.structure_data (None if from COD)
+        """
+        if structure:
+            self.structure_data.update(structure)
+        else:
+            # COD
+            self.structure_data.update(self._init_structure_data)
+
+    def refresh_structure_data(self, structure):
+        """ Output structure data
+        Show dict defined in self.structure_data in an Output widget next to the nglview
+        :param structure: new structure to be displayed (None if from COD)
+        """
+        self._update_structure_data(structure)
+
+        with self.data_output:
+            clear_output()
+            print(self.structure_data)
+
     def refresh_structure_view(self):
         # pylint: disable=protected-access
         for comp_id in self.viewer._ngl_component_ids:
             self.viewer.remove_component(comp_id)
-        # if hasattr(self.viewer, "component_0"):
-        #     self.viewer.clear_representations()
-        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-        #     self.viewer.component_0.remove_ball_and_stick()  # pylint: disable=no-member
-        #     self.viewer.component_0.remove_unitcell()        # pylint: disable=no-member
-        #     cid = self.viewer.component_0.id                 # pylint: disable=no-member
-        #     self.viewer.remove_component(cid)
 
         self.viewer.add_component(nglview.ASEStructure(self.atoms.get_ase())) # adds ball+stick
         self.viewer.add_unitcell() # pylint: disable=no-member
@@ -458,6 +527,7 @@ class OptimadeStructureImport():
         # else:
         #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
         self.refresh_structure_view()
+        self.refresh_structure_data(new_element["structure"])
 
     # def select_structure(self, name):
     #     structure_ase = self.get_ase(self.tmp_folder + '/' + name)
@@ -509,7 +579,7 @@ class OptimadeStructureImport():
 
                 # Description
                 if description is None:
-                    s.description = self.structure_ase.get_chemical_formula()
+                    s.description = s.get_chemical_formula()
                 else:
                     s.description = description
             
