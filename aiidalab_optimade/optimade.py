@@ -173,7 +173,8 @@ class OptimadeStructureImport():
             btn_query,
             self.query_message,
             self.drop_structure,
-            ipw.HBox([self.data_output, self.viewer]),
+            self.data_output,
+            self.viewer,
             store,
             self.store_out
         ])
@@ -507,6 +508,7 @@ class OptimadeStructureImport():
         if new_element['status'] is False:
             self.btn_store.disabled = True
             return
+        self.data_output.layout.visibility = "visible"
         self.btn_store.disabled = False
         self.atoms = new_element['cif']
         formula = self.atoms.get_ase().get_chemical_formula()
