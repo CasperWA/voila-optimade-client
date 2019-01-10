@@ -66,7 +66,6 @@ class OptimadeStructureImport():
         """
 
         # Initial settings
-        self.set_database(database, host)       # OPTiMaDe database to query
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
         self.atoms = None                       # Selected structure
@@ -102,6 +101,7 @@ class OptimadeStructureImport():
             store = ipw.HBox([self.btn_store, self.structure_description])
 
         self._create_ui(store)
+        self.set_database(database, host)       # OPTiMaDe database to query
 
     def _create_ui(self, store):
         """ Create UI
@@ -115,16 +115,11 @@ class OptimadeStructureImport():
             description="",
             options=self.DATABASES
         )
-        for (v, db) in self.DATABASES:
-            if self.query_db["name"] == db["name"]:
-                drop_dbs.label = v
-                drop_dbs.value = db
         drop_dbs.observe(self._on_change_db, names="value")
 
         self.inp_host = ipw.Text(
             description="http://",
-            value="test",  # TODO: Possibly remove later
-            placeholder="e.g. localhost:5000",
+            placeholder="e.g. localhost:5000"
         )
         txt_host = ipw.HTML("/optimade")
 
@@ -318,11 +313,16 @@ class OptimadeStructureImport():
                     raise TypeError("host must be a string")
 
                 # Set host
-                self.inp_host.value = host
-            
+                self.host(host)
         else:
             # COD is set as default database
             self.query_db = self.DATABASES[0][1]
+        
+        # Update UI
+        for (v, db) in self.DATABASES:
+            if self.query_db["name"] == db["name"]:
+                drop_dbs.label = v
+                drop_dbs.value = db
 
     @property
     def node_class(self):
