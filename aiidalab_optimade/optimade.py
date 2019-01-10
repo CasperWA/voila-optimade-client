@@ -172,10 +172,14 @@ class OptimadeStructureImport():
         self.disp_filters.selected_index = None    # Close Accordion
 
         # Select structure
-        self.disp_view_structure = ipw.VBox([
+        self.disp_select_structure = ipw.VBox([
             btn_query,
             self.query_message,
             self.drop_structure,
+        ])
+
+        # View structure
+        self.disp_view_structure = ipw.VBox([
             # ipw.HBox([self.data_output, self.viewer]),
             self.data_output,
             self.viewer
@@ -187,48 +191,51 @@ class OptimadeStructureImport():
             self.store_out
         ])
 
-    def display(self, parts=None, all_=True):
+    def display(self, parts=None):
         """ Display OPTiMaDe structure import parts
         
-        part may be: "host", "filters", "viewer", "store".
-        Either MUST be False for the specifeid parts to be shown.
+        parts may be: "host", "filters", "select", "viewer", "store".
+        If parts is None, all parts will be displayed.
 
         :param parts: list:  Display only chosen parts of the OPTiMaDe structure import app
                       str:   Display only chosen part of the OPTiMaDe structure import app
-        :param all_:  bool:  Display all parts of the OPTiMaDe structure import app
         """
 
         # Checks
-        if not isinstance(all_, bool):
-            raise TypeError("all_ must be a boolean")
-        
-        if all_:
-            if parts is not None:
-                raise DisplayInputError("all_ must be False, if you wish to display " \
-                                        "only parts of the OPTiMaDe structure import app")
-        else:
-            if parts is None:
-                raise DisplayInputError("parts must be specified if all_ is False")
-            elif not isinstance(parts, list) or not isinstance(parts, str):
+        if parts is not None:
+            # Type - make parts a list
+            if isinstance(parts, str):
+                parts = [parts]
+            elif not isinstance(parts, list):
                 raise TypeError("parts must be either a list of strings or a string")
 
+        # Initialize
+        valid_parts = dict(
+            host=self.disp_host,
+            filters=self.disp_filters,
+            select=self.disp_select_structure,
+            viewer=self.disp_view_structure,
+            store=self.disp_store
+        )
+
         # Display all parts - Default
-        if all_:
+        if parts is None:
             display(
                 self.disp_host,
                 self.disp_filters,
+                self.disp_select_structure,
                 self.disp_view_structure,
                 self.disp_store
             )
         # Display specific parts
         else:
-            # Make parts into a list
-            if isinstance(parts, str):
-                parts = [parts]
-            
-            # Display
             for part in parts:
-                display(part)
+                # Check specified part(s) is/are valid
+                if part not in valid_parts:
+                    raise DisplayInputError("Unknown part. Valid parts: {}".format(",".join([p for p in valid_parts])))
+                
+                # Display
+                display(valid_parts[part])
 
     @property
     def node_class(self):
