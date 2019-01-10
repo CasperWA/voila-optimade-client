@@ -25,7 +25,7 @@ from aiida.orm.data.cif import CifData
 from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
 from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
-from .exceptions import ApiVersionError, DisplayInputError
+from .exceptions import ApiVersionError, InputError, DisplayInputError
 
 # TODO: Implement:
 #       - Awareness of pagination
@@ -53,21 +53,24 @@ class OptimadeStructureImport():
     ]
     RESPONSE_LIMIT = 25
 
-    def __init__(self, node_class=None):
-        """ OPTiMaDe Structure Retrieval Widget
+    def __init__(self, database=None, host=None, node_class=None):
+        """ OPTiMaDe Structure Retrieval
         Upload a structure according to OPTiMaDe API, mininmum v0.9.7a (v0.9.5 accepted for COD)
 
-        :param node_class: AiiDA node class for storing the structure.
+        :param database: str: Structure database with implemented OPTiMaDe API.
+        :param host: str: Must be specified if database is "custom".
+            Must be the URL before "/optimade"
+        :param node_class: str: AiiDA node class for storing the structure.
             Possible values: 'StructureData', 'CifData' or None (let the user decide).
             Note: If your workflows require a specific node class, better fix it here.
         """
 
         # Initial settings
-        self.query_db = self.DATABASES[0][1]    # COD is default
+        self.set_database(database, host)       # OPTiMaDe database to query
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
         self.atoms = None                       # Selected structure
-        self.structure_data = self._init_structure_data()  # dict of structure data
+        self.structure_data = self._init_structure_data()   # dict of structure data
         # self.structure_ase = None
         # self.structure_node = None
 
@@ -101,7 +104,7 @@ class OptimadeStructureImport():
         self._create_ui(store)
 
     def _create_ui(self, store):
-        """
+        """ Create UI
         :param store: HBox widget based on specified AiiDA node class for storing
         :return: children widgets for initialization of main widget
         """
@@ -191,7 +194,7 @@ class OptimadeStructureImport():
             self.store_out
         ])
 
-    def display(self, parts=None):
+    def display(self, parts=None, no_host=False):
         """ Display OPTiMaDe structure import parts
         
         parts may be: "host", "filters", "select", "viewer", "store".
@@ -200,8 +203,11 @@ class OptimadeStructureImport():
         NB! Since one may call the display method several times to display the same part multiple times,
         multiple instances of the same part in parts is allowed.
 
+        NB! no_host has no effect if "host" is specified in parts.
+
         :param parts: list:  Display only chosen parts of the OPTiMaDe structure import app
                       str:   Display only chosen part of the OPTiMaDe structure import app
+        :param no_host: bool: Leave out the host part. Default: False
         """
 
         # Checks
@@ -211,6 +217,7 @@ class OptimadeStructureImport():
                 parts = [parts]
             elif not isinstance(parts, list):
                 raise TypeError("parts must be either a list of strings or a string")
+
 
         # Initialize
         valid_parts = dict(
@@ -223,13 +230,21 @@ class OptimadeStructureImport():
 
         # Display all parts - Default
         if parts is None:
-            display(
-                self.disp_host,
-                self.disp_filters,
-                self.disp_select_structure,
-                self.disp_view_structure,
-                self.disp_store
-            )
+            if no_host:
+                display(
+                    self.disp_filters,
+                    self.disp_select_structure,
+                    self.disp_view_structure,
+                    self.disp_store
+                )
+            else:
+                display(
+                    self.disp_host,
+                    self.disp_filters,
+                    self.disp_select_structure,
+                    self.disp_view_structure,
+                    self.disp_store
+                )
         # Display specific parts
         else:
             for part in parts:
@@ -239,6 +254,70 @@ class OptimadeStructureImport():
                 
                 # Display
                 display(valid_parts[part])
+
+    @property
+    def host(self):
+        return self.inp_host.value
+
+    @host.setter
+    def host(self, value):
+        self.inp_host.value = value
+
+    @property
+    def database(self):
+        return self.query_db["name"]
+
+    @database.setter
+    def database(self, value):
+        self.set_database(value, self.host)
+
+    def set_database(self, database, host):
+        """ Set OPTiMaDe database to query
+        If database is None, COD will be chosen as the default database.
+        If database is "custom", host must also be specified.
+
+        :param database: str: OPTiMaDe database to be queried.
+        :param host: str: Must be specified if database is "custom".
+        :return: dict: Relevant information pertaining to the database of choice,
+                       taken from self.DATABASES.
+        """
+
+        # User-specified database
+        if database is not None:
+            # Type check
+            if not isinstance(database, str):
+                raise TypeError("database must be a string")
+            
+            # Get database in lower case to be able to compare with DATABASES
+            database = database.lower()
+            
+            # Set database
+            valid_db = False
+            for (_,db) in self.DATABASES:
+                if database == db["name"]:
+                    self.query_db = db
+                    valid_db = True
+                    break
+            
+            if not valid_db:
+                raise InputError("Database input '{}' is not valid. Available inputs are: {}"
+                                 .format(database, ",".join([db["name"] for (_,db) in self.DATABASES])))
+
+            # Special case for custom database
+            if database == "custom":
+                # Check that host is specified if database is "custom"
+                if host is None:
+                    raise InputError("host must be specified, when a custom database is specified")
+                
+                # Type check
+                if not isinstance(host, str):
+                    raise TypeError("host must be a string")
+
+                # Set host
+                self.host = host
+        else:
+            # COD is set as default database
+            self.query_db = self.DATABASES[0][1]
 
     @property
     def node_class(self):
