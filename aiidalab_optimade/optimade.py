@@ -163,8 +163,7 @@ class OptimadeStructureImport():
         # Database header
         self.disp_host = ipw.VBox([
             head_dbs,
-            ipw.HBox([drop_dbs, self.custom_host_widgets]),
-            btn_query,
+            ipw.HBox([drop_dbs, self.custom_host_widgets])
         ])
 
         # Database search filters
@@ -177,6 +176,7 @@ class OptimadeStructureImport():
 
         # Select structure
         self.disp_select_structure = ipw.VBox([
+            btn_query,
             self.query_message,
             self.drop_structure,
         ])
