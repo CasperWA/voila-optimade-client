@@ -115,6 +115,9 @@ class OptimadeStructureImport():
             description="",
             options=self.DATABASES
         )
+        for (v,db) in self.DATABASES:
+            if self.query_db["name"] == db["name"]:
+                drop_dbs.value = (v,db)
         drop_dbs.observe(self._on_change_db, names="value")
 
         self.inp_host = ipw.Text(
@@ -315,6 +318,7 @@ class OptimadeStructureImport():
 
                 # Set host
                 self.host = host
+            
         else:
             # COD is set as default database
             self.query_db = self.DATABASES[0][1]
