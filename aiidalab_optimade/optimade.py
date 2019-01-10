@@ -115,9 +115,10 @@ class OptimadeStructureImport():
             description="",
             options=self.DATABASES
         )
-        for (v,db) in self.DATABASES:
+        for (v, db) in self.DATABASES:
             if self.query_db["name"] == db["name"]:
-                drop_dbs.value = (v,db)
+                drop_dbs.label = v
+                drop_dbs.value = db
         drop_dbs.observe(self._on_change_db, names="value")
 
         self.inp_host = ipw.Text(
