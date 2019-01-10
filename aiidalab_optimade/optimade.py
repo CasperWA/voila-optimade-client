@@ -297,7 +297,7 @@ class OptimadeStructureImport():
                     raise TypeError("host must be a string")
 
                 # Set host
-                self.inp_host.value = host
+                self.host(host)
         else:
             # COD is set as default database
             self.query_db = self.DATABASES[0][1]
@@ -309,24 +309,34 @@ class OptimadeStructureImport():
                 self.drop_dbs.value = db
 
     def database(self, value, host=None):
+        # Set
         if value is not None:
-            # Set
             self.set_database(value, host)
             return None
         # Get
         return self.query_db["name"]
 
     def host(self, value):
+        # Set
         if value is not None:
-            # Set
+            # Check type
+            if not isinstance(value, str):
+                raise TypeError("host must be a string")
+            
+            # Remove "http://"" or "https://" if host starts with this
+            for url in ["http://", "https://"]:
+                if value.startswith(url):
+                    value = value[len(url):]
+
+            # Input host to user-input
             self.inp_host.value = value
             return None
         # Get
         return self.inp_host.value
     
     def node_class(self, value):
+        # Set
         if value is not None:
-            # Set
             self.data_format.value = value
             return None
         # Get
