@@ -4,12 +4,14 @@ AiiDA Lab App that implements an OPTiMaDe client
 
 ## Installation
 
-This jupyter-based app is intended to run in
+This Jupyter-based app is intended to run in
 [AiiDA Lab](https://aiidalab.materialscloud.org)
-as well as inside the
+as well as inside a
 [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine.
 
-Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
+Use the App Store in the
+[Home App](https://github.com/aiidalab/aiidalab-home)
+to install it.
 
 ## Usage
 
@@ -26,34 +28,49 @@ structure_import.display()
 
 ### Detailed
 
-If you only want certain parts of the importer displayed, e.g. you want to pre-specify the OPTiMaDe database to use and do not want the user of your app to choose another, you could write:
+You can choose to only display certain parts of the structure importer.
+
+As an example, if you want to pre-specify a specific OPTiMaDe database to query and do not want the user of your app to be able to choose another, you could write:
 
 ```python
 from aiidalab_optimade import OptimadeStructureImport
 
 structure_import = OptimadeStructureImport()
-structure_import.set_database("COD")
+structure_import.set_database("COD")  # Use Crystallography Open Database
 ```
 
-or
+or simply
 
 ```python
-structure_import = OptimadeStructureImport(database="COD")
+structure_import = OptimadeStructureImport(database="COD")  # Use Crystallography Open Database
 ```
 
-Then you can display the importer:
+Then you can display the structure importer without the Dropdown-widget of databases, by writing
 
 ```python
 structure_import.display(no_host=True)
 ```
 
-or you can choose the parts individually, leaving out `"host"`:
+or you can choose the parts of the structure importer individually, leaving out `"host"`
 
 ```python
 structure_import.display(parts=["filter", "select", "viewer", "store"])
 ```
 
 > **Note**: If `"host"` is included in `parts`, `no_host` has no effect.
+
+> The included databases for now are:
+> * Crystallography Open Database (COD) - `"cod"`
+> * Your local AiiDA Lab database - `"aiida"`
+>
+> To specify a custom database, one can use:
+> * Custom database - `"custom"`
+
+> **Note**: When specifying a custom database, one *must* also provide a host URL.
+> This is done by adding:
+> ```python
+> 
+> ```
 
 ## License
 

@@ -123,7 +123,7 @@ class OptimadeStructureImport():
 
         self.inp_host = ipw.Text(
             description="http://",
-            value="cc4f821d.ngrok.io",  # TODO: Possibly remove later
+            value="test",  # TODO: Possibly remove later
             placeholder="e.g. localhost:5000",
         )
         txt_host = ipw.HTML("/optimade")
@@ -318,7 +318,7 @@ class OptimadeStructureImport():
                     raise TypeError("host must be a string")
 
                 # Set host
-                self.host = host
+                self.inp_host.value = host
             
         else:
             # COD is set as default database
