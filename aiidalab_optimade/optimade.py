@@ -334,7 +334,7 @@ class OptimadeStructureImport():
             self.inp_host.value = value
             return None
         # Get
-        return self.inp_host.value
+        return str(self.inp_host.value)
     
     def node_class(self, value=None):
         # Set
@@ -342,7 +342,7 @@ class OptimadeStructureImport():
             self.data_format.value = value
             return None
         # Get
-        return self.data_format.value
+        return str(self.data_format.value)
 
     def _init_structure_data(self):
         """ Initialize structure data
