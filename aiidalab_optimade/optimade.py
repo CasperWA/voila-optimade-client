@@ -308,7 +308,9 @@ class OptimadeStructureImport():
                 self.drop_dbs.label = v
                 self.drop_dbs.value = db
 
-    def database(self, value, host=None):
+    def database(self, value=None, host=None):
+        if host is None:
+            host = self.host()
         # Set
         if value is not None:
             self._set_database(value, host)
@@ -316,7 +318,7 @@ class OptimadeStructureImport():
         # Get
         return self.query_db["name"]
 
-    def host(self, value):
+    def host(self, value=None):
         # Set
         if value is not None:
             # Check type
@@ -334,7 +336,7 @@ class OptimadeStructureImport():
         # Get
         return self.inp_host.value
     
-    def node_class(self, value):
+    def node_class(self, value=None):
         # Set
         if value is not None:
             self.data_format.value = value
