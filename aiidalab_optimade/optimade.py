@@ -25,7 +25,7 @@ from aiida.orm.data.cif import CifData
 from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
 from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
-from .exceptions import ApiVersionError
+from .exceptions import ApiVersionError, DisplayInputError
 
 # TODO: Implement:
 #       - Awareness of pagination
@@ -156,39 +156,79 @@ class OptimadeStructureImport():
         self.btn_store.on_click(self._on_click_store)
         self.store_out = ipw.Output()
 
-        ## Display
+        ## Display parts
         # Database header
-        header = ipw.VBox([
+        self.disp_host = ipw.VBox([
             head_dbs,
             ipw.HBox([drop_dbs, self.custom_host_widgets]),
         ])
 
         # Database search filters
-        search_filters = ipw.VBox([
+        self.disp_filters = ipw.VBox([
             self.inp_id
         ])
-        search_filters = ipw.Accordion(children=[search_filters])
-        search_filters.set_title(0, "Filters")
-        search_filters.selected_index = None    # Close Accordion
+        self.disp_filters = ipw.Accordion(children=[self.disp_filters])
+        self.disp_filters.set_title(0, "Filters")
+        self.disp_filters.selected_index = None    # Close Accordion
 
-        # Select (and store) structure
-        select_structure = ipw.VBox([
+        # Select structure
+        self.disp_view_structure = ipw.VBox([
             btn_query,
             self.query_message,
             self.drop_structure,
             # ipw.HBox([self.data_output, self.viewer]),
             self.data_output,
-            self.viewer,
+            self.viewer
+        ])
+
+        # Store structure in AiiDA
+        self.disp_store = ipw.VBox([
             store,
             self.store_out
         ])
 
-        # Show it - stitch it together
-        display(
-            header,
-            search_filters,
-            select_structure
-        )
+    def display(self, parts=None, all_=True):
+        """ Display OPTiMaDe structure import parts
+        
+        part may be: "host", "filters", "viewer", "store".
+        Either MUST be False for the specifeid parts to be shown.
+
+        :param parts: list:  Display only chosen parts of the OPTiMaDe structure import app
+                      str:   Display only chosen part of the OPTiMaDe structure import app
+        :param all_:  bool:  Display all parts of the OPTiMaDe structure import app
+        """
+
+        # Checks
+        if not isinstance(all_, bool):
+            raise TypeError("all_ must be a boolean")
+        
+        if all_:
+            if parts is not None:
+                raise DisplayInputError("all_ must be False, if you wish to display " \
+                                        "only parts of the OPTiMaDe structure import app")
+        else:
+            if parts is None:
+                raise DisplayInputError("parts must be specified if all_ is False")
+            elif not isinstance(parts, list) or not isinstance(parts, str):
+                raise TypeError("parts must be either a list of strings or a string")
+
+        # Display all parts - Default
+        if all_:
+            display(
+                self.disp_host,
+                self.disp_filters,
+                self.disp_view_structure,
+                self.disp_store
+            )
+        # Display specific parts
+        else:
+            # Make parts into a list
+            if isinstance(parts, str):
+                parts = [parts]
+            
+            # Display
+            for part in parts:
+                display(part)
 
     @property
     def node_class(self):
