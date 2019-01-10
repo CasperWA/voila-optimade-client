@@ -28,7 +28,8 @@ from .importer import OptimadeImporter
 from .exceptions import ApiVersionError, InputError, DisplayInputError
 
 # TODO: Implement:
-#       - Awareness of pagination
+#       - Possibly better handling of pagination (show more results?)
+#       - Statically show structure data titles, instead of reprinting (clear, print)
 
 # NB! The nglview is not displayed in an Accordion
 class OptimadeStructureImport():
