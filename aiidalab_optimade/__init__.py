@@ -8,4 +8,4 @@ AiiDA Lab App that implements an OPTiMaDe client
 from .importer import OptimadeImporter  # noqa
 from .optimade import OptimadeStructureImport  # noqa
 
-__version__ = "0.1-alpha"
+__version__ = "0.2-alpha"
