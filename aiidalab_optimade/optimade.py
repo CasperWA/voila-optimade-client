@@ -161,6 +161,7 @@ class OptimadeStructureImport():
         self.disp_host = ipw.VBox([
             head_dbs,
             ipw.HBox([drop_dbs, self.custom_host_widgets]),
+            btn_query,
         ])
 
         # Database search filters
@@ -173,7 +174,6 @@ class OptimadeStructureImport():
 
         # Select structure
         self.disp_select_structure = ipw.VBox([
-            btn_query,
             self.query_message,
             self.drop_structure,
         ])
@@ -196,6 +196,9 @@ class OptimadeStructureImport():
         
         parts may be: "host", "filters", "select", "viewer", "store".
         If parts is None, all parts will be displayed.
+
+        NB! Since one may call the display method several times to display the same part multiple times,
+        multiple instances of the same part in parts is allowed.
 
         :param parts: list:  Display only chosen parts of the OPTiMaDe structure import app
                       str:   Display only chosen part of the OPTiMaDe structure import app
