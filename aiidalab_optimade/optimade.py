@@ -254,7 +254,7 @@ class OptimadeStructureImport():
                 # Display
                 display(valid_parts[part])
 
-    def set_database(self, database, host):
+    def set_database(self, database, host=None):
         """ Set OPTiMaDe database to query
         If database is None, COD will be chosen as the default database.
         If database is "custom", host must also be specified.
@@ -307,6 +307,30 @@ class OptimadeStructureImport():
             if self.query_db["name"] == db["name"]:
                 self.drop_dbs.label = v
                 self.drop_dbs.value = db
+
+    def database(self, value, host=None):
+        if value is not None:
+            # Set
+            self.set_database(value, host)
+            return None
+        # Get
+        return self.query_db["name"]
+
+    def host(self, value):
+        if value is not None:
+            # Set
+            self.inp_host.value = value
+            return None
+        # Get
+        return self.inp_host.value
+    
+    def node_class(self, value):
+        if value is not None:
+            # Set
+            self.data_format.value = value
+            return None
+        # Get
+        return self.data_format.value
 
     def _init_structure_data(self):
         """ Initialize structure data
