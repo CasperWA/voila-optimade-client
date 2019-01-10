@@ -100,8 +100,8 @@ class OptimadeStructureImport():
             self.data_format.value = node_class
             store = ipw.HBox([self.btn_store, self.structure_description])
 
-        self._create_ui(store)                  # Create UI
-        self.set_database(database, host)       # OPTiMaDe database to query
+        self._create_ui(store)                  # Create UI widgets
+        self._set_database(database, host)      # OPTiMaDe database to query
 
     def _create_ui(self, store):
         """ Create UI
@@ -254,7 +254,7 @@ class OptimadeStructureImport():
                 # Display
                 display(valid_parts[part])
 
-    def set_database(self, database, host=None):
+    def _set_database(self, database, host=None):
         """ Set OPTiMaDe database to query
         If database is None, COD will be chosen as the default database.
         If database is "custom", host must also be specified.
@@ -311,7 +311,7 @@ class OptimadeStructureImport():
     def database(self, value, host=None):
         # Set
         if value is not None:
-            self.set_database(value, host)
+            self._set_database(value, host)
             return None
         # Get
         return self.query_db["name"]
