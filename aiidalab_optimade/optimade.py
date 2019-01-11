@@ -1,8 +1,9 @@
-# -*- CODing: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # Python 2/3 compatibility
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import with_statement
 
 # Load AiiDA database
 # pylint: disable=import-error
@@ -30,6 +31,7 @@ from .exceptions import ApiVersionError, InputError, DisplayInputError
 # TODO: Implement:
 #       - Possibly better handling of pagination (show more results?)
 #       - Statically show structure data titles, instead of reprinting (clear, print)
+#       - Possibly separate 'parts' into individual widgets
 
 # NB! The nglview is not displayed in an Accordion
 class OptimadeStructureImport():
@@ -68,9 +70,7 @@ class OptimadeStructureImport():
 
         # Initial settings
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
-        self._clear_structures_dropdown()       # Set self.structure to 'select structure'
-        self.atoms = None                       # Selected structure
-        self.structure_data = self._init_structure_data()   # dict of structure data
+        self.atoms = None                       # Selected structure in ASE format
         self.node_class(node_class)             # Pre-select node class to save in AiiDA
         # self.structure_ase = None
         # self.structure_node = None
@@ -84,7 +84,8 @@ class OptimadeStructureImport():
         Following 'self.' variables are created:
         host:       drop_dbs, inp_hos, custom_host_widgets
         filters:    inp_id, query_message
-        select:     drop_structure, data_output, viewer
+        select:     structure, drop_structure, structure_data, data_output
+                    viewer
         store:      btn_store, data_format, structure_description, store_out
 
         parts:      disp_host, disp_filters, disp_select_structure
@@ -127,16 +128,15 @@ class OptimadeStructureImport():
         self.query_message = ipw.HTML("")
 
         # Select structure - List of results (structures dropdown)
+        self._clear_structures_dropdown()  # Set self.structure to 'select structure'
         self.drop_structure = ipw.Dropdown(
             description="Results:",
             options=self.structures
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
 
-        self.data_output = ipw.Output(layout=ipw.Layout(
-            visibility="hidden"
-            # width="100%"
-        ))
+        self.structure_data = self._init_structure_data()   # dict of structure data
+        self.data_output = self._init_structure_data_out()  # dict of widgets for data output
 
         self.viewer = nglview.NGLWidget()
         
@@ -358,18 +358,50 @@ class OptimadeStructureImport():
             self.data_format.value = value
             return None
 
+    def _init_structure_data_out(self):
+        """ Initialize structure data output 'keys' """
+        # Standard 'keys'
+        data_out=dict(
+            formula={
+                "widget": ipw.HTML(),
+                "title": "<b>{}</b>: ".format("Chemical formula"),
+                "value": ""
+            },
+            elements={
+                "widget": ipw.HTML(),
+                "title": "<b>{}</b>: ".format("Elements"),
+                "value": ""
+            },
+            nelements={
+                "widget": ipw.HTML(),
+                "title": "<b>{}</b>: ".format("Number of elements"),
+                "value": ""
+            },
+            nsites={
+                "widget": ipw.HTML(),
+                "title": "<b>{}</b>: ".format("Number of sites in unit cell"),
+                "value": ""
+            },
+            unitcell={
+                "widget": ipw.HTML(),
+                "title": "<b>{}</b>: ".format("Unit cell"),
+                "value": ""
+            }
+        )
+
+        return data_out
+
     def _init_structure_data(self):
         """ Initialize structure data
-        A dict output that will be shown in an Output widget next to the nglview
+        A dict output that will serve as data for an output next to the nglview
         :return: Structure data
         """
-        
         data = dict(
-            formula="",
-            elements="",
-            number_of_elements="",
-            number_of_sites_in_unit_cell="",
-            unit_cell=""
+            formula="",     # Chemical formula
+            elements="",    # Elements, e.g. Si,Al,O
+            nelements="",   # Number of elements
+            nsites="",      # Number of sites in unit cell
+            unitcell=""     # Unit cell vectors within matrix, i.e. 3x3 matrix
         )
 
         return data
@@ -648,40 +680,40 @@ class OptimadeStructureImport():
         Show dict defined in self.structure_data in an Output widget next to the nglview
         :param structure: new structure to be displayed (None if from COD)
         """
-        # TODO: Make keys static, only change values
-        
+        # Update structure data to chosen structure
         self._update_structure_data(structure)
-
-        with self.data_output:
-            clear_output()
+        
+        # # Write output
+        # with self.data_output:
+        #     clear_output()
             
-            for k, v in self.structure_data.items():
-                if k != "unit_cell":
-                    key = str(k).replace("_", " ")
+        #     for k, v in self.structure_data.items():
+        #         if k != "unit_cell":
+        #             key = str(k).replace("_", " ")
 
-                    out = ipw.HTML("<b>{}</b>: {}<br/>".format(key.capitalize(), v))
+        #             out = ipw.HTML("<b>{}</b>: {}<br/>".format(key.capitalize(), v))
 
-                    display(out)
+        #             display(out)
             
-            # Unit cell
-            out = r"<b>Unit cell</b>: "
-            if isinstance(self.structure_data["unit_cell"], list):
-                uc = self.structure_data["unit_cell"]
-                out += r"$\Bigl(\begin{smallmatrix} "
-                for i in range(len(uc[0])-1):
-                    row = list()
-                    for vector in uc:
-                        row.append(vector[i])
-                    out += r" & ".join([str(x) for x in row])
-                    out += r" \\ "
-                row = list()
-                for vector in uc:
-                    row.append(vector[-1])
-                out += r" & ".join([str(x) for x in row])
-                out += r" \end{smallmatrix} \Bigr)$"
+        #     # Unit cell
+        #     out = r"<b>Unit cell</b>: "
+        #     if isinstance(self.structure_data["unit_cell"], list):
+        #         uc = self.structure_data["unit_cell"]
+        #         out += r"$\Bigl(\begin{smallmatrix} "
+        #         for i in range(len(uc[0])-1):
+        #             row = list()
+        #             for vector in uc:
+        #                 row.append(vector[i])
+        #             out += r" & ".join([str(x) for x in row])
+        #             out += r" \\ "
+        #         row = list()
+        #         for vector in uc:
+        #             row.append(vector[-1])
+        #         out += r" & ".join([str(x) for x in row])
+        #         out += r" \end{smallmatrix} \Bigr)$"
                 
-            out = ipw.HTMLMath(out)
-            display(out)
+        #     out = ipw.HTMLMath(out)
+        #     display(out)
 
 
     def refresh_structure_view(self):
@@ -702,7 +734,7 @@ class OptimadeStructureImport():
         if new_element['status'] is False:
             self.btn_store.disabled = True
             return
-        self.data_output.layout.visibility = "visible"
+        # self.data_output.layout.visibility = "visible"
         self.btn_store.disabled = False
         self.atoms = new_element['cif']
         formula = self.atoms.get_ase().get_chemical_formula()
