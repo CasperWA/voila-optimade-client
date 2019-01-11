@@ -71,42 +71,25 @@ class OptimadeStructureImport():
         self._clear_structures_dropdown()       # Set self.structure to 'select structure'
         self.atoms = None                       # Selected structure
         self.structure_data = self._init_structure_data()   # dict of structure data
+        self.node_class(node_class)             # Pre-select node class to save in AiiDA
         # self.structure_ase = None
         # self.structure_node = None
 
-        # Sub-widgets / UI
-        self.viewer = nglview.NGLWidget()
-
-        self.btn_store = ipw.Button(
-            description="Store in AiiDA",
-            disabled=True,
-            button_style="primary"
-        )
-        self.data_format = ipw.RadioButtons(
-            options=self.DATA_FORMATS,
-            description='Data type:'
-        )
-        self.structure_description = ipw.Text(
-            description="",
-            placeholder="Description (optional)"
-        )
-
-        if node_class is None:
-            store = ipw.HBox(
-                [self.btn_store, self.data_format, self.structure_description])
-        elif node_class not in self.DATA_FORMATS:
-            raise ValueError("Unknown data format '{}'. Options: {}".format(
-                node_class, self.DATA_FORMATS))
-        else:
-            self.data_format.value = node_class
-            store = ipw.HBox([self.btn_store, self.structure_description])
-
-        self._create_ui(store)                  # Create UI widgets
+        # Create UI and set pre-selected database
+        self._create_ui()                       # Create UI widgets
         self._set_database(database, host)      # OPTiMaDe database to query
 
-    def _create_ui(self, store):
+    def _create_ui(self):
         """ Create UI
-        :param store: HBox widget based on specified AiiDA node class for storing
+        Following 'self.' variables are created:
+        host:       drop_dbs, inp_hos, custom_host_widgets
+        filters:    inp_id, query_message
+        select:     drop_structure, data_output, viewer
+        store:      btn_store, data_format, structure_description, store_out
+
+        parts:      disp_host, disp_filters, disp_select_structure
+                    disp_view_structure, disp_store
+
         :return: children widgets for initialization of main widget
         """
         ## UI
@@ -154,9 +137,33 @@ class OptimadeStructureImport():
             visibility="hidden"
             # width="100%"
         ))
+
+        self.viewer = nglview.NGLWidget()
         
         # Store structure
+        self.btn_store = ipw.Button(
+            description="Store in AiiDA",
+            disabled=True,
+            button_style="primary"
+        )
         self.btn_store.on_click(self._on_click_store)
+
+        self.data_format = ipw.RadioButtons(
+            options=self.DATA_FORMATS,
+            description='Data type:'
+        )
+
+        self.structure_description = ipw.Text(
+            description="",
+            placeholder="Description (optional)"
+        )
+
+        if self.node_class() is None:
+            store = ipw.HBox(
+                [self.btn_store, self.data_format, self.structure_description])
+        else:
+            store = ipw.HBox([self.btn_store, self.structure_description])
+        
         self.store_out = ipw.Output()
 
         ## Display parts
@@ -338,12 +345,18 @@ class OptimadeStructureImport():
         return str(self.inp_host.value)
     
     def node_class(self, value=None):
+        # Get
+        if value is None:
+            return str(self.data_format.value)
+        
         # Set
-        if value is not None:
+        if value not in self.DATA_FORMATS:
+            # Check type
+            raise ValueError("Unknown data format '{}'. Options: {}".format(
+                value, self.DATA_FORMATS))
+        else:
             self.data_format.value = value
             return None
-        # Get
-        return str(self.data_format.value)
 
     def _init_structure_data(self):
         """ Initialize structure data
