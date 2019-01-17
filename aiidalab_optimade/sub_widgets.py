@@ -113,7 +113,7 @@ class StructureDataOutput(ipw.VBox):
         return data_out
 
     def _set_widget_data(self, data):
-        for structure_attribute, value in data:
+        for structure_attribute, value in data.items():
             # Update "value"
             self._widget_data[structure_attribute]["value"] = value
     
@@ -122,7 +122,7 @@ class StructureDataOutput(ipw.VBox):
         for widget_data in self._widget_data.values():
             widget = widget_data["widget"]
             
-            widget.value = widget_data["title"] + widget_data["value"]
+            widget.value = widget_data["title"] + str(widget_data["value"])
 
             widgets.append(widget)
         return widgets
