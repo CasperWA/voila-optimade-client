@@ -4,6 +4,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import with_statement
+from __future__ import division
 
 # Load AiiDA database
 # pylint: disable=import-error
@@ -23,8 +24,8 @@ from IPython.display import display, clear_output
 # import ase.io
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
-from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
-from aiida.orm.querybuilder import QueryBuilder
+# from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
+# from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError, InputError, DisplayInputError
 from .sub_widgets import StructureDataOutput
@@ -677,16 +678,16 @@ class OptimadeStructureImport():
         # self.data_output.layout.visibility = "visible"
         self.btn_store.disabled = False
         self.atoms = new_element['cif']
-        formula = self.atoms.get_ase().get_chemical_formula()
+        # formula = self.atoms.get_ase().get_chemical_formula()
         
         # search for existing calculations using chosen structure
-        qb = QueryBuilder()
-        qb.append(StructureData)
-        qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
-        qb.order_by({Calculation:{'ctime':'desc'}})
-        for n in qb.iterall():
-            calc = n[0]
-            print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
+        # qb = QueryBuilder()
+        # qb.append(StructureData)
+        # qb.append(Calculation, filters={'extras.formula':formula}, descendant_of=StructureData)
+        # qb.order_by({Calculation:{'ctime':'desc'}})
+        # for n in qb.iterall():
+        #     calc = n[0]
+        #     print("Found existing calculation: PK=%d | %s"%(calc.pk, calc.get_extra("structure_description")))
         #     thumbnail = b64decode(calc.get_extra("thumbnail"))
         #     display(Image(data=thumbnail))
         # struct_url = new_element['url'].split('.cif')[0]+'.html'
@@ -696,33 +697,6 @@ class OptimadeStructureImport():
         #     self.link.value='{} entry {}'.format(self.query_db["name"], new_element['id'])
         self.refresh_structure_view()
         self.refresh_structure_data(new_element["structure"])
-
-    # def select_structure(self, name):
-    #     structure_ase = self.get_ase(self.tmp_folder + '/' + name)
-    #     self.btn_store.disabled = False
-    #     if structure_ase is None:
-    #         self.structure_ase = None
-    #         self.btn_store.disabled = True
-    #         self.refresh_view()
-    #         return
-
-    #     self.structure_description.value = self.get_description(
-    #         structure_ase, name)
-    #     self.structure_ase = structure_ase
-    #     self.refresh_view()
-
-    # def get_ase(self, fname):
-    #     try:
-    #         traj = ase.io.read(fname, index=":")
-    #     except AttributeError:
-    #         print("Looks like {} file does not contain structure coordinates".
-    #               format(fname))
-    #         return None
-    #     if len(traj) > 1:
-    #         print(
-    #             "Warning: Uploaded file {} contained more than one structure. The first one will be taken."
-    #             .format(fname))
-    #     return traj[0]
 
     # pylint: disable=unused-argument
     def _on_click_store(self, change):
@@ -754,36 +728,6 @@ class OptimadeStructureImport():
             s.store()
             print("Stored in AiiDA: "+repr(s))
 
-        # # determine data source
-        # if name.endswith('.cif'):
-        #     source_format = 'CIF'
-        # else:
-        #     source_format = 'ASE'
-
-        # # perform conversion
-        # if self.data_format.value == 'CifData':
-        #     if source_format == 'CIF':
-        #         structure_node = CifData(
-        #             file=self.tmp_folder + '/' + name,
-        #             scan_type='flex',
-        #             parse_policy='lazy')
-        #     else:
-        #         structure_node = CifData()
-        #         structure_node.set_ase(structure_ase)
-        # else:  # Target format is StructureData
-        #     structure_node = StructureData(ase=structure_ase)
-
-        #     #TODO: Figure out whether this is still necessary for StructureData
-        #     # ensure that tags got correctly translated into kinds
-        #     for t1, k in zip(structure_ase.get_tags(),
-        #                      structure_node.get_site_kindnames()):
-        #         t2 = int(k[-1]) if k[-1].isnumeric() else 0
-        #         assert t1 == t2
-        # structure_node.label = ".".join(name.split('.')[:-1])
-        # structure_node.store()
-        # self.structure_node = structure_node
-        # print("Stored in AiiDA: " + repr(structure_node))
-
     @staticmethod
     def ver_to_str(api_version):
         """
@@ -803,7 +747,6 @@ class OptimadeStructureImport():
             raise ApiVersionError("When API MAJOR version is 0, MINOR version MUST be specified.")
         
         # Convert
-        version = "v"
-        version += ".".join([str(v) for v in api_version])
+        version = "v{}".format(".".join([str(v) for v in api_version]))
         
         return version
