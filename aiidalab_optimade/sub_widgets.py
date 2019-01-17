@@ -105,7 +105,7 @@ class StructureDataOutput(ipw.VBox):
                 "value": ""
             },
             'unitcell': {
-                "widget": ipw.HTML(),
+                "widget": ipw.HTMLMath(),
                 "title": "<b>{}</b>: ".format("Unit cell"),
                 "value": ""
             }
@@ -119,10 +119,14 @@ class StructureDataOutput(ipw.VBox):
     
     def _get_widgets(self):
         widgets = []
-        for widget_data in self._widget_data.values():
-            widget = widget_data["widget"]
+        for structure_attribute, widget_data in self._widget_data.items():
+            if structure_attribute == "unitcell":
+                value = self._unit_cell(widget_data["value"])
+            else:
+                value = str(widget_data["value"])
             
-            widget.value = widget_data["title"] + str(widget_data["value"])
+            widget = widget_data["widget"]
+            widget.value = widget_data["title"] + value
 
             widgets.append(widget)
         return widgets
@@ -130,3 +134,22 @@ class StructureDataOutput(ipw.VBox):
     def _update_widget(self):
         self._set_widget_data(self._data)
         self.children = self._get_widgets()
+
+    def _unit_cell(self, uc):
+        if isinstance(uc, list):
+            out = r"$\Bigl(\begin{smallmatrix} "
+            for i in range(len(uc[0])-1):
+                row = list()
+                for vector in uc:
+                    row.append(vector[i])
+                out += r" & ".join([str(x) for x in row])
+                out += r" \\ "
+            row = list()
+            for vector in uc:
+                row.append(vector[-1])
+            out += r" & ".join([str(x) for x in row])
+            out += r" \end{smallmatrix} \Bigr)$"
+        else:
+            raise TypeError("Value of unit cell must be given as a list (of lists)")
+            
+        return out
