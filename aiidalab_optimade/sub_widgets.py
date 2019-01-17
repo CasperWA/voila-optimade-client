@@ -149,7 +149,9 @@ class StructureDataOutput(ipw.VBox):
                 row.append(vector[-1])
             out += r" & ".join([str(x) for x in row])
             out += r" \end{smallmatrix} \Bigr)$"
+        elif isinstance(uc, str):
+            out = uc
         else:
             raise TypeError("Value of unit cell must be given as a list (of lists)")
-            
+        
         return out
