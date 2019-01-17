@@ -27,16 +27,20 @@ from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-modul
 from aiida.orm.querybuilder import QueryBuilder
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError, InputError, DisplayInputError
+from .sub_widgets import StructureDataOutput
 
 # TODO: Implement:
 #       - Possibly better handling of pagination (show more results?)
 #       - Statically show structure data titles, instead of reprinting (clear, print)
 #       - Possibly separate 'parts' into individual widgets
+#
+# TODO: Separate into "GUI" and "python"
 
-# NB! The nglview is not displayed in an Accordion
+# NB! The nglview does not seem to be able to be displayed in an Accordion widget
 class OptimadeStructureImport():
 
     DATA_FORMATS = ("StructureData", "CifData")
+
     DATABASES = [
         ("Crystallography Open Database (COD)",{
             "name": "cod",
@@ -54,6 +58,7 @@ class OptimadeStructureImport():
             "importer": None
         })
     ]
+    
     RESPONSE_LIMIT = 25
 
     def __init__(self, database=None, host=None, node_class=None):
@@ -135,8 +140,8 @@ class OptimadeStructureImport():
         )
         self.drop_structure.observe(self._on_change_struct, names='value')
 
-        self.structure_data = self._init_structure_data()   # dict of structure data
-        self.data_output = self._init_structure_data_out()  # dict of widgets for data output
+        self.structure_data = self._init_structure_data()                   # dict of structure data
+        self.data_output = StructureDataOutput(data=self.structure_data)   # dict of widgets for data output
 
         self.viewer = nglview.NGLWidget()
         
@@ -358,39 +363,6 @@ class OptimadeStructureImport():
             self.data_format.value = value
             return None
 
-    def _init_structure_data_out(self):
-        """ Initialize structure data output 'keys' """
-        # Standard 'keys'
-        data_out=dict(
-            formula={
-                "widget": ipw.HTML(),
-                "title": "<b>{}</b>: ".format("Chemical formula"),
-                "value": ""
-            },
-            elements={
-                "widget": ipw.HTML(),
-                "title": "<b>{}</b>: ".format("Elements"),
-                "value": ""
-            },
-            nelements={
-                "widget": ipw.HTML(),
-                "title": "<b>{}</b>: ".format("Number of elements"),
-                "value": ""
-            },
-            nsites={
-                "widget": ipw.HTML(),
-                "title": "<b>{}</b>: ".format("Number of sites in unit cell"),
-                "value": ""
-            },
-            unitcell={
-                "widget": ipw.HTML(),
-                "title": "<b>{}</b>: ".format("Unit cell"),
-                "value": ""
-            }
-        )
-
-        return data_out
-
     def _init_structure_data(self):
         """ Initialize structure data
         A dict output that will serve as data for an output next to the nglview
@@ -507,8 +479,8 @@ class OptimadeStructureImport():
         out.update(
             formula=attr["chemical_formula"],
             elements=attr["elements"],
-            number_of_elements=int(attr["nelements"]),
-            number_of_sites_in_unit_cell=len(attr["cartesian_site_positions"])
+            nelements=int(attr["nelements"]),
+            nsites=len(attr["cartesian_site_positions"])
         )
 
         # Get unit cell
@@ -523,7 +495,7 @@ class OptimadeStructureImport():
         else:
             uc_matrix = ""
         
-        out.update(unit_cell=uc_matrix)
+        out.update(unitcell=uc_matrix)
 
         return out
 
@@ -683,6 +655,8 @@ class OptimadeStructureImport():
         # Update structure data to chosen structure
         self._update_structure_data(structure)
         
+        self.data_output.data = self.structure_data
+
         # # Write output
         # with self.data_output:
         #     clear_output()
