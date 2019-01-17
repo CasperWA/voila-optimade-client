@@ -350,18 +350,18 @@ class OptimadeStructureImport():
         return str(self.inp_host.value)
     
     def node_class(self, value=None):
-        # Get
-        if value is None:
-            return str(self.data_format.value)
-        
         # Set
-        if value not in self.DATA_FORMATS:
-            # Check type
-            raise ValueError("Unknown data format '{}'. Options: {}".format(
-                value, self.DATA_FORMATS))
-        else:
-            self.data_format.value = value
-            return None
+        if value is not None:
+            if value not in self.DATA_FORMATS:
+                # Check type
+                raise ValueError("Unknown data format '{}'. Options: {}".format(
+                    value, self.DATA_FORMATS))
+            else:
+                self.data_format.value = value
+                return None
+
+        # Get
+        return str(self.data_format.value)
 
     def _init_structure_data(self):
         """ Initialize structure data
