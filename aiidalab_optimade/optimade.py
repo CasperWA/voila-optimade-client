@@ -76,13 +76,13 @@ class OptimadeStructureImport():
         # Initial settings
         self.min_api_version = (0,9,5)          # Minimum acceptable OPTiMaDe API version
         self.atoms = None                       # Selected structure in ASE format
-        self.node_class(node_class)             # Pre-select node class to save in AiiDA
         # self.structure_ase = None
         # self.structure_node = None
 
         # Create UI and set pre-selected database
         self._create_ui()                       # Create UI widgets
         self._set_database(database, host)      # OPTiMaDe database to query
+        self.node_class(node_class)             # Pre-select node class to save in AiiDA
 
     def _create_ui(self):
         """ Create UI
