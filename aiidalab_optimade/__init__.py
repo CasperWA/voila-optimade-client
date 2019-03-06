@@ -8,4 +8,9 @@ AiiDA Lab App that implements an OPTiMaDe client
 from .importer import OptimadeImporter  # noqa
 from .optimade import OptimadeStructureImport  # noqa
 
-__version__ = "0.2-alpha"
+from json import loads
+
+metadata = loads("metadata.json")
+
+# In order to update version, change it in `metadata.json`
+__version__ = metadata['version']
