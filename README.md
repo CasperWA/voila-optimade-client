@@ -1,6 +1,6 @@
 # OPTiMaDe client for AiiDA Lab
 
-AiiDA Lab App that implements an OPTiMaDe client
+AiiDA Lab App that implements an [OPTiMaDe](http://www.optimade.org) client
 
 ## Installation
 

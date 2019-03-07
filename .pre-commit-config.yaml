@@ -2,11 +2,11 @@
 # pre-commit install
  
 # yapf = yet another python formatter
-# - repo: git://github.com/pre-commit/mirrors-yapf
-#   sha: v0.17.0
-#   hooks:
-#   - id: yapf
-#     language: system
+- repo: git://github.com/pre-commit/mirrors-yapf
+  sha: v0.17.0
+  hooks:
+  - id: yapf
+    language: system
 
 # prospector: collection of python linters
 - repo: git://github.com/guykisel/prospector-mirror
