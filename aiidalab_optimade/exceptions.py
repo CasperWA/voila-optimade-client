@@ -9,6 +9,13 @@ class ApiVersionError(Exception):
     pass
 
 
+class NonExistent(Exception):
+    """ Non Existent
+    An entity does not exist, e.g. a URL location.
+    """
+    pass
+
+
 class InputError(Exception):
     """ Input Error
     Base input error exception.

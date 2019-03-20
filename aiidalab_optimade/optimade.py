@@ -7,6 +7,7 @@ from __future__ import with_statement
 from __future__ import division
 
 # Imports
+# pylint: disable=import-error
 import requests
 import tempfile
 import ipywidgets as ipw
@@ -15,6 +16,14 @@ import nglview
 from six.moves import range
 from six.moves import zip
 from IPython.display import display, clear_output
+
+# Load AiiDA database
+from aiida import load_dbenv, is_dbenv_loaded
+from aiida.backends import settings
+if not is_dbenv_loaded():
+    load_dbenv(profile=settings.AIIDADB_PROFILE)
+
+# pylint: disable=wrong-import-position
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
 # from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
@@ -22,12 +31,6 @@ from aiida.orm.data.cif import CifData
 from .importer import OptimadeImporter
 from .exceptions import ApiVersionError, InputError, DisplayInputError
 from .sub_widgets import StructureDataOutput
-
-# Load AiiDA database
-from aiida import load_dbenv, is_dbenv_loaded
-from aiida.backends import settings
-if not is_dbenv_loaded():
-    load_dbenv(profile=settings.AIIDADB_PROFILE)
 
 # TODO: Implement:
 #       - Possibly better handling of pagination (show more results?)
@@ -38,6 +41,7 @@ if not is_dbenv_loaded():
 
 
 # NB! The nglview does not seem to be able to be displayed in an Accordion widget
+# pylint: disable=useless-object-inheritance
 class OptimadeStructureImport(object):
 
     DATA_FORMATS = ("StructureData", "CifData")
