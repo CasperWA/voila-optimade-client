@@ -28,9 +28,9 @@ from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
 # from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
 # from aiida.orm.querybuilder import QueryBuilder
-from .importer import OptimadeImporter
-from .exceptions import ApiVersionError, InputError, DisplayInputError
-from .sub_widgets import StructureDataOutput
+from aiidalab_optimade.importer import OptimadeImporter
+from aiidalab_optimade.exceptions import ApiVersionError, InputError, DisplayInputError
+from aiidalab_optimade.sub_widgets import StructureDataOutput
 
 # TODO: Implement:
 #       - Possibly better handling of pagination (show more results?)

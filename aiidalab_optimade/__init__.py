@@ -15,11 +15,11 @@ from json import load
 from io import open
 
 # pylint: disable=unused-import
-from .importer import OptimadeImporter  # noqa
-from .optimade import OptimadeStructureImport  # noqa
+from aiidalab_optimade.importer import OptimadeImporter  # noqa
+from aiidalab_optimade.optimade import OptimadeStructureImport  # noqa
 
 path_to_metadata = path.join(
-    path.abspath(__name__), path.pardir, "metadata.json")
+    path.dirname(__file__), path.pardir, "metadata.json")
 with open(path_to_metadata, 'r') as fp:
     metadata = load(fp)
 

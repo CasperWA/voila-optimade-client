@@ -8,7 +8,7 @@ from __future__ import division
 
 import json
 from six.moves.urllib.request import urlopen
-from . import exceptions as exc
+from aiidalab_optimade import exceptions as exc
 
 TIMEOUT_SECONDS = 30  # Seconds before timeout is raised
 

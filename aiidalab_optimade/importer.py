@@ -2,12 +2,14 @@
 
 # Python 2/3 compatibility
 from __future__ import print_function
+from __future__ import absolute_import
 
 # Imports
 import requests
-from .exceptions import ApiVersionError
+from aiidalab_optimade.exceptions import ApiVersionError
 
 
+# pylint: disable=useless-object-inheritance
 class OptimadeImporter(object):
     """
     OPTiMaDe v0.9.5 and v0.9.7a
