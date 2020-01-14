@@ -4,15 +4,11 @@ class ApiVersionError(Exception):
     The API version cannot be recognized.
     """
 
-    pass
-
 
 class NonExistent(Exception):
     """ Non Existent
     An entity does not exist, e.g. a URL location.
     """
-
-    pass
 
 
 class InputError(Exception):
@@ -21,13 +17,9 @@ class InputError(Exception):
     Wrong input to a method.
     """
 
-    pass
-
 
 class DisplayInputError(InputError):
     """ Display Input Error
     The input to display method cannot be used.
     If 'all' is True, 'part' must be None.
     """
-
-    pass
