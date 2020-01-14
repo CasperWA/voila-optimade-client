@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Python 2/3 compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import with_statement
-from __future__ import division
-
 import json
 from six.moves.urllib.request import urlopen
 from aiidalab_optimade import exceptions as exc
@@ -30,14 +22,13 @@ def fetch_providers(providers_url=None):
         providers = urlopen(providers_url, timeout=TIMEOUT_SECONDS)
         providers = providers.read()
     except Exception:
-        raise exc.NonExistent(
-            "The URL cannot be opened: {}".format(providers_url))
+        raise exc.NonExistent("The URL cannot be opened: {}".format(providers_url))
 
     # Load providers.json
     providers = json.loads(providers)
 
     # Get dict of providers
-    providers = providers['data'][0]['attributes']['providers']
+    providers = providers["data"][0]["attributes"]["providers"]
 
     return providers
 
@@ -49,13 +40,13 @@ def validate_provider_details(details):
     if not details or not isinstance(details, dict):
         raise exc.InputError("Please specify 'details', it must be a dict")
 
-    if details['index_base_url'] is None:
-        details['index_base_url'] = ""
+    if details["index_base_url"] is None:
+        details["index_base_url"] = ""
 
-    if details['description'] is None:
-        details['description'] = ""
+    if details["description"] is None:
+        details["description"] = ""
 
-    details['description'] = capwords(details['description'])
+    details["description"] = capwords(details["description"])
 
     return details
 
@@ -80,10 +71,10 @@ def get_list_of_database_providers():
         details = validate_provider_details(details)
 
         res_dict = {}
-        res_dict['name'] = provider
-        res_dict['index'] = details['index_base_url']
+        res_dict["name"] = provider
+        res_dict["index"] = details["index_base_url"]
 
-        provider_name = details['description']
+        provider_name = details["description"]
 
         res.append((provider_name, res_dict))
 

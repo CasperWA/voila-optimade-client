@@ -1,17 +1,12 @@
 # OPTiMaDe client for AiiDA Lab
 
-AiiDA Lab App that implements an [OPTiMaDe](http://www.optimade.org) client
+AiiDA Lab App that implements an [OPTiMaDe](http://www.optimade.org) client.
 
 ## Installation
 
-This Jupyter-based app is intended to run in
-[AiiDA Lab](https://aiidalab.materialscloud.org)
-as well as inside a
-[Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine.
+This Jupyter-based app is intended to run in [AiiDA Lab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine.
 
-Use the App Store in the
-[Home App](https://github.com/aiidalab/aiidalab-home)
-to install it.
+Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
 
 ## Usage
 
@@ -29,9 +24,7 @@ structure_import.display()
 This will immediately display a Dropdown-widget of current structure databases with the OPTiMaDe API implemented.
 
 Then you can filter to find a family of structures according to elements, number of elements, chemical formula, and more.
-See the
-[OPTiMaDe API documentation](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.md)
-for the full list and their description.
+See the [OPTiMaDe API documentation](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.md) for the full list and their description.
 
 From another Dropdown-widget, you can single out a structure, view its unit cell and a list of relevant data will be shown.
 

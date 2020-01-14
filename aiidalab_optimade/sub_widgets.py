@@ -1,13 +1,5 @@
-# -*- coding: utf-8 -*-
-
-# Python 2/3 compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import with_statement
-
-# Imports
-# pylint: disable=import-error
 import ipywidgets as ipw
+
 
 class StructureDataOutput(ipw.VBox):
     def __init__(self, data=None, **kwargs):
@@ -25,13 +17,15 @@ class StructureDataOutput(ipw.VBox):
         self._data = data
         self._set_widget_data(self._data)
 
-        super(StructureDataOutput, self).__init__(children=self._get_widgets(), **kwargs)
+        super(StructureDataOutput, self).__init__(
+            children=self._get_widgets(), **kwargs
+        )
 
     @property
     def data(self):
         # Set data if empty
         if self._data is None:
-            self._data = self._empty_values()[:]['value']
+            self._data = self._empty_values()[:]["value"]
         # Getter
         return self._data
 
@@ -51,9 +45,12 @@ class StructureDataOutput(ipw.VBox):
                 self._data.update(value)
                 self._update_widget()
             else:
-                raise ValueError("Non-valid structure attributes (data dict keys) "
-                                "were provided. Valid attributes (keys) are: {}"
-                                .format(','.join(list(self._empty_values().keys()))))
+                raise ValueError(
+                    "Non-valid structure attributes (data dict keys) "
+                    "were provided. Valid attributes (keys) are: {}".format(
+                        ",".join(list(self._empty_values().keys()))
+                    )
+                )
 
     def _valid_attributes(self, data):
         """ Check if keys in data are valid
@@ -76,39 +73,38 @@ class StructureDataOutput(ipw.VBox):
             raise TypeError("data must be a dictionary")
 
         # Update values
-        
         return data
-        
+
     def _empty_values(self):
         """ Return dict 'schema' with empty values
         :return: dict: 'schema' of structure attributes with empty values
         """
-        data_out={
-            'formula': {
+        data_out = {
+            "formula": {
                 "widget": ipw.HTML(),
                 "title": "<b>{}</b>: ".format("Chemical formula"),
-                "value": ""
+                "value": "",
             },
-            'elements': {
+            "elements": {
                 "widget": ipw.HTML(),
                 "title": "<b>{}</b>: ".format("Elements"),
-                "value": ""
+                "value": "",
             },
-            'nelements': {
+            "nelements": {
                 "widget": ipw.HTML(),
                 "title": "<b>{}</b>: ".format("Number of elements"),
-                "value": ""
+                "value": "",
             },
-            'nsites': {
+            "nsites": {
                 "widget": ipw.HTML(),
                 "title": "<b>{}</b>: ".format("Number of sites in unit cell"),
-                "value": ""
+                "value": "",
             },
-            'unitcell': {
+            "unitcell": {
                 "widget": ipw.HTMLMath(),
                 "title": "<b>{}</b>: ".format("Unit cell"),
-                "value": ""
-            }
+                "value": "",
+            },
         }
         return data_out
 
@@ -116,7 +112,7 @@ class StructureDataOutput(ipw.VBox):
         for structure_attribute, value in data.items():
             # Update "value"
             self._widget_data[structure_attribute]["value"] = value
-    
+
     def _get_widgets(self):
         widgets = []
         for structure_attribute, widget_data in self._widget_data.items():
@@ -124,7 +120,7 @@ class StructureDataOutput(ipw.VBox):
                 value = self._unit_cell(widget_data["value"])
             else:
                 value = str(widget_data["value"])
-            
+
             widget = widget_data["widget"]
             widget.value = widget_data["title"] + value
 
@@ -138,7 +134,7 @@ class StructureDataOutput(ipw.VBox):
     def _unit_cell(self, uc):
         if isinstance(uc, list):
             out = r"$\Bigl(\begin{smallmatrix} "
-            for i in range(len(uc[0])-1):
+            for i in range(len(uc[0]) - 1):
                 row = list()
                 for vector in uc:
                     row.append(vector[i])
@@ -153,5 +149,5 @@ class StructureDataOutput(ipw.VBox):
             out = uc
         else:
             raise TypeError("Value of unit cell must be given as a list (of lists)")
-        
+
         return out

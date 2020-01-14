@@ -1,17 +1,8 @@
-# -*- coding: utf-8 -*-
-
-# Python 2/3 compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import with_statement
-from __future__ import division
-
-# Imports
-# pylint: disable=import-error
 import requests
 import tempfile
 import ipywidgets as ipw
 import nglview
+
 # import ase.io
 from six.moves import range
 from six.moves import zip
@@ -20,12 +11,14 @@ from IPython.display import display, clear_output
 # Load AiiDA database
 from aiida import load_dbenv, is_dbenv_loaded
 from aiida.backends import settings
+
 if not is_dbenv_loaded():
     load_dbenv(profile=settings.AIIDADB_PROFILE)
 
 # pylint: disable=wrong-import-position
 from aiida.orm.data.structure import StructureData, Kind, Site
 from aiida.orm.data.cif import CifData
+
 # from aiida.orm.calculation import Calculation # pylint: disable=no-name-in-module
 # from aiida.orm.querybuilder import QueryBuilder
 from aiidalab_optimade.importer import OptimadeImporter
@@ -46,21 +39,25 @@ class OptimadeStructureImport(object):
 
     DATA_FORMATS = ("StructureData", "CifData")
 
-    DATABASES = [("Crystallography Open Database (COD)", {
-        "name": "cod",
-        "url": "http://www.crystallography.net/cod/optimade",
-        "importer": None
-    }),
-                 ("AiiDA @ localhost:5000", {
-                     "name": "aiida",
-                     "url": "http://127.0.0.1:5000/optimade",
-                     "importer": None
-                 }),
-                 ("Custom host:", {
-                     "name": "custom",
-                     "url": "",
-                     "importer": None
-                 })]
+    DATABASES = [
+        (
+            "Crystallography Open Database (COD)",
+            {
+                "name": "cod",
+                "url": "http://www.crystallography.net/cod/optimade",
+                "importer": None,
+            },
+        ),
+        (
+            "AiiDA @ localhost:5000",
+            {
+                "name": "aiida",
+                "url": "http://127.0.0.1:5000/optimade",
+                "importer": None,
+            },
+        ),
+        ("Custom host:", {"name": "custom", "url": "", "importer": None}),
+    ]
 
     RESPONSE_LIMIT = 25
 
@@ -108,20 +105,22 @@ class OptimadeStructureImport(object):
         self.drop_dbs.observe(self._on_change_db, names="value")
 
         self.inp_host = ipw.Text(
-            description="http://", placeholder="e.g. localhost:5000")
+            description="http://", placeholder="e.g. localhost:5000"
+        )
         txt_host = ipw.HTML("/optimade")
 
         self.custom_host_widgets = ipw.HBox(
-            children=[self.inp_host, txt_host],
-            layout=ipw.Layout(visibility="hidden"))
+            children=[self.inp_host, txt_host], layout=ipw.Layout(visibility="hidden")
+        )
 
         # Filters - Accordion
         # head_filters = ipw.HTML("<h4><strong>Filters:</strong></h4>")
         self.inp_id = ipw.Text(
-            description="id:", value="", placeholder='e.g. 9009008 or 16')
+            description="id:", value="", placeholder="e.g. 9009008 or 16"
+        )
 
-        btn_query = ipw.Button(description='Query in DB')
-        btn_query.button_style = 'primary'
+        btn_query = ipw.Button(description="Query in DB")
+        btn_query.button_style = "primary"
         btn_query.on_click(self._on_click_query)
 
         self.query_message = ipw.HTML("")
@@ -130,32 +129,36 @@ class OptimadeStructureImport(object):
         # Set self.structure to 'select structure'
         self._clear_structures_dropdown()
         self.drop_structure = ipw.Dropdown(
-            description="Results:", options=self.structures)
-        self.drop_structure.observe(self._on_change_struct, names='value')
+            description="Results:", options=self.structures
+        )
+        self.drop_structure.observe(self._on_change_struct, names="value")
 
         # dict of structure data
         self.structure_data = self._init_structure_data()
         self.data_output = StructureDataOutput(
-            data=self.structure_data)  # dict of widgets for data output
+            data=self.structure_data
+        )  # dict of widgets for data output
 
         self.viewer = nglview.NGLWidget()
 
         # Store structure
         self.btn_store = ipw.Button(
-            description="Store in AiiDA",
-            disabled=True,
-            button_style="primary")
+            description="Store in AiiDA", disabled=True, button_style="primary"
+        )
         self.btn_store.on_click(self._on_click_store)
 
         self.data_format = ipw.RadioButtons(
-            options=self.DATA_FORMATS, description='Data type:')
+            options=self.DATA_FORMATS, description="Data type:"
+        )
 
         self.structure_description = ipw.Text(
-            description="", placeholder="Description (optional)")
+            description="", placeholder="Description (optional)"
+        )
 
         if self.node_class() is None:
             store = ipw.HBox(
-                [self.btn_store, self.data_format, self.structure_description])
+                [self.btn_store, self.data_format, self.structure_description]
+            )
         else:
             store = ipw.HBox([self.btn_store, self.structure_description])
 
@@ -164,8 +167,8 @@ class OptimadeStructureImport(object):
         ## Display parts
         # Database header
         self.disp_host = ipw.VBox(
-            [head_dbs,
-             ipw.HBox([self.drop_dbs, self.custom_host_widgets])])
+            [head_dbs, ipw.HBox([self.drop_dbs, self.custom_host_widgets])]
+        )
 
         # Database search filters
         self.disp_filters = ipw.VBox([self.inp_id])
@@ -174,25 +177,25 @@ class OptimadeStructureImport(object):
         self.disp_filters.selected_index = None  # Close Accordion
 
         # Select structure
-        self.disp_select_structure = ipw.VBox([
-            btn_query,
-            self.query_message,
-            self.drop_structure,
-        ])
+        self.disp_select_structure = ipw.VBox(
+            [btn_query, self.query_message, self.drop_structure,]
+        )
 
         # View structure
-        self.disp_view_structure = ipw.VBox([
-            # ipw.HBox([self.data_output, self.viewer]),
-            self.data_output,
-            self.viewer
-        ])
+        self.disp_view_structure = ipw.VBox(
+            [
+                # ipw.HBox([self.data_output, self.viewer]),
+                self.data_output,
+                self.viewer,
+            ]
+        )
 
         # Store structure in AiiDA
         self.disp_store = ipw.VBox([store, self.store_out])
 
     def display(self, parts=None, no_host=False):
         """ Display OPTiMaDe structure import parts
-        
+
         parts may be: "host", "filters", "select", "viewer", "store".
         If parts is None, all parts will be displayed.
 
@@ -212,8 +215,7 @@ class OptimadeStructureImport(object):
             if isinstance(parts, str):
                 parts = [parts]
             elif not isinstance(parts, list):
-                raise TypeError(
-                    "parts must be either a list of strings or a string")
+                raise TypeError("parts must be either a list of strings or a string")
 
         # Initialize
         valid_parts = dict(
@@ -221,25 +223,36 @@ class OptimadeStructureImport(object):
             filters=self.disp_filters,
             select=self.disp_select_structure,
             viewer=self.disp_view_structure,
-            store=self.disp_store)
+            store=self.disp_store,
+        )
 
         # Display all parts - Default
         if parts is None:
             if no_host:
-                display(self.disp_filters, self.disp_select_structure,
-                        self.disp_view_structure, self.disp_store)
+                display(
+                    self.disp_filters,
+                    self.disp_select_structure,
+                    self.disp_view_structure,
+                    self.disp_store,
+                )
             else:
-                display(self.disp_host, self.disp_filters,
-                        self.disp_select_structure, self.disp_view_structure,
-                        self.disp_store)
+                display(
+                    self.disp_host,
+                    self.disp_filters,
+                    self.disp_select_structure,
+                    self.disp_view_structure,
+                    self.disp_store,
+                )
         # Display specific parts
         else:
             for part in parts:
                 # Check specified part(s) is/are valid
                 if part not in valid_parts:
                     raise DisplayInputError(
-                        "Unknown part. Valid parts: {}".format(",".join(
-                            [p for p in valid_parts])))
+                        "Unknown part. Valid parts: {}".format(
+                            ",".join([p for p in valid_parts])
+                        )
+                    )
 
                 # Display
                 display(valid_parts[part])
@@ -274,10 +287,10 @@ class OptimadeStructureImport(object):
 
             if not valid_db:
                 raise InputError(
-                    "Database input '{}' is not valid. Available inputs are: {}"
-                    .format(
-                        database,
-                        ",".join([db["name"] for (_, db) in self.DATABASES])))
+                    "Database input '{}' is not valid. Available inputs are: {}".format(
+                        database, ",".join([db["name"] for (_, db) in self.DATABASES])
+                    )
+                )
 
             # Special case for custom database
             if database == "custom":
@@ -323,7 +336,7 @@ class OptimadeStructureImport(object):
             # Remove "http://"" or "https://" if host starts with this
             for url in ["http://", "https://"]:
                 if value.startswith(url):
-                    value = value[len(url):]
+                    value = value[len(url) :]
 
             # Input host to user-input
             self.inp_host.value = value
@@ -338,7 +351,9 @@ class OptimadeStructureImport(object):
                 # Check type
                 raise ValueError(
                     "Unknown data format '{}'. Options: {}".format(
-                        value, self.DATA_FORMATS))
+                        value, self.DATA_FORMATS
+                    )
+                )
             else:
                 self.data_format.value = value
                 return None
@@ -356,7 +371,7 @@ class OptimadeStructureImport(object):
             elements="",  # Elements, e.g. Si,Al,O
             nelements="",  # Number of elements
             nsites="",  # Number of sites in unit cell
-            unitcell=""  # Unit cell vectors within matrix, i.e. 3x3 matrix
+            unitcell="",  # Unit cell vectors within matrix, i.e. 3x3 matrix
         )
 
         return data
@@ -365,7 +380,7 @@ class OptimadeStructureImport(object):
         """ Update database to be queried
         :param dbs: Dropdown widget containing list of OPTiMaDe databases
         """
-        self.query_db = dbs['new']
+        self.query_db = dbs["new"]
 
         # Allow editing of text-field if "Custom" database is chosen
         if self.query_db["name"] == "custom":
@@ -388,10 +403,10 @@ class OptimadeStructureImport(object):
 
         # OPTiMaDe URI queries
         optimade_queries = dict(
-            format_="json", email=None, fields=None, limit=self.RESPONSE_LIMIT)
+            format_="json", email=None, fields=None, limit=self.RESPONSE_LIMIT
+        )
 
-        return importer.query(filter_,
-                              **optimade_queries), importer.api_version
+        return importer.query(filter_, **optimade_queries), importer.api_version
 
     def _clear_structures_dropdown(self):
         """ Reset dropdown of structure results """
@@ -433,7 +448,9 @@ class OptimadeStructureImport(object):
                     symbols=kind["chemical_symbols"],
                     weights=kind["concentration"],
                     mass=kind["mass"],
-                    name=kind["original_name"]))
+                    name=kind["original_name"],
+                )
+            )
 
         # Add Sites
         for idx in range(len(attr["cartesian_site_positions"])):
@@ -441,7 +458,9 @@ class OptimadeStructureImport(object):
             s.append_site(
                 Site(
                     kind_name=attr["species_at_sites"][idx],
-                    position=attr["cartesian_site_positions"][idx]))
+                    position=attr["cartesian_site_positions"][idx],
+                )
+            )
 
         return s
 
@@ -460,7 +479,8 @@ class OptimadeStructureImport(object):
             formula=attr["chemical_formula"],
             elements=attr["elements"],
             nelements=int(attr["nelements"]),
-            nsites=len(attr["cartesian_site_positions"]))
+            nsites=len(attr["cartesian_site_positions"]),
+        )
 
         # Get unit cell
         uc = True
@@ -482,7 +502,9 @@ class OptimadeStructureImport(object):
         """ Update "url" key for custom host """
         if self.inp_host.value == "":
             # No host specified as input
-            self.query_message.value = "You must specify a host URL, e.g. 'localhost:5000'"
+            self.query_message.value = (
+                "You must specify a host URL, e.g. 'localhost:5000'"
+            )
             return
         self.query_db["url"] = "http://{}/optimade".format(self.inp_host.value)
 
@@ -494,8 +516,12 @@ class OptimadeStructureImport(object):
         old = False
         valid = api_version >= self.min_api_version
         if api_version < self.min_api_version:
-            self.query_message.value = "OPTiMaDe API {} is not supported. " \
-                                "Must be at least {}.".format(self.ver_to_str(api_version), self.ver_to_str(self.min_api_version))
+            self.query_message.value = (
+                "OPTiMaDe API {} is not supported. "
+                "Must be at least {}.".format(
+                    self.ver_to_str(api_version), self.ver_to_str(self.min_api_version)
+                )
+            )
         elif api_version == self.min_api_version:
             old = True
 
@@ -540,8 +566,12 @@ class OptimadeStructureImport(object):
         more_data = response["meta"]["more_data_available"]
         if more_data:
             avail = response["meta"]["data_available"]
-            extra_msg = "<br/>{} results found, only providing the first {}. " \
-                        "Please use filters to reduce the number of results found.".format(avail, self.RESPONSE_LIMIT)
+            extra_msg = (
+                "<br/>{} results found, only providing the first {}. "
+                "Please use filters to reduce the number of results found.".format(
+                    avail, self.RESPONSE_LIMIT
+                )
+            )
 
         # Initialization
         count = 0  # Count of structures found
@@ -562,10 +592,10 @@ class OptimadeStructureImport(object):
 
                 cif_url = entry["links"]["self"]
                 fn = requests.get(cif_url)
-                with tempfile.NamedTemporaryFile(mode='w+') as f:
+                with tempfile.NamedTemporaryFile(mode="w+") as f:
                     f.write(fn.text)
                     f.flush()
-                    entry_cif = CifData(file=f.name, parse_policy='lazy')
+                    entry_cif = CifData(file=f.name, parse_policy="lazy")
 
                 try:
                     formula = entry_cif.get_ase().get_chemical_formula()
@@ -593,20 +623,25 @@ class OptimadeStructureImport(object):
 
             idn = entry["id"]
             entry_name = "{} (id: {})".format(formula, idn)
-            entry_add = (entry_name, {
-                "status": True,
-                "cif": entry_cif,
-                "structure": attributes,
-                "url": cif_url,
-                "id": idn,
-            })
+            entry_add = (
+                entry_name,
+                {
+                    "status": True,
+                    "cif": entry_cif,
+                    "structure": attributes,
+                    "url": cif_url,
+                    "id": idn,
+                },
+            )
             self.structures.append(entry_add)
             count += 1
 
         if valid:
-            self.query_message.value = "{} structure(s) found" \
-                                       " ... {} non-valid structure(s) found " \
-                                       "(partial occupancies are not allowed)".format(count, non_valid_count)
+            self.query_message.value = (
+                "{} structure(s) found"
+                " ... {} non-valid structure(s) found "
+                "(partial occupancies are not allowed)".format(count, non_valid_count)
+            )
         if more_data:
             self.query_message.value += extra_msg
 
@@ -637,8 +672,9 @@ class OptimadeStructureImport(object):
         for comp_id in self.viewer._ngl_component_ids:
             self.viewer.remove_component(comp_id)
 
-        self.viewer.add_component(nglview.ASEStructure(
-            self.atoms.get_ase()))  # adds ball+stick
+        self.viewer.add_component(
+            nglview.ASEStructure(self.atoms.get_ase())
+        )  # adds ball+stick
         self.viewer.add_unitcell()  # pylint: disable=no-member
         self.viewer.center()
 
@@ -647,13 +683,13 @@ class OptimadeStructureImport(object):
         :param structs: Dropdown widget containing list of structure entries
         """
         # indx = structs['owner'].index
-        new_element = structs['new']
-        if new_element['status'] is False:
+        new_element = structs["new"]
+        if new_element["status"] is False:
             self.btn_store.disabled = True
             return
         # self.data_output.layout.visibility = "visible"
         self.btn_store.disabled = False
-        self.atoms = new_element['cif']
+        self.atoms = new_element["cif"]
         # formula = self.atoms.get_ase().get_chemical_formula()
 
         # search for existing calculations using chosen structure
@@ -690,8 +726,9 @@ class OptimadeStructureImport(object):
             elif self.data_format.value == "StructureData":
                 s = StructureData(ase=self.atoms.get_ase())
                 # ensure that tags got correctly translated into kinds
-                for t1, k in zip(self.atoms.get_ase().get_tags(),
-                                 s.get_site_kindnames()):
+                for t1, k in zip(
+                    self.atoms.get_ase().get_tags(), s.get_site_kindnames()
+                ):
                     t2 = int(k[-1]) if k[-1].isnumeric() else 0
                     assert t1 == t2
 
@@ -708,7 +745,7 @@ class OptimadeStructureImport(object):
     def ver_to_str(api_version):
         """
         Convert api_version from tuple of integers to string.
-        
+
         :param api_version: Tuple of integers representing API version: (MAJOR,MINOR,PATCH)
         :return: String representing API version: "vMAJOR.MINOR.PATCH"
         """
@@ -719,9 +756,11 @@ class OptimadeStructureImport(object):
         if len(api_version) > 3:  # Shouldn't be necessary to check
             raise ApiVersionError(
                 "Too many arguments for api_version. "
-                "API version is defined as maximum (MAJOR,MINOR,PATCH).")
-        if len(api_version) == 1 and api_version[
-                0] == 0:  # Shouldn't be necessary to check
+                "API version is defined as maximum (MAJOR,MINOR,PATCH)."
+            )
+        if (
+            len(api_version) == 1 and api_version[0] == 0
+        ):  # Shouldn't be necessary to check
             raise ApiVersionError(
                 "When API MAJOR version is 0, MINOR version MUST be specified."
             )
