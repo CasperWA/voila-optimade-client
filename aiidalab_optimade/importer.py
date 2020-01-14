@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Python 2/3 compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-
 # Imports
 import requests
 from aiidalab_optimade.exceptions import ApiVersionError
@@ -18,28 +12,32 @@ class OptimadeImporter(object):
     def __init__(self, **kwargs):
         self.db = kwargs["name"] if "name" in kwargs else "cod"
 
-        self.db_baseurl = kwargs["url"] if "url" in kwargs else \
-            "http://www.crystallography.net/cod/optimade"
+        self.db_baseurl = (
+            kwargs["url"]
+            if "url" in kwargs
+            else "http://www.crystallography.net/cod/optimade"
+        )
 
         self.api_version = self._set_api_version()
 
     def _set_api_version(self):
         endpoint = "/info"
-        url = ''.join([self.db_baseurl, endpoint])
+        url = "".join([self.db_baseurl, endpoint])
         r = requests.get(url)
 
         if r.status_code != 200:
-            raise ImportError("Query returned HTTP status code: {}".format(
-                r.status_code))
+            raise ImportError(
+                "Query returned HTTP status code: {}".format(r.status_code)
+            )
 
         response = r.json()
         _api_version = response["meta"]["api_version"][1:]
 
         try:
-            _api_version = tuple(int(i) for i in _api_version.split('.'))
+            _api_version = tuple(int(i) for i in _api_version.split("."))
         except ValueError:
             # Remove 'alpha' from PATCH number
-            _api_version = _api_version.split('.')
+            _api_version = _api_version.split(".")
             _api_version[-1] = _api_version[-1][0]
 
         try:
@@ -101,12 +99,13 @@ class OptimadeImporter(object):
             query_str = "?{}".format("&".join(queries))
 
         # Make query - get data
-        url = ''.join([self.db_baseurl, endpoint, query_str])
+        url = "".join([self.db_baseurl, endpoint, query_str])
         r = requests.get(url)
 
         if r.status_code >= 400:
-            raise ImportError("Query returned HTTP status code: {}".format(
-                r.status_code))
+            raise ImportError(
+                "Query returned HTTP status code: {}".format(r.status_code)
+            )
         elif r.status_code != 200:
             print("Query returned HTTP status code: {}".format(r.status_code))
 

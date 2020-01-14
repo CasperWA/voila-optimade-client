@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-
-# Python 2/3 compatibility
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import with_statement
-from __future__ import division
-
-import pytest  # pylint: disable=import-error
+import pytest
 
 from .. import utils
 from .. import exceptions as exc
@@ -22,12 +14,13 @@ def test_fetch_providers_wrong_url():
 
 def test_fetch_providers_content():
     """Test known content in dict of database providers"""
-    EXMPL = ("exmpl", {
-        "description":
-        "used for examples, not to be assigned to a real database",
-        "index_base_url":
-        "http://example.com/optimade/index/"
-    })
+    EXMPL = (
+        "exmpl",
+        {
+            "description": "used for examples, not to be assigned to a real database",
+            "index_base_url": "http://example.com/optimade/index/",
+        },
+    )
 
     assert EXMPL[0], EXMPL[1] in list(utils.fetch_providers().items())
 
@@ -59,15 +52,11 @@ def test_exmpl_not_in_list():
     from string import capwords
 
     EXMPL = (
-        capwords('used for examples, not to be assigned to a real database'), {
-            'name': 'exmpl',
-            'index': 'http://example.com/optimade/index/'
-        })
+        capwords("used for examples, not to be assigned to a real database"),
+        {"name": "exmpl", "index": "http://example.com/optimade/index/"},
+    )
 
-    MAT_CLOUD = (capwords('materialscloud.org'), {
-        'name': 'mcloud',
-        'index': ''
-    })
+    MAT_CLOUD = (capwords("materialscloud.org"), {"name": "mcloud", "index": ""})
 
     list_of_database_providers = utils.get_list_of_database_providers()
 

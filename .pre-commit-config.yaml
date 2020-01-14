@@ -1,85 +1,14 @@
-# Install pre-commit hooks via
-# pre-commit install
- 
-# yapf = yet another python formatter
 repos:
-- repo: git://github.com/pre-commit/mirrors-yapf
-  rev: v0.26.0
-  hooks:
-  - id: yapf
-    language: system
-
-# prospector: collection of python linters
-- repo: git://github.com/guykisel/prospector-mirror
-  rev: 7ff847e779347033ebbd9e3b88279e7f3a998b45
-  hooks:
-  - id: prospector
-    language: system
-    exclude: '^(tests/)|(examples/)'
-
-- repo: git://github.com/pre-commit/pre-commit-hooks
-  rev: v2.1.0
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.4.0
   hooks:
   - id: check-yaml
+  - id: check-json
+  - id: trailing-whitespace
+    exclude: README.md
 
-# modernizer: make sure our code-base is Python 3 ready
-- repo: https://github.com/python-modernize/python-modernize.git
-  rev: '0.7'
+- repo: https://github.com/ambv/black
+  rev: 19.10b0
   hooks:
-  - id: python-modernize
-    args:
-      - --write
-      - --nobackups
-# Following are all the fixers in python-modernize.
-# Those marked as 'done' were run at some point and their results checked
-# and incorporated if necessary, but they can't be applied without breaking valid cases
-      - --fix=apply
-      - --fix=except
-      - --fix=exec
-      - --fix=execfile
-      - --fix=exitfunc
-      - --fix=funcattrs
-      - --fix=has_key
-      - --fix=idioms
-      - --fix=long
-      - --fix=methodattrs
-      - --fix=ne
-      - --fix=numliterals
-      - --fix=operator
-      - --fix=paren
-      - --fix=reduce
-      - --fix=renames
-      - --fix=repr
-#optional:      - --fix=set_literal
-      - --fix=standarderror
-      - --fix=sys_exc
-      - --fix=throw
-      - --fix=tuple_params
-      - --fix=types
-#optional:      - --fix=ws_comma
-      - --fix=xreadlines
-      - --fix=basestring
-      - --fix=classic_division
-      - --fix=dict_six
-      - --fix=file
-      - --fix=filter
-      - --fix=import
-      - --fix=imports_six
-      - --fix=input_six
-      - --fix=int_long_tuple
-      - --fix=itertools_imports_six
-      - --fix=itertools_six
-      - --fix=map
-      - --fix=metaclass
-      - --fix=next
-      - --fix=open
-      - --fix=print
-      - --fix=raise
-      - --fix=raise_six
-      - --fix=unichr
-      - --fix=unicode
-      - --fix=unicode_future
-      - --fix=unicode_type
-      - --fix=urllib_six
-      - --fix=xrange_six
-      - --fix=zip
+  - id: black
+    name: Blacken
