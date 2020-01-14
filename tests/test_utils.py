@@ -76,7 +76,7 @@ def test_exmpl_not_in_list():
         },
     )
 
-    list_of_database_providers = utils.get_list_of_database_providers()
+    list_of_database_providers = utils.get_list_of_valid_providers()
 
     assert exmpl not in list_of_database_providers
     assert materials_cloud in list_of_database_providers

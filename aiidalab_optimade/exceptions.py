@@ -23,3 +23,7 @@ class DisplayInputError(InputError):
     The input to display method cannot be used.
     If 'all' is True, 'part' must be None.
     """
+
+
+class NotOkResponse(Exception):
+    """Did not receive a `200 OK` response"""

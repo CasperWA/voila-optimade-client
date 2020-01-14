@@ -1,4 +1,6 @@
+from typing import Tuple, List
 import requests
+
 from aiidalab_optimade import exceptions as exc
 
 TIMEOUT_SECONDS = 30  # Seconds before timeout is raised
@@ -21,11 +23,45 @@ def fetch_providers(providers_url: str = None) -> list:
         providers = requests.get(providers_url, timeout=TIMEOUT_SECONDS)
     except Exception:
         raise exc.NonExistent("The URL cannot be opened: {}".format(providers_url))
-    else:
+
+    if providers.status_code == 200:
         providers = providers.json()
+    else:
+        raise exc.NotOkResponse("Received a {} response".format(providers.status_code))
 
     # Return list of providers
     return providers["data"]
+
+
+def fetch_provider_child_dbs(base_url: str) -> list:
+    """Fetch an OPTiMaDe provider's child databases"""
+    if not isinstance(base_url, str):
+        raise TypeError("base_url must be a string")
+
+    links_endpoint = "/links"
+    links_endpoint = (
+        base_url + links_endpoint[1:]
+        if base_url.endswith("/")
+        else base_url + links_endpoint
+    )
+
+    try:
+        implementations = requests.get(links_endpoint, timeout=TIMEOUT_SECONDS)
+    except Exception:
+        raise exc.NonExistent("The URL cannot be opened: {}".format(links_endpoint))
+
+    if implementations.status_code == 200:
+        implementations = implementations.json()
+    else:
+        implementations = {}
+        # raise exc.NotOkResponse("Received a {} response".format(implementations.status_code))
+
+    # Return all implementations of type "child"
+    return [
+        implementation
+        for implementation in implementations.get("data", [])
+        if implementation.get("type", "") == "child"
+    ]
 
 
 def validate_provider_details(details: dict) -> dict:
@@ -40,8 +76,8 @@ def validate_provider_details(details: dict) -> dict:
     return details
 
 
-def get_list_of_database_providers():
-    """ Get list of database providers
+def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
+    """ Get curated list of database providers
 
     Return formatted list of tuples to use for a dropdown-widget.
     """
@@ -54,7 +90,32 @@ def get_list_of_database_providers():
             continue
 
         attributes = provider["attributes"]
+
+        # Skip if there is no base URL
+        if attributes["base_url"] is None:
+            continue
+
         provider_name = attributes.pop("name")
         res.append((provider_name, attributes))
+
+    return res
+
+
+def get_list_of_provider_implementations(
+    provider_attributes: str = None,
+) -> List[Tuple[str, dict]]:
+    """Get list of provider implementations"""
+    child_dbs = fetch_provider_child_dbs(provider_attributes["base_url"])
+    res = []
+
+    for child_db in child_dbs:
+        attributes = child_db["attributes"]
+
+        # Skip if there is no base_url
+        if attributes["base_url"] is None:
+            continue
+
+        child_db_name = attributes.pop("name")
+        res.append((child_db_name, attributes))
 
     return res
