@@ -176,7 +176,7 @@ class OptimadeStructureImport(object):
 
         # Select structure
         self.disp_select_structure = ipw.VBox(
-            [btn_query, self.query_message, self.drop_structure,]
+            [btn_query, self.query_message, self.drop_structure]
         )
 
         # View structure
