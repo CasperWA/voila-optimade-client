@@ -16,6 +16,6 @@ setup(
     packages=find_packages(),
     license="MIT Licence",
     author="The AiiDA Lab team",
-    install_requires=["aiidalab~=19.11.0", "requests"],
+    install_requires=["aiidalab~=19.11.0a", "requests"],
     extras_require={"dev": DEV, "testing": TESTING},
 )

@@ -100,15 +100,13 @@ class OptimadeImporter(object):
 
         # Make query - get data
         url = "".join([self.db_baseurl, endpoint, query_str])
-        r = requests.get(url)
+        response = requests.get(url)
 
-        if r.status_code >= 400:
+        if response.status_code >= 400:
             raise ImportError(
-                "Query returned HTTP status code: {}".format(r.status_code)
+                "Query returned HTTP status code: {}".format(response.status_code)
             )
-        elif r.status_code != 200:
-            print("Query returned HTTP status code: {}".format(r.status_code))
+        if response.status_code != 200:
+            print("Query returned HTTP status code: {}".format(response.status_code))
 
-        response = r.json()
-
-        return response
+        return response.json()
