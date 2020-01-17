@@ -5,12 +5,9 @@ import ase
 
 from aiida.orm.nodes.data.structure import Site, Kind, StructureData
 
-from aiidalab_optimade.exceptions import ApiVersionError
 from aiidalab_optimade.importer import OptimadeImporter
-from aiidalab_optimade.utils import (
-    get_list_of_valid_providers,
-    get_list_of_provider_implementations,
-)
+from aiidalab_optimade.utils import validate_api_version
+from aiidalab_optimade.widgets import ProvidersImplementations, StructureDropdown
 
 
 __api_version__ = "v0.10.1"
@@ -20,105 +17,6 @@ DEFAULT_FILTER_VALUE = (
     'chemical_formula_descriptive CONTAINS "Al" OR (chemical_formula_anonymous = "AB" AND '
     'elements HAS ALL "Si","Al","O")'
 )
-
-
-class OptimadeProvidersWidget(ipw.VBox):
-    """List all OPTiMaDe providers and their implementations"""
-
-    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
-
-    def __init__(self, **kwargs):
-        providers = get_list_of_valid_providers()
-        providers.insert(0, ("Select a provider", None))
-        implementations = [("No provider chosen", None)]
-
-        self.providers = ipw.Dropdown(options=providers)
-        self.child_dbs = ipw.Dropdown(options=implementations, disabled=True)
-
-        self.providers.observe(self._observe_providers, names="index")
-        self.child_dbs.observe(self._observe_child_dbs, names="index")
-
-        super().__init__(children=[self.providers, self.child_dbs], **kwargs)
-
-    def _observe_providers(self, change):
-        """Update child database dropdown upon changing provider"""
-        index = change["new"]
-        if index is None or self.providers.options[index][1] is None:
-            self.child_dbs.options = [("No provider chosen", None)]
-            self.child_dbs.disabled = True
-            with self.hold_trait_notifications():
-                self.providers.index = 0
-                self.child_dbs.index = 0
-        else:
-            provider = self.providers.options[index][1]
-            implementations = get_list_of_provider_implementations(provider)
-            implementations.insert(0, ("Select a database", None))
-            self.child_dbs.options = implementations
-            self.child_dbs.disabled = False
-            with self.hold_trait_notifications():
-                self.child_dbs.index = 0
-
-    def _observe_child_dbs(self, change):
-        """Update database traitlet with base URL for chosen child database"""
-        index = change["new"]
-        if index is None or self.child_dbs.options[index][1] is None:
-            self.database = "", None
-        else:
-            self.database = self.child_dbs.options[index]
-
-    def freeze(self):
-        """Disable widget"""
-        self.providers.disabled = True
-        self.child_dbs.disabled = True
-
-    def unfreeze(self):
-        """Activate widget (in its current state)"""
-        self.providers.disabled = False
-        self.child_dbs.disabled = False
-
-    def reset(self):
-        """Reset widget"""
-        with self.hold_trait_notifications():
-            self.providers.index = 0
-            self.providers.disabled = False
-
-            self.child_dbs.options = [("No provider chosen", None)]
-            self.child_dbs.disabled = True
-
-
-class SelectionStructureUploadWidget(ipw.Dropdown):
-    """From aiidalab-qe"""
-
-    NO_OPTIONS = "Search for structures ..."
-    HINT = "Select a structure"
-
-    def __init__(self, options=None, **kwargs):
-        if options is None:
-            options = [(self.NO_OPTIONS, None)]
-        else:
-            options.insert(0, (self.HINT, None))
-
-        super().__init__(options=options, **kwargs)
-
-    def set_options(self, options):
-        """Set options with hint at top/as first entry"""
-        self.options = options
-        self.options.insert(0, (self.HINT, None))
-
-    def reset(self):
-        """Reset widget"""
-        with self.hold_trait_notifications():
-            self.options = [(self.NO_OPTIONS, None)]
-            self.index = 0
-            self.disabled = True
-
-    def freeze(self):
-        """Disable widget"""
-        self.disabled = True
-
-    def unfreeze(self):
-        """Activate widget (in its current state)"""
-        self.disabled = False
 
 
 class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attributes
@@ -131,7 +29,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.header = ipw.HTML(
             "<h4><strong>Search for a structure in an OPTiMaDe database</h4></strong>"
         )
-        self.base_url = OptimadeProvidersWidget()
+        self.base_url = ProvidersImplementations()
         self.base_url.observe(self._on_database_select, names="database")
 
         self.filter_header = ipw.HTML("<br><strong>Apply query filter</strong>")
@@ -143,12 +41,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.query_button = ipw.Button(
             description="Search", button_style="primary", icon="search", disabled=True
         )
-        self.query_button.on_click(self.query)
+        self.query_button.on_click(self.retrieve_data)
 
         self.structures_header = ipw.HTML("<br><strong>Choose a structure</strong>")
-        self.structure_drop = SelectionStructureUploadWidget(
-            description="Results:", disabled=True
-        )
+        self.structure_drop = StructureDropdown(description="Results:", disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
 
         super().__init__(
@@ -265,10 +161,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         return importer.query(**queries)
 
-    def query(self, _):
-        """Perform query"""
+    def retrieve_data(self, _):
+        """Perform query and retrieve data"""
         try:
-            # Freeze/disable list of structures in dropdown widget
+            # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
             self.freeze()
 
@@ -280,12 +176,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             response = self._query()
 
             # Check implementation API version
-            if response["meta"]["api_version"] != __api_version__:
-                raise ApiVersionError(
-                    "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
-                        __api_version__, response["meta"]["api_version"]
-                    )
-                )
+            validate_api_version(response.get("meta", {}).get("api_version", ""))
 
             # Go through data entries
             structures = []
