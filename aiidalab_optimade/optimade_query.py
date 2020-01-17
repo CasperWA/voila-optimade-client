@@ -43,6 +43,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.structures_header = ipw.HTML("<br><strong>Choose a structure</strong>")
         self.structure_drop = StructureDropdown(description="Results:", disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
+        self.structures_results = ipw.HTML("")
 
         super().__init__(
             children=[
@@ -53,6 +54,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.query_button,
                 self.structures_header,
                 self.structure_drop,
+                self.structures_results,
             ],
             **kwargs,
         )
@@ -140,7 +142,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         return structure
 
-    def _query(self):
+    def _query(self) -> dict:
         """Query helper function"""
         importer = OptimadeImporter(base_url=self.database[1]["base_url"])
 
@@ -199,6 +201,23 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             self.structure_drop.options = structures
             with self.hold_trait_notifications():
                 self.structure_drop.index = 0
+
+            # Update text output
+            data_returned = response.get("meta", {}).get("data_returned", 0)
+            data_available = response.get("meta", {}).get("data_available", 0)
+
+            self.structures_results.value = "<strong>{}</strong> structures are available in this database.".format(
+                data_available
+            )
+            if data_returned and structures:
+                value = data_returned
+            else:
+                value = len(structures)
+            self.structures_results.value += "<br><strong>{}</strong> structures were found.".format(
+                value
+            )
+
+            # TODO: Handle extra pages
 
         finally:
             self.query_button.description = "Search"

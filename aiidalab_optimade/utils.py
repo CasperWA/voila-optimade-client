@@ -120,8 +120,8 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     if not version:
         raise InputError("No version found in response")
 
-    if not version.startswith("v"):
-        version = "v{}".format(version)
+    if version.startswith("v"):
+        version = version[1:]
 
     if version != __api_version__:
         if raise_on_mismatch:

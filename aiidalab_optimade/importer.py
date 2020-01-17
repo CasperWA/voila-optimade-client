@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 from urllib.parse import urlencode
 
 import requests
@@ -18,7 +18,7 @@ class OptimadeImporter:
         email: str = None,
         fields: str = None,
         limit: int = None,
-    ) -> List[dict]:
+    ) -> dict:
         """Perform query of database"""
         queries = {}
 
