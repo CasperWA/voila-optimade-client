@@ -1,6 +1,8 @@
 from typing import Tuple, List
 import requests
 
+from optimade import __api_version__
+
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
     InputError,
@@ -113,10 +115,8 @@ def get_list_of_provider_implementations(
     return res
 
 
-def validate_api_version(version: str):
+def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     """Given an OPTiMaDe API version, validate it against current supported API version"""
-    from optimade import __api_version__
-
     if not version:
         raise InputError("No version found in response")
 
@@ -124,8 +124,12 @@ def validate_api_version(version: str):
         version = "v{}".format(version)
 
     if version != __api_version__:
-        raise ApiVersionError(
-            "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
-                __api_version__, version
+        if raise_on_mismatch:
+            raise ApiVersionError(
+                "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
+                    __api_version__, version
+                )
             )
-        )
+        return False
+
+    return True

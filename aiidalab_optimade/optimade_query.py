@@ -7,10 +7,7 @@ from aiida.orm.nodes.data.structure import Site, Kind, StructureData
 
 from aiidalab_optimade.importer import OptimadeImporter
 from aiidalab_optimade.utils import validate_api_version
-from aiidalab_optimade.widgets import ProvidersImplementations, StructureDropdown
-
-
-__api_version__ = "v0.10.1"
+from aiidalab_optimade.helper_widgets import ProvidersImplementations, StructureDropdown
 
 
 DEFAULT_FILTER_VALUE = (
