@@ -1,18 +1,18 @@
-from os import path
-from json import load
+import json
+from pathlib import Path
 
 from setuptools import setup, find_packages
 
-path_to_metadata = path.join(path.dirname(__file__), "metadata.json")
-with open(path_to_metadata, "r") as fp:
-    metadata = load(fp)
+PATH_TO_METADATA = Path(__file__).parent.joinpath("metadata.json").resolve()
+with open(PATH_TO_METADATA, "r") as fp:
+    METADATA = json.load(fp)
 
 TESTING = ["pytest~=3.6", "pytest-cov", "codecov"]
 DEV = ["pylint", "black", "pre-commit"] + TESTING
 
 setup(
     name="aiidalab-optimade",
-    version=metadata["version"],
+    version=METADATA["version"],
     packages=find_packages(),
     license="MIT Licence",
     author="The AiiDA Lab team",

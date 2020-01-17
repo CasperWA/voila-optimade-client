@@ -1,9 +1,9 @@
 from typing import Tuple, List
 import requests
 
-from aiidalab_optimade import exceptions as exc
+from aiidalab_optimade.exceptions import NotOkResponse, NonExistent
 
-TIMEOUT_SECONDS = 30  # Seconds before timeout is raised
+TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
 PROVIDERS_URL = "https://www.optimade.org/providers/links"
 
@@ -22,12 +22,12 @@ def fetch_providers(providers_url: str = None) -> list:
     try:
         providers = requests.get(providers_url, timeout=TIMEOUT_SECONDS)
     except Exception:
-        raise exc.NonExistent("The URL cannot be opened: {}".format(providers_url))
+        raise NonExistent("The URL cannot be opened: {}".format(providers_url))
 
     if providers.status_code == 200:
         providers = providers.json()
     else:
-        raise exc.NotOkResponse("Received a {} response".format(providers.status_code))
+        raise NotOkResponse("Received a {} response".format(providers.status_code))
 
     # Return list of providers
     return providers["data"]
@@ -48,13 +48,12 @@ def fetch_provider_child_dbs(base_url: str) -> list:
     try:
         implementations = requests.get(links_endpoint, timeout=TIMEOUT_SECONDS)
     except Exception:
-        raise exc.NonExistent("The URL cannot be opened: {}".format(links_endpoint))
+        raise NonExistent("The URL cannot be opened: {}".format(links_endpoint))
 
     if implementations.status_code == 200:
         implementations = implementations.json()
     else:
         implementations = {}
-        # raise exc.NotOkResponse("Received a {} response".format(implementations.status_code))
 
     # Return all implementations of type "child"
     return [
@@ -62,18 +61,6 @@ def fetch_provider_child_dbs(base_url: str) -> list:
         for implementation in implementations.get("data", [])
         if implementation.get("type", "") == "child"
     ]
-
-
-def validate_provider_details(details: dict) -> dict:
-    """Validate dict of details from providers.json"""
-    if not details or not isinstance(details, dict):
-        raise exc.InputError("Please specify 'details', it must be a dict")
-
-    for field in details:
-        if details[field] is None:
-            details[field] = ""
-
-    return details
 
 
 def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
