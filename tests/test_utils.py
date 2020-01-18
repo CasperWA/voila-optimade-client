@@ -28,33 +28,6 @@ def test_fetch_providers_content():
     assert exmpl in utils.fetch_providers()
 
 
-def test_validate_provider_details():
-    """Test empty strings are returned if None values are found"""
-    none_details = {
-        "description": None,
-        "base_url": None,
-        "homepage": None,
-        "name": None,
-    }
-
-    res = utils.validate_provider_details(none_details)
-
-    # Make sure the size of the dict is still the same
-    assert len(res) == len(none_details)
-
-    # Make sure all None values are now empty strings
-    for value in res.values():
-        assert value == ""
-
-    # Test that if it is run through again, it does not change the values
-    for value in utils.validate_provider_details(res).values():
-        assert value == ""
-
-    # Make sure InputError is raised when a None input is given
-    with pytest.raises(exc.InputError):
-        utils.validate_provider_details(None)
-
-
 def test_exmpl_not_in_list():
     """Make sure the 'exmpl' database provider is not in the final list"""
     exmpl = (
