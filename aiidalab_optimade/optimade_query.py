@@ -95,6 +95,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         """Reset widget"""
         with self.hold_trait_notifications():
             self.query_button.disabled = False
+            self.filter.disabled = False
             self.base_url.reset()
             self.structure_drop.reset()
 
