@@ -5,9 +5,8 @@ import ase
 
 from aiida.orm.nodes.data.structure import Site, Kind, StructureData
 
-from aiidalab_optimade.importer import OptimadeImporter
-from aiidalab_optimade.utils import validate_api_version
 from aiidalab_optimade.helper_widgets import ProvidersImplementations, StructureDropdown
+from aiidalab_optimade.utils import validate_api_version, perform_optimade_query
 
 
 DEFAULT_FILTER_VALUE = (
@@ -144,13 +143,13 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
     def _query(self) -> dict:
         """Query helper function"""
-        importer = OptimadeImporter(base_url=self.database[1]["base_url"])
 
         # Avoid structures that cannot be converted to an ASE.Atoms instance
         add_to_filter = 'NOT structure_features HAS ANY "disorder","unknown_positions"'
 
         # OPTiMaDe queries
         queries = {
+            "base_url": self.database[1]["base_url"],
             "filter_": "( {} ) AND ( {} )".format(self.filter.value, add_to_filter),
             "format_": "json",
             "email": None,
@@ -158,7 +157,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             "limit": 10,
         }
 
-        return importer.query(**queries)
+        return perform_optimade_query(**queries)
 
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
@@ -206,15 +205,16 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             data_returned = response.get("meta", {}).get("data_returned", 0)
             data_available = response.get("meta", {}).get("data_available", 0)
 
-            self.structures_results.value = "<strong>{}</strong> structures are available in this database.".format(
-                data_available
+            self.structures_results.value = (
+                f"<strong>{data_available}</strong> "
+                "structures are available in this database."
             )
             if data_returned and structures:
                 value = data_returned
             else:
                 value = len(structures)
-            self.structures_results.value += "<br><strong>{}</strong> structures were found.".format(
-                value
+            self.structures_results.value += (
+                f"<br><strong>{value}</strong> structures were found."
             )
 
             # TODO: Handle extra pages
