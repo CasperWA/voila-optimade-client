@@ -5,6 +5,7 @@ import ase
 
 from aiida.orm.nodes.data.structure import Site, Kind, StructureData
 
+from aiidalab_optimade.exceptions import InputError
 from aiidalab_optimade.helper_widgets import ProvidersImplementations, StructureDropdown
 from aiidalab_optimade.utils import validate_api_version, perform_optimade_query
 
@@ -42,7 +43,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.structures_header = ipw.HTML("<br><strong>Choose a structure</strong>")
         self.structure_drop = StructureDropdown(description="Results:", disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
-        self.structures_results = ipw.HTML("")
+        self.structure_results_section = ipw.HTML("")
 
         super().__init__(
             children=[
@@ -53,7 +54,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.query_button,
                 self.structures_header,
                 self.structure_drop,
-                self.structures_results,
+                self.structure_results_section,
             ],
             **kwargs,
         )
@@ -160,6 +161,25 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         return perform_optimade_query(**queries)
 
+    def handle_errors(self, response: dict) -> bool:
+        """Handle any errors"""
+        if "data" not in response and "errors" not in response:
+            raise InputError(f"No data and no errors reported in response: {response}")
+
+        if "errors" in response:
+            if "data" in response:
+                self.structure_results_section.value = (
+                    "Error(s) during querying, but "
+                    f"<strong>{len(response['data'])}</strong> structures found."
+                )
+            else:
+                self.structure_results_section.value = (
+                    "Error during querying, please try again later."
+                )
+            return True
+
+        return False
+
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
         try:
@@ -173,6 +193,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
             # Query database
             response = self._query()
+            if self.handle_errors(response):
+                return
 
             # Check implementation API version
             validate_api_version(response.get("meta", {}).get("api_version", ""))
@@ -203,22 +225,21 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.structure_drop.index = 0
 
             # Update text output
+            data_on_page = len(response.get("data", []))
             data_returned = response.get("meta", {}).get("data_returned", 0)
-            data_available = response.get("meta", {}).get("data_available", 0)
+            data_available = response.get("meta", {}).get("data_available", None)
 
-            self.structures_results.value = (
+            self.structure_results_section.value = (
                 f"<strong>{data_available}</strong> "
                 "structures are available in this database."
             )
             if data_returned and structures:
                 value = data_returned
             else:
-                value = len(structures)
-            self.structures_results.value += (
+                value = len(structures) - 1
+            self.structure_results_section.value += (
                 f"<br><strong>{value}</strong> structures were found."
             )
-
-            # TODO: Handle extra pages
 
         finally:
             self.query_button.description = "Search"
