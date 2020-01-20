@@ -178,11 +178,4 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
     url_query = urlencode(queries)
     response = requests.get("{}?{}".format(url_path, url_query))
 
-    if response.status_code >= 400:
-        raise ImportError(
-            "Query returned HTTP status code: {}".format(response.status_code)
-        )
-    if response.status_code != 200:
-        print("Query returned HTTP status code: {}".format(response.status_code))
-
     return response.json()
