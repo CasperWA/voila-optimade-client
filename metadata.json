@@ -1,7 +1,7 @@
 {
     "title": "OPTiMaDe client",
     "description": "AiiDA Lab App that implements an OPTiMaDe client",
-    "version": "1.0-alpha",
+    "version": "1.0-alpha1",
     "authors": "AiiDA Lab Team",
     "state": "development",
     "logo": "img/optimade_square.png",
