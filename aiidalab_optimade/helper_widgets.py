@@ -94,10 +94,12 @@ class StructureDropdown(ipw.Dropdown):
 
         super().__init__(options=options, **kwargs)
 
-    def set_options(self, options):
+    def set_options(self, options: list):
         """Set options with hint at top/as first entry"""
+        options.insert(0, (self.HINT, None))
         self.options = options
-        self.options.insert(0, (self.HINT, None))
+        with self.hold_trait_notifications():
+            self.index = 0
 
     def reset(self):
         """Reset widget"""

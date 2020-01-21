@@ -40,8 +40,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         )
         self.query_button.on_click(self.retrieve_data)
 
-        self.structures_header = ipw.HTML("<br><h4>Choose a structure</h4>")
-        self.structure_drop = StructureDropdown(description="Results:", disabled=True)
+        self.structures_header = ipw.HTML("<br><h4>Results</h4>")
+        self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
         self.structure_results_section = ipw.HTML("")
 
@@ -226,11 +226,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 structures.append(entry_add)
 
             # Update list of structures in dropdown widget
-            structures.insert(0, ("Choose a structure", None))
-            self.structure_drop.reset()
-            self.structure_drop.options = structures
-            with self.hold_trait_notifications():
-                self.structure_drop.index = 0
+            self.structure_drop.set_options(structures)
 
             # Update text output
             # data_on_page = len(response.get("data", []))
