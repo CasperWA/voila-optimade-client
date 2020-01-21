@@ -179,3 +179,26 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
     response = requests.get("{}?{}".format(url_path, url_query))
 
     return response.json()
+
+
+def get_structures_schema(base_url: str) -> dict:
+    """Retrieve provider's /structures endpoint schema"""
+    result = {}
+
+    endpoint = "/info/structures"
+    url_path = (
+        base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
+    )
+
+    response = requests.get(url_path)
+
+    if response.status_code != 200:
+        return result
+
+    properties = response.get("data", {}).get("properties", {})
+    output_fields_by_json = response.get("output_fields_by_format", {}).get("json", [])
+    for field in output_fields_by_json:
+        if field in properties:
+            result[field] = properties[field]
+
+    return result
