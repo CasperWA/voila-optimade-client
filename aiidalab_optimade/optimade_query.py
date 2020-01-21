@@ -26,7 +26,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
     structure = traitlets.Instance(ase.Atoms, allow_none=True)
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug: bool = False, **kwargs):
+        self.debug = debug
+
         # self.header = ipw.HTML(
         #     "<h4><strong>Search for a structure in an OPTiMaDe database</h4></strong>"
         # )
@@ -156,6 +158,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             if filter_
             else add_to_filter
         )
+        if self.debug:
+            print(filter_)
 
         # OPTiMaDe queries
         queries = {
