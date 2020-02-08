@@ -10,6 +10,7 @@ from aiidalab_optimade.helper_widgets import (
     ProvidersImplementations,
     StructureDropdown,
     FilterInputs,
+    ResultsPageChooser,
 )
 from aiidalab_optimade.utils import validate_api_version, perform_optimade_query
 
@@ -38,7 +39,11 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
         self.filters = FilterInputs()
         self.query_button = ipw.Button(
-            description="Search", button_style="primary", icon="search", disabled=True
+            description="Search",
+            button_style="primary",
+            icon="search",
+            disabled=True,
+            tooltip="Search - No database chosen",
         )
         self.query_button.on_click(self.retrieve_data)
 
@@ -46,6 +51,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
         self.structure_results_section = ipw.HTML("")
+
+        self.structure_page_chooser = ResultsPageChooser()
 
         super().__init__(
             children=[
@@ -57,6 +64,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.structures_header,
                 self.structure_drop,
                 self.structure_results_section,
+                self.structure_page_chooser,
             ],
             layout=ipw.Layout(width="100%"),
             **kwargs,
@@ -67,8 +75,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.database = change["new"]
         if self.database[1] is None or self.database[1].get("base_url", None) is None:
             self.query_button.disabled = True
+            self.query_button.tooltip = "Search - No database chosen"
         else:
             self.query_button.disabled = False
+            self.query_button.tooltip = "Search"
         self.structure_drop.reset()
 
     def _on_structure_select(self, change):
@@ -99,6 +109,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         """Reset widget"""
         with self.hold_trait_notifications():
             self.query_button.disabled = False
+            self.query_button.tooltip = "Search - No database chosen"
             self.filters.reset()
             self.base_url.reset()
             self.structure_drop.reset()
@@ -202,6 +213,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             # Update button text and icon
             self.query_button.description = "Querying ... "
             self.query_button.icon = "cog"
+            self.query_button.tooltip = "Please wait ..."
 
             # Query database
             response = self._query()
@@ -250,4 +262,5 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         finally:
             self.query_button.description = "Search"
             self.query_button.icon = "search"
+            self.query_button.tooltip = "Search"
             self.unfreeze()

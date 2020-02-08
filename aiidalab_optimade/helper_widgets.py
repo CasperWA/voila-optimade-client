@@ -201,9 +201,11 @@ class FilterInputParser:
     def lattice_vectors(value: str) -> str:
         """Wrap in query list of values"""
         if value.find("(") != -1 and value.find(")") != -1:
-            wrappers = ("(", ")")
+            pass
+            # wrappers = ("(", ")")
         elif value.find("[") != -1 and value.find("]") != -1:
-            wrappers = ("[", "]")
+            pass
+            # wrappers = ("[", "]")
         else:
             raise ParserError(
                 "lattica_vectors",
@@ -234,7 +236,8 @@ class FilterInputParser:
                 raise ParserError(
                     field,
                     value,
-                    msg="Multiple values given, must be an integer, either with or without an operator prefixed.",
+                    msg="Multiple values given, must be an integer, "
+                    "either with or without an operator prefixed.",
                 )
             result = re.sub(r"\s*", "", match_no_operator[0])
             return f"={result}"
@@ -380,3 +383,86 @@ class FilterInputs(ipw.VBox):
             ]
         )
         return re.sub("'", '"', result)
+
+
+class ResultsPageChooser(ipw.HBox):
+    """Flip through the OPTiMaDe 'pages'"""
+
+    page_limit = traitlets.Int(0)
+    data_returned = traitlets.Int(0)
+    current_page = traitlets.Int(1)
+
+    def __init__(self, **kwargs):
+        self._layout = ipw.Layout(width="auto")
+
+        self.pages: int
+
+        self._button_layout = {
+            "style": ipw.ButtonStyle(button_color="white"),
+            "layout": ipw.Layout(height="auto", width="auto"),
+        }
+        self.button_sides = {
+            "left": ipw.HBox(
+                children=[
+                    self._create_arrow_button("angle-double-left", "First results"),
+                    self._create_arrow_button(
+                        "angle-left", f"Previous {self.page_limit} results"
+                    ),
+                ]
+            ),
+            "right": ipw.HBox(
+                children=[
+                    self._create_arrow_button(
+                        "angle-right", f"Next {self.page_limit} results"
+                    ),
+                    self._create_arrow_button("angle-double-right", "Last results"),
+                ]
+            ),
+        }
+
+        self.parts = [
+            self.button_sides["left"],
+            self.page_text(),
+            self.button_sides["right"],
+        ]
+        super().__init__(children=self.parts, layout=self._layout, **kwargs)
+
+    @traitlets.validate("page_limit", "data_returned")
+    def _validate_non_negative_ints(self, proposal):  # pylint: disable=no-self-use
+        """Traitlets must be >=0. Set value to 0 if <0."""
+        value = proposal["value"]
+        if value < 0:
+            value = 0
+        return value
+
+    def reset(self):
+        """Reset widget"""
+        for side in self.button_sides.values():
+            for button in side.children:
+                button.disabled = False
+
+    def freeze(self):
+        """Disable widget"""
+        for side in self.button_sides.values():
+            for button in side.children:
+                button.disabled = True
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        self.reset()
+
+    def results_on_next_page(self) -> int:
+        """Return the amount of results on the next page"""
+        # if self.current_page
+
+    def _create_arrow_button(self, icon: str, hover_text: str = None) -> ipw.Button:
+        """Create an arrow button"""
+        tooltip = hover_text if hover_text is not None else ""
+        return ipw.Button(
+            disabled=False, icon=icon, tooltip=tooltip, **self._button_layout
+        )
+
+    @staticmethod
+    def page_text() -> ipw.HTML:
+        """Create text between buttons"""
+        return ipw.HTML("Showing 0-10 of 25 results")
