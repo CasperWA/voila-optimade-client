@@ -144,6 +144,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
     email: str = None,
     fields: str = None,
     limit: int = None,
+    offset: int = None,
 ) -> dict:
     """Perform query of database"""
     queries = {}
@@ -173,6 +174,8 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
         queries["response_fields"] = fields
     if limit:
         queries["page_limit"] = limit
+    if offset:
+        queries["page_offset"] = offset
 
     # Make query - get data
     url_query = urlencode(queries)

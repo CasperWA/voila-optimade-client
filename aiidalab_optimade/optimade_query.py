@@ -1,3 +1,5 @@
+from typing import Union
+import requests
 import traitlets
 import ipywidgets as ipw
 
@@ -10,6 +12,7 @@ from aiidalab_optimade.helper_widgets import (
     ProvidersImplementations,
     StructureDropdown,
     FilterInputs,
+    ResultsPageChooser,
 )
 from aiidalab_optimade.utils import validate_api_version, perform_optimade_query
 
@@ -21,13 +24,18 @@ DEFAULT_FILTER_VALUE = (
 
 
 class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attributes
-    """Structure search and import widget for OPTiMaDe"""
+    """Structure search and import widget for OPTiMaDe
+
+    NOTE: Only supports offset-pagination at the moment.
+    """
 
     structure = traitlets.Instance(ase.Atoms, allow_none=True)
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, debug: bool = False, **kwargs):
+    def __init__(self, debug: bool = False, result_limit: int = None, **kwargs):
         self.debug = debug
+        self.page_limit = result_limit if result_limit else 10
+        self.offset = 0
 
         # self.header = ipw.HTML(
         #     "<h4><strong>Search for a structure in an OPTiMaDe database</h4></strong>"
@@ -37,8 +45,13 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
         self.filters = FilterInputs()
+        self.filters.on_submit(self.retrieve_data)
         self.query_button = ipw.Button(
-            description="Search", button_style="primary", icon="search", disabled=True
+            description="Search",
+            button_style="primary",
+            icon="search",
+            disabled=True,
+            tooltip="Search - No database chosen",
         )
         self.query_button.on_click(self.retrieve_data)
 
@@ -46,6 +59,11 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
         self.structure_results_section = ipw.HTML("")
+
+        self.structure_page_chooser = ResultsPageChooser(self.page_limit)
+        self.structure_page_chooser.observe(
+            self._get_more_results, names=["page_offset", "page_link"]
+        )
 
         super().__init__(
             children=[
@@ -57,6 +75,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.structures_header,
                 self.structure_drop,
                 self.structure_results_section,
+                self.structure_page_chooser,
             ],
             layout=ipw.Layout(width="100%"),
             **kwargs,
@@ -67,8 +86,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.database = change["new"]
         if self.database[1] is None or self.database[1].get("base_url", None) is None:
             self.query_button.disabled = True
+            self.query_button.tooltip = "Search - No database chosen"
         else:
             self.query_button.disabled = False
+            self.query_button.tooltip = "Search"
         self.structure_drop.reset()
 
     def _on_structure_select(self, change):
@@ -81,12 +102,49 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         else:
             self.structure = chosen_structure["ase_atoms"]
 
+    def _get_more_results(self, change):
+        """Query for more results according to page_offset"""
+        offset_or_link: Union[int, str] = change["new"]
+        if isinstance(offset_or_link, int):
+            self.offset = offset_or_link
+            offset_or_link = None
+
+        try:
+            # Freeze and disable list of structures in dropdown widget
+            # We don't want changes leading to weird things happening prior to the query ending
+            self.freeze()
+
+            # Update button text and icon
+            self.query_button.description = "Updating ... "
+            self.query_button.icon = "cog"
+            self.query_button.tooltip = "Please wait ..."
+
+            # Query database
+            response = self._query(offset_or_link)
+            if self.handle_errors(response):
+                return
+
+            # Update list of structures in dropdown widget
+            self._update_structures(response["data"])
+
+            # Update pageing
+            self.structure_page_chooser.set_pagination_data(
+                links_to_page=response.get("links", {}),
+            )
+
+        finally:
+            self.query_button.description = "Search"
+            self.query_button.icon = "search"
+            self.query_button.tooltip = "Search"
+            self.unfreeze()
+
     def freeze(self):
         """Disable widget"""
         self.query_button.disabled = True
         self.filters.freeze()
         self.base_url.freeze()
         self.structure_drop.freeze()
+        self.structure_page_chooser.freeze()
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
@@ -94,14 +152,17 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.filters.unfreeze()
         self.base_url.unfreeze()
         self.structure_drop.unfreeze()
+        self.structure_page_chooser.unfreeze()
 
     def reset(self):
         """Reset widget"""
         with self.hold_trait_notifications():
             self.query_button.disabled = False
+            self.query_button.tooltip = "Search - No database chosen"
             self.filters.reset()
             self.base_url.reset()
             self.structure_drop.reset()
+            self.structure_page_chooser.reset()
 
     @staticmethod
     def _get_structure_data(optimade_structure: dict) -> StructureData:
@@ -146,8 +207,12 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         return structure
 
-    def _query(self) -> dict:
+    def _query(self, link: str = None) -> dict:
         """Query helper function"""
+
+        # If a complete link is provided, use it straight up
+        if link is not None:
+            return requests.get(link).json()
 
         # Avoid structures that cannot be converted to an ASE.Atoms instance
         add_to_filter = 'NOT structure_features HAS ANY "disorder","unknown_positions"'
@@ -168,7 +233,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             "format_": "json",
             "email": None,
             "fields": None,
-            "limit": 10,
+            "limit": self.page_limit,
+            "offset": self.offset,
         }
 
         return perform_optimade_query(**queries)
@@ -192,6 +258,29 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         return False
 
+    def _update_structures(self, data: list):
+        """Update structures dropdown from response data"""
+        structures = []
+
+        for entry in data:
+            structure = self._get_structure_data(entry)
+
+            if structure.has_vacancies or structure.is_alloy:
+                continue
+
+            formula = structure.get_formula()
+
+            optimade_id = entry["id"]
+            entry_name = "{} (id={})".format(formula, optimade_id)
+            entry_add = (
+                entry_name,
+                {"structure": structure, "ase_atoms": structure.get_ase()},
+            )
+            structures.append(entry_add)
+
+        # Update list of structures in dropdown widget
+        self.structure_drop.set_options(structures)
+
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
         try:
@@ -202,6 +291,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             # Update button text and icon
             self.query_button.description = "Querying ... "
             self.query_button.icon = "cog"
+            self.query_button.tooltip = "Please wait ..."
 
             # Query database
             response = self._query()
@@ -211,43 +301,18 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             # Check implementation API version
             validate_api_version(response.get("meta", {}).get("api_version", ""))
 
-            # Go through data entries
-            structures = []
-            for entry in response["data"]:
-                structure = self._get_structure_data(entry)
-
-                if structure.has_vacancies or structure.is_alloy:
-                    continue
-
-                formula = structure.get_formula()
-
-                optimade_id = entry["id"]
-                entry_name = "{} (id={})".format(formula, optimade_id)
-                entry_add = (
-                    entry_name,
-                    {"structure": structure, "ase_atoms": structure.get_ase()},
-                )
-                structures.append(entry_add)
-
             # Update list of structures in dropdown widget
-            self.structure_drop.set_options(structures)
+            self._update_structures(response["data"])
 
-            # Update text output
-            # data_on_page = len(response.get("data", []))
-            data_returned = response.get("meta", {}).get("data_returned", 0)
-            data_available = response.get("meta", {}).get("data_available", None)
-
-            self.structure_results_section.value = (
-                f"<strong>{data_available}</strong> "
-                "structures are available in this database."
+            # Update pageing
+            self.structure_page_chooser.set_pagination_data(
+                data_returned=response.get("meta", {}).get("data_returned", 0),
+                links_to_page=response.get("links", {}),
+                reset_cache=True,
             )
-            if data_returned and structures:
-                value = data_returned
-            else:
-                value = len(structures) - 1
-            self.structure_results_section.value += f"<br><strong>{value}</strong> structures were found (not counting disordered structures)."
 
         finally:
             self.query_button.description = "Search"
             self.query_button.icon = "search"
+            self.query_button.tooltip = "Search"
             self.unfreeze()
