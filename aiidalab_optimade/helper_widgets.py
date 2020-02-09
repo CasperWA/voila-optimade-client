@@ -1,5 +1,7 @@
 import re
 from typing import List, Tuple, Dict, Union, Any
+from urllib.parse import urlparse, parse_qs
+
 import traitlets
 import ipywidgets as ipw
 
@@ -386,50 +388,63 @@ class FilterInputs(ipw.VBox):
 
 
 class ResultsPageChooser(ipw.HBox):
-    """Flip through the OPTiMaDe 'pages'"""
+    """Flip through the OPTiMaDe 'pages'
 
-    page_limit = traitlets.Int(0)
-    data_returned = traitlets.Int(0)
-    current_page = traitlets.Int(1)
+    NOTE: Only supports offset-pagination at the moment.
+    """
 
-    def __init__(self, **kwargs):
+    page_offset = traitlets.Int(0)
+    page_link = traitlets.Unicode(allow_none=True)
+
+    def __init__(self, page_limit: int, **kwargs):
+        self._cache = {}
+        self.__last_page_offset = None
         self._layout = ipw.Layout(width="auto")
 
-        self.pages: int
+        self._page_limit = page_limit
+        self.data_returned = 0
+        self.pages_links = {}
 
         self._button_layout = {
             "style": ipw.ButtonStyle(button_color="white"),
             "layout": ipw.Layout(height="auto", width="auto"),
         }
-        self.button_sides = {
-            "left": ipw.HBox(
-                children=[
-                    self._create_arrow_button("angle-double-left", "First results"),
-                    self._create_arrow_button(
-                        "angle-left", f"Previous {self.page_limit} results"
-                    ),
-                ]
-            ),
-            "right": ipw.HBox(
-                children=[
-                    self._create_arrow_button(
-                        "angle-right", f"Next {self.page_limit} results"
-                    ),
-                    self._create_arrow_button("angle-double-right", "Last results"),
-                ]
-            ),
-        }
+        self.button_first = self._create_arrow_button(
+            "angle-double-left", "First results"
+        )
+        self.button_prev = self._create_arrow_button(
+            "angle-left", f"Previous {self._page_limit} results"
+        )
+        self.text = ipw.HTML("Showing 0 of 0 results")
+        self.button_next = self._create_arrow_button(
+            "angle-right", f"Next {self._page_limit} results"
+        )
+        self.button_last = self._create_arrow_button(
+            "angle-double-right", "Last results"
+        )
 
-        self.parts = [
-            self.button_sides["left"],
-            self.page_text(),
-            self.button_sides["right"],
-        ]
-        super().__init__(children=self.parts, layout=self._layout, **kwargs)
+        self.button_first.on_click(self._goto_first)
+        self.button_prev.on_click(self._goto_prev)
+        self.button_next.on_click(self._goto_next)
+        self.button_last.on_click(self._goto_last)
 
-    @traitlets.validate("page_limit", "data_returned")
+        self._update_cache()
+
+        super().__init__(
+            children=[
+                self.button_first,
+                self.button_prev,
+                self.text,
+                self.button_next,
+                self.button_last,
+            ],
+            layout=self._layout,
+            **kwargs,
+        )
+
+    @traitlets.validate("page_offset")
     def _validate_non_negative_ints(self, proposal):  # pylint: disable=no-self-use
-        """Traitlets must be >=0. Set value to 0 if <0."""
+        """Must be >=0. Set value to 0 if <0."""
         value = proposal["value"]
         if value < 0:
             value = 0
@@ -437,32 +452,154 @@ class ResultsPageChooser(ipw.HBox):
 
     def reset(self):
         """Reset widget"""
-        for side in self.button_sides.values():
-            for button in side.children:
-                button.disabled = False
+        self.button_first.disabled = True
+        self.button_prev.disabled = True
+        self.text.value = "Showing 0 of 0 results"
+        self.button_next.disabled = True
+        self.button_last.disabled = True
+        with self.hold_trait_notifications():
+            self.page_offset = 0
+            self.page_link = None
+        self._update_cache()
 
     def freeze(self):
         """Disable widget"""
-        for side in self.button_sides.values():
-            for button in side.children:
-                button.disabled = True
+        self.button_first.disabled = True
+        self.button_prev.disabled = True
+        self.button_next.disabled = True
+        self.button_last.disabled = True
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
-        self.reset()
+        self.button_first.disabled = self._cache["buttons"]["first"]
+        self.button_prev.disabled = self._cache["buttons"]["prev"]
+        self.button_next.disabled = self._cache["buttons"]["next"]
+        self.button_last.disabled = self._cache["buttons"]["last"]
 
-    def results_on_next_page(self) -> int:
-        """Return the amount of results on the next page"""
-        # if self.current_page
+    @property
+    def _last_page_offset(self):
+        """Get the page_offset for the last page"""
+        if self.__last_page_offset is not None:
+            return self.__last_page_offset
+
+        if self.data_returned <= self._page_limit:
+            res = 0
+        elif self.data_returned % self._page_limit == 0:
+            res = self.data_returned - self._page_limit
+        else:
+            res = self.data_returned - self.data_returned % self._page_limit
+
+        self.__last_page_offset = res
+        return self.__last_page_offset
+
+    def _update_cache(self, page_offset: int = None):
+        """Update cache"""
+        offset = page_offset if page_offset is not None else self.page_offset
+        self._cache = {
+            "buttons": {
+                "first": self.button_first.disabled,
+                "prev": self.button_prev.disabled,
+                "next": self.button_next.disabled,
+                "last": self.button_last.disabled,
+            },
+            "page_offset": offset,
+        }
 
     def _create_arrow_button(self, icon: str, hover_text: str = None) -> ipw.Button:
         """Create an arrow button"""
         tooltip = hover_text if hover_text is not None else ""
         return ipw.Button(
-            disabled=False, icon=icon, tooltip=tooltip, **self._button_layout
+            disabled=True, icon=icon, tooltip=tooltip, **self._button_layout
         )
 
     @staticmethod
-    def page_text() -> ipw.HTML:
-        """Create text between buttons"""
-        return ipw.HTML("Showing 0-10 of 25 results")
+    def _parse_offset(url: str) -> int:
+        """Retrieve and parse 'page_offset' value from request URL"""
+        parsed_url = urlparse(url)
+        query = parse_qs(parsed_url.query)
+        return int(query.get("page_offset", ["0"])[0])
+
+    def _goto_first(self, _):
+        """Go to first page of results"""
+        if self.pages_links.get("first", ""):
+            self._cache["page_offset"] = self._parse_offset(self.pages_links["first"])
+            self.page_link = self.pages_links["first"]
+        else:
+            self._cache["page_offset"] = 0
+            self.page_offset = self._cache["page_offset"]
+
+    def _goto_prev(self, _):
+        """Go to previous page of results"""
+        if self.pages_links.get("prev", ""):
+            self._cache["page_offset"] = self._parse_offset(self.pages_links["prev"])
+            self.page_link = self.pages_links["prev"]
+        else:
+            self._cache["page_offset"] -= self._page_limit
+            self.page_offset = self._cache["page_offset"]
+
+    def _goto_next(self, _):
+        """Go to next page of results"""
+        if self.pages_links.get("next", ""):
+            self._cache["page_offset"] = self._parse_offset(self.pages_links["next"])
+            self.page_link = self.pages_links["next"]
+        else:
+            self._cache["page_offset"] += self._page_limit
+            self.page_offset = self._cache["page_offset"]
+
+    def _goto_last(self, _):
+        """Go to last page of results"""
+        if self.pages_links.get("last", ""):
+            self._cache["page_offset"] = self._parse_offset(self.pages_links["last"])
+            self.page_link = self.pages_links["last"]
+        else:
+            self._cache["page_offset"] = self._last_page_offset
+            self.page_offset = self._cache["page_offset"]
+
+    def _update(self):
+        """Update widget according to chosen results"""
+        offset = self._cache["page_offset"]
+        if offset >= self._page_limit:
+            self.button_first.disabled = False
+            self.button_prev.disabled = False
+        else:
+            self.button_first.disabled = True
+            self.button_prev.disabled = True
+
+        if self.data_returned > self._page_limit:
+            if offset > self._last_page_offset:
+                result_range = f"{offset + 1}-{self.data_returned}"
+            else:
+                result_range = f"{offset + 1}-{offset + self._page_limit}"
+        elif self.data_returned == 0:
+            result_range = "0"
+        elif self.data_returned == 1:
+            result_range = "1"
+        else:
+            result_range = f"{offset + 1}-{self.data_returned}"
+        self.text.value = f"Showing {result_range} of {self.data_returned} results"
+
+        if offset == self._last_page_offset:
+            self.button_next.disabled = True
+            self.button_last.disabled = True
+        else:
+            self.button_next.disabled = False
+            self.button_last.disabled = False
+
+        self._update_cache(page_offset=offset)
+
+    def set_pagination_data(
+        self,
+        data_returned: int = None,
+        links_to_page: dict = None,
+        reset_cache: bool = False,
+    ):
+        """Set data needed to 'activate' this pagination widget"""
+        if data_returned is not None:
+            self.data_returned = data_returned
+        if links_to_page is not None:
+            self.pages_links = links_to_page
+        if reset_cache:
+            self._update_cache(page_offset=0)
+            self.__last_page_offset = None
+
+        self._update()
