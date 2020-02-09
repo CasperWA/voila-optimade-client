@@ -294,7 +294,7 @@ class FilterInputs(ipw.VBox):
                     ("Chemical Formula", "e.g., (H2O)2 Na"),
                 ),
                 ("elements", ("Elements", "H, O, Cl, ...")),
-                ("nelements", ("Number of Elements", "e.g., =3")),
+                ("nelements", ("Number of Elements", "e.g., =3 or >=5")),
             ],
         ),
         (
