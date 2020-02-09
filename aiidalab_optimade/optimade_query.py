@@ -45,6 +45,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
         self.filters = FilterInputs()
+        self.filters.on_submit(self.retrieve_data)
         self.query_button = ipw.Button(
             description="Search",
             button_style="primary",

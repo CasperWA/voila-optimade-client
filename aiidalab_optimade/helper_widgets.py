@@ -127,6 +127,7 @@ class FilterText(ipw.HBox):
         _field_width = field_width if field_width is not None else "150px"
         description = ipw.HTML(field, layout=ipw.Layout(width=_field_width))
         self.text_input = ipw.Text(layout=ipw.Layout(width="100%"))
+        self.text_input.continuous_update = False
         if hint:
             self.text_input.placeholder = hint
         super().__init__(
@@ -154,6 +155,12 @@ class FilterText(ipw.HBox):
         since we want to keep the already typed in filter inputs.
         """
         self.reset()
+
+    def on_submit(self, callback, remove=False):
+        """(Un)Register a callback to handle text submission"""
+        self.text_input._submission_callbacks.register_callback(  # pylint: disable=protected-access
+            callback, remove=remove
+        )
 
 
 class ParserError(Exception):
@@ -326,7 +333,7 @@ class FilterInputs(ipw.VBox):
     }
 
     def __init__(self, **kwargs):
-        self.query_fields = {}
+        self.query_fields: Dict[str, FilterText] = {}
         self._layout = ipw.Layout(width="auto")
 
         sections = [
@@ -386,8 +393,13 @@ class FilterInputs(ipw.VBox):
         )
         return re.sub("'", '"', result)
 
+    def on_submit(self, callback, remove=False):
+        """(Un)Register a callback to handle text submission"""
+        for text in self.query_fields.values():
+            text.on_submit(callback=callback, remove=remove)
 
-class ResultsPageChooser(ipw.HBox):
+
+class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attributes
     """Flip through the OPTiMaDe 'pages'
 
     NOTE: Only supports offset-pagination at the moment.
@@ -566,7 +578,7 @@ class ResultsPageChooser(ipw.HBox):
             self.button_prev.disabled = True
 
         if self.data_returned > self._page_limit:
-            if offset > self._last_page_offset:
+            if offset == self._last_page_offset:
                 result_range = f"{offset + 1}-{self.data_returned}"
             else:
                 result_range = f"{offset + 1}-{offset + self._page_limit}"
