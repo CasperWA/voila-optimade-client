@@ -17,7 +17,7 @@ setup(
     license="MIT Licence",
     author="The AiiDA Lab team",
     python_requires=">=3.6",
-    install_requires=["aiidalab~=19.11.0a", "optimade~=0.3.2", "requests",],
+    install_requires=["optimade~=0.4", "requests", "aiidalab-widgets-base~=1.0.0a8"],
     extras_require={"dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",

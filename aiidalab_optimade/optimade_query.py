@@ -8,7 +8,7 @@ import ase
 from aiida.orm.nodes.data.structure import Site, Kind, StructureData
 
 from aiidalab_optimade.exceptions import InputError
-from aiidalab_optimade.helper_widgets import (
+from aiidalab_optimade.subwidgets import (
     ProvidersImplementations,
     StructureDropdown,
     FilterInputs,
