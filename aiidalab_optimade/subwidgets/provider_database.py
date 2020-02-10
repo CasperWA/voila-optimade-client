@@ -1,5 +1,5 @@
-from ipywidgets import VBox, Dropdown, Layout
-from traitlets import Tuple, Unicode, Dict
+import ipywidgets as ipw
+import traitlets
 
 from aiidalab_optimade.utils import (
     get_list_of_valid_providers,
@@ -10,10 +10,11 @@ from aiidalab_optimade.utils import (
 __all__ = ("ProvidersImplementations",)
 
 
-class ProvidersImplementations(VBox):
+class ProviderImplementationChooser(ipw.VBox):
     """List all OPTiMaDe providers and their implementations"""
 
-    database = Tuple(Unicode(), Dict(allow_none=True))
+    provider = traitlets.Dict(allow_none=True)
+    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
     NO_OPTIONS = "No provider chosen"
@@ -23,15 +24,15 @@ class ProvidersImplementations(VBox):
         providers.insert(0, (self.HINT["provider"], None))
         implementations = [(self.NO_OPTIONS, None)]
 
-        self.providers = Dropdown(options=providers)
-        self.child_dbs = Dropdown(options=implementations, disabled=True)
+        self.providers = ipw.Dropdown(options=providers)
+        self.child_dbs = ipw.Dropdown(options=implementations, disabled=True)
 
         self.providers.observe(self._observe_providers, names="index")
         self.child_dbs.observe(self._observe_child_dbs, names="index")
 
         super().__init__(
             children=[self.providers, self.child_dbs],
-            layout=Layout(width="auto"),
+            layout=ipw.Layout(width="auto"),
             **kwargs,
         )
 
@@ -45,8 +46,8 @@ class ProvidersImplementations(VBox):
                 self.providers.index = 0
                 self.child_dbs.index = 0
         else:
-            provider = self.providers.options[index][1]
-            implementations = get_list_of_provider_implementations(provider)
+            self.provider = self.providers.options[index][1]
+            implementations = get_list_of_provider_implementations(self.provider)
             implementations.insert(0, (self.HINT["child_dbs"], None))
             self.child_dbs.options = implementations
             self.child_dbs.disabled = False
@@ -79,3 +80,87 @@ class ProvidersImplementations(VBox):
 
             self.child_dbs.options = [(self.NO_OPTIONS, None)]
             self.child_dbs.disabled = True
+
+
+class ProviderImplementationSummary(ipw.HBox):
+    """Summary/description of chosen provider and their database"""
+
+    provider = traitlets.Dict(allow_none=True)
+    database = traitlets.Dict(allow_none=True)
+
+    def __init__(self, **kwargs):
+        provider_section = ipw.VBox(
+            children=[
+                ipw.HTML("<h4>Provider</h4>"),
+                ipw.Label("Some info about the provider here"),
+            ],
+            layout=ipw.Layout(width="auto", height="auto"),
+        )
+        database_section = ipw.VBox(
+            children=[ipw.HTML("<h4>Database</h4>"),],
+            layout=ipw.Layout(width="auto", height="auto"),
+        )
+        super().__init__(
+            children=[provider_section, database_section],
+            layout=ipw.Layout(width="auto", height="auto"),
+            **kwargs,
+        )
+
+    def freeze(self):
+        """Disable widget"""
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+
+    def reset(self):
+        """Reset widget"""
+
+
+class ProvidersImplementations(ipw.GridspecLayout):
+    """Combining chooser and summary widgets"""
+
+    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
+
+    def __init__(self, include_summary: bool = True, **kwargs):
+        self.summary_included = include_summary
+
+        self.chooser = ProviderImplementationChooser()
+
+        self.sections = [self.chooser]
+        if self.summary_included:
+            self.summary = ProviderImplementationSummary()
+            self.sections.append(self.summary)
+
+        super().__init__(n_rows=3, n_columns=15, **kwargs)
+        self[1, :5] = self.chooser
+        if self.summary_included:
+            self[:, 7:] = self.summary
+
+        self.chooser.observe(self._update_database, names="database")
+        if self.summary_included:
+            self.chooser.observe(self._update_provider, names="provider")
+
+    def _update_database(self, change):
+        """Patch database through to own traitlet and pass info to summary"""
+        self.database = change["new"]
+        if self.summary_included:
+            self.summary.database = self.database[1]
+
+    def _update_provider(self, change):
+        """Pass information to summary"""
+        self.summary.provider = change["new"]
+
+    def freeze(self):
+        """Disable widget"""
+        for widget in self.sections:
+            widget.freeze()
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        for widget in self.sections:
+            widget.unfreeze()
+
+    def reset(self):
+        """Reset widget"""
+        for widget in self.sections:
+            widget.reset()

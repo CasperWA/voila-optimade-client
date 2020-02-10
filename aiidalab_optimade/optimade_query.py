@@ -37,9 +37,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
 
-        # self.header = ipw.HTML(
-        #     "<h4><strong>Search for a structure in an OPTiMaDe database</h4></strong>"
-        # )
         self.base_url = ProvidersImplementations()
         self.base_url.observe(self._on_database_select, names="database")
 
@@ -67,7 +64,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         super().__init__(
             children=[
-                # self.header,
                 self.base_url,
                 self.filter_header,
                 self.filters,

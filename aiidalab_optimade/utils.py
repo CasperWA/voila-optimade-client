@@ -97,7 +97,7 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
 
 
 def get_list_of_provider_implementations(
-    provider_attributes: str = None,
+    provider_attributes: dict = None,
 ) -> List[Tuple[str, dict]]:
     """Get list of provider implementations"""
     child_dbs = fetch_provider_child_dbs(provider_attributes["base_url"])
