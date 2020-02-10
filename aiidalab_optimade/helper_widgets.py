@@ -127,7 +127,6 @@ class FilterText(ipw.HBox):
         _field_width = field_width if field_width is not None else "150px"
         description = ipw.HTML(field, layout=ipw.Layout(width=_field_width))
         self.text_input = ipw.Text(layout=ipw.Layout(width="100%"))
-        self.text_input.continuous_update = False
         if hint:
             self.text_input.placeholder = hint
         super().__init__(
