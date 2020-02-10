@@ -1,23 +1,13 @@
 import re
-from typing import Any, Dict, List, Union, Tuple
+from typing import Dict, List, Union, Tuple
 
 import ipywidgets as ipw
 import traitlets
 
+from aiidalab_optimade.exceptions import ParserError
 
-__all__ = ("ParserError", "FilterInputs")
 
-
-class ParserError(Exception):
-    """Error during FilterInputParser parsing"""
-
-    def __init__(self, field: str = None, value: Any = None, msg: str = None):
-        self.field = field if field is not None else "General"
-        self.value = value if value is not None else ""
-        self.msg = msg if msg is not None else "A general error occured during parsing."
-        super().__init__(
-            f"Field: {self.field}, Value: {self.value}, Message: {self.msg}"
-        )
+__all__ = ("FilterInputs",)
 
 
 class FilterText(ipw.HBox):
