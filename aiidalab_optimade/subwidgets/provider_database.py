@@ -82,29 +82,41 @@ class ProviderImplementationChooser(ipw.VBox):
             self.child_dbs.disabled = True
 
 
-class ProviderImplementationSummary(ipw.HBox):
+class ProviderImplementationSummary(ipw.GridspecLayout):
     """Summary/description of chosen provider and their database"""
 
     provider = traitlets.Dict(allow_none=True)
     database = traitlets.Dict(allow_none=True)
 
     def __init__(self, **kwargs):
+        self.provider_summary = ipw.HTML()
         provider_section = ipw.VBox(
-            children=[
-                ipw.HTML("<h4>Provider</h4>"),
-                ipw.Label("Some info about the provider here"),
-            ],
+            children=[self.provider_summary],
             layout=ipw.Layout(width="auto", height="auto"),
         )
+
+        self.database_summary = ipw.HTML()
         database_section = ipw.VBox(
-            children=[ipw.HTML("<h4>Database</h4>"),],
+            children=[self.database_summary],
             layout=ipw.Layout(width="auto", height="auto"),
         )
-        super().__init__(
-            children=[provider_section, database_section],
-            layout=ipw.Layout(width="auto", height="auto"),
-            **kwargs,
-        )
+
+        super().__init__(n_rows=1, n_columns=7, **kwargs)
+        self[:, :3] = provider_section
+        self[:, 4:] = database_section
+
+        self.observe(self._update_provider_summary, names="provider")
+        self.observe(self._update_database_summary, names="database")
+
+    def _update_provider_summary(self, change):
+        """Update provider summary"""
+        new_provider = change["new"]
+        if new_provider is None:
+            self.provider_summary.value = None
+            self.database_summary.value = None
+
+    def _update_database_summary(self, change):
+        """Update database summary"""
 
     def freeze(self):
         """Disable widget"""
@@ -114,6 +126,7 @@ class ProviderImplementationSummary(ipw.HBox):
 
     def reset(self):
         """Reset widget"""
+        self.provider = None
 
 
 class ProvidersImplementations(ipw.GridspecLayout):
@@ -121,7 +134,7 @@ class ProvidersImplementations(ipw.GridspecLayout):
 
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, include_summary: bool = True, **kwargs):
+    def __init__(self, include_summary: bool = False, **kwargs):
         self.summary_included = include_summary
 
         self.chooser = ProviderImplementationChooser()
@@ -131,10 +144,13 @@ class ProvidersImplementations(ipw.GridspecLayout):
             self.summary = ProviderImplementationSummary()
             self.sections.append(self.summary)
 
-        super().__init__(n_rows=3, n_columns=15, **kwargs)
-        self[1, :5] = self.chooser
         if self.summary_included:
+            super().__init__(n_rows=3, n_columns=15, **kwargs)
+            self[1, :5] = self.chooser
             self[:, 7:] = self.summary
+        else:
+            super().__init__(n_rows=1, n_columns=1, **kwargs)
+            self[:, :] = self.chooser
 
         self.chooser.observe(self._update_database, names="database")
         if self.summary_included:
