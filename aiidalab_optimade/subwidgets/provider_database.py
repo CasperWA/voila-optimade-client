@@ -39,20 +39,22 @@ class ProviderImplementationChooser(ipw.VBox):
     def _observe_providers(self, change):
         """Update child database dropdown upon changing provider"""
         index = change["new"]
-        if index is None or self.providers.options[index][1] is None:
+        self.child_dbs.disabled = True
+        if index is None or self.providers.value is None:
             self.child_dbs.options = [(self.NO_OPTIONS, None)]
             self.child_dbs.disabled = True
             with self.hold_trait_notifications():
                 self.providers.index = 0
                 self.child_dbs.index = 0
         else:
-            self.provider = self.providers.options[index][1]
+            self.provider = self.providers.value
             implementations = get_list_of_provider_implementations(self.provider)
             implementations.insert(0, (self.HINT["child_dbs"], None))
             self.child_dbs.options = implementations
             self.child_dbs.disabled = False
             with self.hold_trait_notifications():
                 self.child_dbs.index = 0
+        self.child_dbs.disabled = False
 
     def _observe_child_dbs(self, change):
         """Update database traitlet with base URL for chosen child database"""
@@ -102,10 +104,10 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
         )
 
         super().__init__(
-            n_rows=1, n_columns=7, layout={"border": "solid 1px"}, **kwargs
+            n_rows=1, n_columns=31, layout={"border": "solid 0.5px"}, **kwargs
         )
-        self[:, :3] = provider_section
-        self[:, 4:] = database_section
+        self[:, :15] = provider_section
+        self[:, 16:] = database_section
 
         self.observe(self._on_provider_change, names="provider")
         self.observe(self._on_database_change, names="database")
@@ -113,9 +115,9 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
     def _on_provider_change(self, change):
         """Update provider summary, since self.provider has been changed"""
         new_provider = change["new"]
+        self.database_summary.value = ""
         if new_provider is None:
             self.provider_summary.value = ""
-            self.database_summary.value = ""
         else:
             self._update_provider()
 
@@ -129,9 +131,15 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
 
     def _update_provider(self):
         """Update provider summary"""
+        html_text = f"""<h4>{self.provider.get('name', 'Provider')}</h4>
+        <p style="line-height:1.2;">{self.provider['description']}</p>"""
+        self.provider_summary.value = html_text
 
     def _update_database(self):
         """Update database summary"""
+        html_text = f"""<h4>{self.database.get('name', 'Database')}</h4>
+        <p style="line-height:1.2;">{self.database['description']}</p>"""
+        self.database_summary.value = html_text
 
     def freeze(self):
         """Disable widget"""
@@ -160,9 +168,9 @@ class ProvidersImplementations(ipw.GridspecLayout):
             self.sections.append(self.summary)
 
         if self.summary_included:
-            super().__init__(n_rows=3, n_columns=15, **kwargs)
-            self[1, :5] = self.chooser
-            self[:, 7:] = self.summary
+            super().__init__(n_rows=2, n_columns=31, **kwargs)
+            self[:, :10] = self.chooser
+            self[:, 11:] = self.summary
         else:
             super().__init__(n_rows=1, n_columns=1, **kwargs)
             self[:, :] = self.chooser

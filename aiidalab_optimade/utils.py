@@ -123,8 +123,7 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
         if attributes["base_url"] is None:
             continue
 
-        provider_name = attributes.pop("name")
-        res.append((provider_name, attributes))
+        res.append((attributes["name"], attributes))
 
     return res
 
@@ -152,8 +151,7 @@ def get_list_of_provider_implementations(
         if attributes["base_url"] is None:
             continue
 
-        child_db_name = attributes.pop("name")
-        res.append((child_db_name, attributes))
+        res.append((attributes["name"], attributes))
 
     return res
 
