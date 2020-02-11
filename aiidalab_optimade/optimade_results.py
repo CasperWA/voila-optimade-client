@@ -16,10 +16,10 @@ class OptimadeResultsWidget(ipw.Tab):
     def __init__(self, debug: bool = False, **kwargs):
         self.debug = debug
 
-        sections = {"tab title": ipw.Widget()}
+        sections = ("", ipw.Widget())
 
         super().__init__(
-            children=list(sections.values()), layout=ipw.Layout(width="100%"), **kwargs
+            children=(_[1] for _ in sections), layout=ipw.Layout(width="100%"), **kwargs
         )
-        for index, title in enumerate(sections):
+        for index, title in enumerate([_[0] for _ in sections]):
             self.set_title(index, title)
