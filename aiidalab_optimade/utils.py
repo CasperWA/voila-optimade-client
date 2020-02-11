@@ -1,6 +1,7 @@
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
 import requests
+from simplejson import JSONDecodeError
 
 from optimade import __api_version__
 
@@ -56,7 +57,7 @@ def fetch_provider_child_dbs(base_url: str) -> list:
     try:
         implementations = requests.get(links_endpoint, timeout=TIMEOUT_SECONDS)
     except Exception:
-        raise NonExistent("The URL cannot be opened: {}".format(links_endpoint))
+        raise NonExistent(f"The URL cannot be opened: {links_endpoint}")
 
     if implementations.status_code == 200:
         implementations = implementations.json()
@@ -64,17 +65,49 @@ def fetch_provider_child_dbs(base_url: str) -> list:
         implementations = {}
 
     # Return all implementations of type "child"
-    return [
+    implementations = [
         implementation
         for implementation in implementations.get("data", [])
         if implementation.get("type", "") == "child"
     ]
 
+    # If there are no implementations, try if index meta-database == implementation database
+    if not implementations:
+        structures_endpoint = "/structures?page_limit=1"
+        structures_endpoint = (
+            base_url + structures_endpoint[1:]
+            if base_url.endswith("/")
+            else base_url + structures_endpoint
+        )
+
+        try:
+            implementations = requests.get(structures_endpoint, timeout=TIMEOUT_SECONDS)
+        except Exception:  # pylint: disable=broad-except
+            return []
+
+        if implementations.status_code == 200:
+            implementations = implementations.json()
+        else:
+            return []
+
+        attributes = implementations.get("meta", {}).get("provider", {})
+        implementations = []
+        if attributes:
+            attributes.update({"base_url": base_url})
+            for field in ("prefix", "index_base_url"):
+                attributes.pop(field, None)
+            implementations = [{"attributes": attributes}]
+
+        if not implementations:
+            implementations = "structures found"
+
+    return implementations
+
 
 def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
     """ Get curated list of database providers
 
-    Return formatted list of tuples to use for a dropdown-widget.
+    Return formatted list of tuples to use with a dropdown-widget.
     """
     providers = fetch_providers()
     res = []
@@ -97,11 +130,20 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
 
 
 def get_list_of_provider_implementations(
-    provider_attributes: dict = None,
+    provider_attributes: dict,
 ) -> List[Tuple[str, dict]]:
-    """Get list of provider implementations"""
+    """Get list of provider implementations
+
+    Return formatted list of tuples to use with a dropdown-widget.
+    """
     child_dbs = fetch_provider_child_dbs(provider_attributes["base_url"])
     res = []
+
+    if isinstance(child_dbs, str) and child_dbs == "structures found":
+        # Use info from provider attributes
+        database = {"attributes": provider_attributes}
+        database["attributes"]["name"] = "Main database"
+        child_dbs = [database]
 
     for child_db in child_dbs:
         attributes = child_db["attributes"]
@@ -136,7 +178,7 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     return True
 
 
-def perform_optimade_query(  # pylint: disable=too-many-arguments
+def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
     base_url: str,
     endpoint: str = None,
     filter_: Union[dict, str] = None,
@@ -181,7 +223,12 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
     url_query = urlencode(queries)
     response = requests.get("{}?{}".format(url_path, url_query))
 
-    return response.json()
+    try:
+        response = response.json()
+    except JSONDecodeError:
+        response = {"errors": []}
+
+    return response
 
 
 def get_structures_schema(base_url: str) -> dict:

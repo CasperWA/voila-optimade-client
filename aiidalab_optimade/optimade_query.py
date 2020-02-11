@@ -32,12 +32,19 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
     structure = traitlets.Instance(ase.Atoms, allow_none=True)
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, debug: bool = False, result_limit: int = None, **kwargs):
+    def __init__(
+        self,
+        debug: bool = False,
+        embedded: bool = False,
+        result_limit: int = None,
+        **kwargs,
+    ):
         self.debug = debug
+        self.embedded = embedded
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
 
-        self.base_url = ProvidersImplementations()
+        self.base_url = ProvidersImplementations(include_summary=not self.embedded)
         self.base_url.observe(self._on_database_select, names="database")
 
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
@@ -55,7 +62,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.structures_header = ipw.HTML("<br><h4>Results</h4>")
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
-        self.structure_results_section = ipw.HTML("")
+        self.error_or_status_messages = ipw.HTML("")
 
         self.structure_page_chooser = ResultsPageChooser(self.page_limit)
         self.structure_page_chooser.observe(
@@ -70,7 +77,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.query_button,
                 self.structures_header,
                 self.structure_drop,
-                self.structure_results_section,
+                self.error_or_status_messages,
                 self.structure_page_chooser,
             ],
             layout=ipw.Layout(width="100%"),
@@ -242,14 +249,12 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         if "errors" in response:
             if "data" in response:
-                self.structure_results_section.value = (
-                    "Error(s) during querying, but "
+                self.error_or_status_messages.value = (
+                    '<font color="red">Error(s) during querying,</font> but '
                     f"<strong>{len(response['data'])}</strong> structures found."
                 )
             else:
-                self.structure_results_section.value = (
-                    "Error during querying, please try again later."
-                )
+                self.error_or_status_messages.value = '<font color="red">Error during querying, please try again later.</font>'
             return True
 
         return False
@@ -283,6 +288,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
             self.freeze()
+
+            # Reset the error or status message
+            if self.error_or_status_messages.value:
+                self.error_or_status_messages.value = ""
 
             # Update button text and icon
             self.query_button.description = "Querying ... "

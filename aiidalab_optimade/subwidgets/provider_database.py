@@ -101,21 +101,36 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
             layout=ipw.Layout(width="auto", height="auto"),
         )
 
-        super().__init__(n_rows=1, n_columns=7, **kwargs)
+        super().__init__(
+            n_rows=1, n_columns=7, layout={"border": "solid 1px"}, **kwargs
+        )
         self[:, :3] = provider_section
         self[:, 4:] = database_section
 
-        self.observe(self._update_provider_summary, names="provider")
-        self.observe(self._update_database_summary, names="database")
+        self.observe(self._on_provider_change, names="provider")
+        self.observe(self._on_database_change, names="database")
 
-    def _update_provider_summary(self, change):
-        """Update provider summary"""
+    def _on_provider_change(self, change):
+        """Update provider summary, since self.provider has been changed"""
         new_provider = change["new"]
         if new_provider is None:
-            self.provider_summary.value = None
-            self.database_summary.value = None
+            self.provider_summary.value = ""
+            self.database_summary.value = ""
+        else:
+            self._update_provider()
 
-    def _update_database_summary(self, change):
+    def _on_database_change(self, change):
+        """Update database summary, since self.database has been changed"""
+        new_database = change["new"]
+        if new_database is None:
+            self.database_summary.value = ""
+        else:
+            self._update_database()
+
+    def _update_provider(self):
+        """Update provider summary"""
+
+    def _update_database(self):
         """Update database summary"""
 
     def freeze(self):
@@ -134,7 +149,7 @@ class ProvidersImplementations(ipw.GridspecLayout):
 
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, include_summary: bool = False, **kwargs):
+    def __init__(self, include_summary: bool = True, **kwargs):
         self.summary_included = include_summary
 
         self.chooser = ProviderImplementationChooser()
