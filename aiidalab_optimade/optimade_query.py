@@ -29,7 +29,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
     NOTE: Only supports offset-pagination at the moment.
     """
 
-    structure = traitlets.Instance(ase.Atoms, allow_none=True)
+    structure = traitlets.Union(
+        [traitlets.Instance(ase.Atoms), traitlets.Instance(StructureData)],
+        allow_none=True,
+    )
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
     def __init__(
@@ -103,7 +106,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             with self.hold_trait_notifications():
                 self.structure_drop.index = 0
         else:
-            self.structure = chosen_structure["ase_atoms"]
+            self.structure = chosen_structure["structure"]
 
     def _get_more_results(self, change):
         """Query for more results according to page_offset"""
