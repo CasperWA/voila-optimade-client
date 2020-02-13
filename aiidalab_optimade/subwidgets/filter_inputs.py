@@ -127,7 +127,9 @@ class FilterInputParser:
                 )
             result = re.sub(r"\s*", "", match_no_operator[0])
             return f"={result}"
-        raise ParserError(field, value, msg="Not proper input. Should be, e.g., >=3")
+        raise ParserError(
+            field, value, msg="Not proper input. Should be, e.g., >=3 or 5"
+        )
 
     def nsites(self, value: str) -> str:
         """OPTIONAL operator with integer value"""
@@ -171,7 +173,7 @@ class FilterInputs(ipw.VBox):
                     ("Chemical Formula", "e.g., (H2O)2 Na"),
                 ),
                 ("elements", ("Elements", "H, O, Cl, ...")),
-                ("nelements", ("Number of Elements", "e.g., =3 or >=5")),
+                ("nelements", ("Number of Elements", "e.g., 3 or >=5")),
             ],
         ),
         (

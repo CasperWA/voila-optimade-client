@@ -52,6 +52,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
         self.filters = FilterInputs()
+        self.filters.freeze()
         self.filters.on_submit(self.retrieve_data)
         self.query_button = ipw.Button(
             description="Search",
@@ -93,9 +94,11 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         if self.database[1] is None or self.database[1].get("base_url", None) is None:
             self.query_button.disabled = True
             self.query_button.tooltip = "Search - No database chosen"
+            self.filters.freeze()
         else:
             self.query_button.disabled = False
             self.query_button.tooltip = "Search"
+            self.filters.unfreeze()
         self.structure_drop.reset()
 
     def _on_structure_select(self, change):
@@ -257,7 +260,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                     f"<strong>{len(response['data'])}</strong> structures found."
                 )
             else:
-                self.error_or_status_messages.value = '<font color="red">Error during querying, please try again later.</font>'
+                self.error_or_status_messages.value = (
+                    '<font color="red">Error during querying, '
+                    "please try again later.</font>"
+                )
             return True
 
         return False
@@ -272,7 +278,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             if structure.has_vacancies or structure.is_alloy:
                 continue
 
-            formula = structure.get_formula()
+            formula = structure.get_formula(mode="hill_compact")
 
             optimade_id = entry["id"]
             entry_name = "{} (id={})".format(formula, optimade_id)
