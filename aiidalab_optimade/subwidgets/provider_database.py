@@ -19,9 +19,22 @@ class ProviderImplementationChooser(ipw.VBox):
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
     NO_OPTIONS = "No provider chosen"
 
-    def __init__(self, **kwargs):
-        providers = get_list_of_valid_providers()
+    def __init__(self, debug: bool = False, **kwargs):
+        self.debug = debug
+
+        providers = []
+        if not self.debug:
+            providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
+        if self.debug:
+            from aiidalab_optimade.utils import __optimade_version__
+
+            local_provider = {
+                "description": "Local server, running aiida-optimade",
+                "base_url": f"http://localhost:5000/optimade/v{__optimade_version__.split('.')[0]}",
+                "homepage": "https://example.org",
+            }
+            providers.insert(1, ("Local server", local_provider))
         implementations = [(self.NO_OPTIONS, None)]
 
         self.providers = ipw.Dropdown(options=providers)
@@ -157,10 +170,11 @@ class ProvidersImplementations(ipw.GridspecLayout):
 
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
-    def __init__(self, include_summary: bool = True, **kwargs):
+    def __init__(self, include_summary: bool = True, debug: bool = False, **kwargs):
         self.summary_included = include_summary
+        self.debug = debug
 
-        self.chooser = ProviderImplementationChooser()
+        self.chooser = ProviderImplementationChooser(debug=self.debug)
 
         self.sections = [self.chooser]
         if self.summary_included:

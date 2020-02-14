@@ -3,14 +3,16 @@ from urllib.parse import urlencode
 import requests
 from simplejson import JSONDecodeError
 
-from optimade import __api_version__
-
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
     InputError,
     NonExistent,
     NotOkResponse,
 )
+
+
+# Supported OPTiMaDe spec version
+__optimade_version__ = "0.10.1"
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
@@ -123,6 +125,25 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
         if attributes["base_url"] is None:
             continue
 
+        # Get versioned base URL
+        version_parts = [
+            f"/v{__optimade_version__.split('.')[0]}",  # major
+            f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # minor
+            f"/v{__optimade_version__}",  # patch
+        ]
+        for version in version_parts:
+            base_url = (
+                attributes["base_url"] + version[1:]
+                if attributes["base_url"].endswith("/")
+                else attributes["base_url"] + version
+            )
+            if requests.get(f"{base_url}/info").status_code == 200:
+                attributes["base_url"] = base_url
+                break
+        else:
+            # Not a valid/supported provider: skip
+            continue
+
         res.append((attributes["name"], attributes))
 
     return res
@@ -164,11 +185,11 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     if version.startswith("v"):
         version = version[1:]
 
-    if version != __api_version__:
+    if version != __optimade_version__:
         if raise_on_mismatch:
             raise ApiVersionError(
                 "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
-                    __api_version__, version
+                    __optimade_version__, version
                 )
             )
         return False

@@ -47,7 +47,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
 
-        self.base_url = ProvidersImplementations(include_summary=not self.embedded)
+        self.base_url = ProvidersImplementations(
+            include_summary=not self.embedded, debug=self.debug
+        )
         self.base_url.observe(self._on_database_select, names="database")
 
         self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
