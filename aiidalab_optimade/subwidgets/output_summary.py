@@ -68,7 +68,7 @@ class StructureDataSummary(ipw.VBox):
             "Elements": ", ".join(sorted(self.structure.get_symbols_set())),
             "Number of sites": str(len(self.structure.sites)),
             "Unit cell": self._unit_cell(self.structure.cell),
-            "Unit cell volume": f"{self.structure.get_cell_volume():.2f} Å",
+            "Unit cell volume": f"{self.structure.get_cell_volume():.2f} Å<sup>3</sup>",
         }
 
     @staticmethod
@@ -113,9 +113,8 @@ class StructureDataSites(ipw.HTML):
         <style>
             .df { border: none; }
             .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
-            .df tbody tr:nth-child(odd):hover { background-color:   #f5b7b1; }
-            .df tbody tr:nth-child(even):hover { background-color:  #f5b7b1; }
-            .df tbody td { min-width: 300px; text-align: center; border: none }
+            .df tbody tr:hover { background-color:   #f5b7b1; }
+            .df tbody td { min-width: 100px; text-align: center; border: none; padding: 5px }
             .df th { text-align: center; border: none;  border-bottom: 1px solid black;}
         </style>
         """
@@ -126,13 +125,13 @@ class StructureDataSites(ipw.HTML):
         self.structure = structure
 
     def _on_change_structure(self, change: dict):
-        """When traitlet 'sites' is updated"""
+        """When traitlet 'structure' is updated"""
         if change["new"] is None:
             self.value = ""
         else:
             self.value = self._style
             dataf = pd.DataFrame(
-                self._format_sites(), columns=["Elements", "Occypancy", "Position"]
+                self._format_sites(), columns=["Elements", "Occupancy", "Position"]
             )
             self.value += dataf.to_html(classes="df", index=False)
 

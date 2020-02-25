@@ -23,13 +23,13 @@ class ProviderImplementationChooser(ipw.VBox):
         self.debug = debug
 
         providers = []
-        if not self.debug:
-            providers = get_list_of_valid_providers()
+        providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
         if self.debug:
             from aiidalab_optimade.utils import __optimade_version__
 
             local_provider = {
+                "name": "Local server",
                 "description": "Local server, running aiida-optimade",
                 "base_url": f"http://localhost:5000/optimade/v{__optimade_version__.split('.')[0]}",
                 "homepage": "https://example.org",

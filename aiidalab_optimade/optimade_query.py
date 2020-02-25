@@ -266,6 +266,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                     '<font color="red">Error during querying, '
                     "please try again later.</font>"
                 )
+            if self.debug:
+                import json
+
+                print(json.dumps(response, indent=2))
             return True
 
         return False

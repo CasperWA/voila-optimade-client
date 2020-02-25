@@ -106,6 +106,26 @@ def fetch_provider_child_dbs(base_url: str) -> list:
     return implementations
 
 
+_VERSION_PARTS = [
+    f"/v{__optimade_version__.split('.')[0]}",  # major
+    f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # minor
+    f"/v{__optimade_version__}",  # patch
+]
+
+
+def _get_versioned_base_url(base_url: str) -> str:
+    """Retrieve the versioned base URL"""
+    res = ""
+    for version in _VERSION_PARTS:
+        versioned_base_url = (
+            base_url + version[1:] if base_url.endswith("/") else base_url + version
+        )
+        if requests.get(f"{versioned_base_url}/info").status_code == 200:
+            res = versioned_base_url
+            break
+    return res
+
+
 def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
     """ Get curated list of database providers
 
@@ -125,21 +145,9 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
         if attributes["base_url"] is None:
             continue
 
-        # Get versioned base URL
-        version_parts = [
-            f"/v{__optimade_version__.split('.')[0]}",  # major
-            f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # minor
-            f"/v{__optimade_version__}",  # patch
-        ]
-        for version in version_parts:
-            base_url = (
-                attributes["base_url"] + version[1:]
-                if attributes["base_url"].endswith("/")
-                else attributes["base_url"] + version
-            )
-            if requests.get(f"{base_url}/info").status_code == 200:
-                attributes["base_url"] = base_url
-                break
+        versioned_base_url = _get_versioned_base_url(attributes["base_url"])
+        if versioned_base_url:
+            attributes["base_url"] = versioned_base_url
         else:
             # Not a valid/supported provider: skip
             continue
@@ -170,6 +178,13 @@ def get_list_of_provider_implementations(
 
         # Skip if there is no base_url
         if attributes["base_url"] is None:
+            continue
+
+        versioned_base_url = _get_versioned_base_url(attributes["base_url"])
+        if versioned_base_url:
+            attributes["base_url"] = versioned_base_url
+        else:
+            # Not a valid/supported provider: skip
             continue
 
         res.append((attributes["name"], attributes))
