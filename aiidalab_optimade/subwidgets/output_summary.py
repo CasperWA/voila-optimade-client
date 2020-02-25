@@ -107,7 +107,7 @@ class StructureDataSites(ipw.HTML):
     structure = traitlets.Instance(StructureData, allow_none=True)
 
     def __init__(self, structure: StructureData = None, **kwargs):
-        # For more information on how to controle the table appearance please visit:
+        # For more information on how to control the table appearance please visit:
         # https://css-tricks.com/complete-guide-table-element/
         self._style = """
         <style>
