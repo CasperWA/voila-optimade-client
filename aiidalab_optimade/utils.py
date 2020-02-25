@@ -1,8 +1,7 @@
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
 import requests
-
-from optimade import __api_version__
+from simplejson import JSONDecodeError
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
@@ -11,9 +10,13 @@ from aiidalab_optimade.exceptions import (
     NotOkResponse,
 )
 
+
+# Supported OPTiMaDe spec version
+__optimade_version__ = "0.10.1"
+
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
-PROVIDERS_URL = "https://www.optimade.org/providers/links"
+PROVIDERS_URL = "https://providers.optimade.org/v1/links"
 
 
 def fetch_providers(providers_url: str = None) -> list:
@@ -56,7 +59,7 @@ def fetch_provider_child_dbs(base_url: str) -> list:
     try:
         implementations = requests.get(links_endpoint, timeout=TIMEOUT_SECONDS)
     except Exception:
-        raise NonExistent("The URL cannot be opened: {}".format(links_endpoint))
+        raise NonExistent(f"The URL cannot be opened: {links_endpoint}")
 
     if implementations.status_code == 200:
         implementations = implementations.json()
@@ -64,17 +67,49 @@ def fetch_provider_child_dbs(base_url: str) -> list:
         implementations = {}
 
     # Return all implementations of type "child"
-    return [
+    implementations = [
         implementation
         for implementation in implementations.get("data", [])
         if implementation.get("type", "") == "child"
     ]
 
+    # If there are no implementations, try if index meta-database == implementation database
+    if not implementations:
+        structures_endpoint = "/structures?page_limit=1"
+        structures_endpoint = (
+            base_url + structures_endpoint[1:]
+            if base_url.endswith("/")
+            else base_url + structures_endpoint
+        )
+
+        try:
+            implementations = requests.get(structures_endpoint, timeout=TIMEOUT_SECONDS)
+        except Exception:  # pylint: disable=broad-except
+            return []
+
+        if implementations.status_code == 200:
+            implementations = implementations.json()
+        else:
+            return []
+
+        attributes = implementations.get("meta", {}).get("provider", {})
+        implementations = []
+        if attributes:
+            attributes.update({"base_url": base_url})
+            for field in ("prefix", "index_base_url"):
+                attributes.pop(field, None)
+            implementations = [{"attributes": attributes}]
+
+        if not implementations:
+            implementations = "structures found"
+
+    return implementations
+
 
 def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
     """ Get curated list of database providers
 
-    Return formatted list of tuples to use for a dropdown-widget.
+    Return formatted list of tuples to use with a dropdown-widget.
     """
     providers = fetch_providers()
     res = []
@@ -90,18 +125,45 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
         if attributes["base_url"] is None:
             continue
 
-        provider_name = attributes.pop("name")
-        res.append((provider_name, attributes))
+        # Get versioned base URL
+        version_parts = [
+            f"/v{__optimade_version__.split('.')[0]}",  # major
+            f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # minor
+            f"/v{__optimade_version__}",  # patch
+        ]
+        for version in version_parts:
+            base_url = (
+                attributes["base_url"] + version[1:]
+                if attributes["base_url"].endswith("/")
+                else attributes["base_url"] + version
+            )
+            if requests.get(f"{base_url}/info").status_code == 200:
+                attributes["base_url"] = base_url
+                break
+        else:
+            # Not a valid/supported provider: skip
+            continue
+
+        res.append((attributes["name"], attributes))
 
     return res
 
 
 def get_list_of_provider_implementations(
-    provider_attributes: str = None,
+    provider_attributes: dict,
 ) -> List[Tuple[str, dict]]:
-    """Get list of provider implementations"""
+    """Get list of provider implementations
+
+    Return formatted list of tuples to use with a dropdown-widget.
+    """
     child_dbs = fetch_provider_child_dbs(provider_attributes["base_url"])
     res = []
+
+    if isinstance(child_dbs, str) and child_dbs == "structures found":
+        # Use info from provider attributes
+        database = {"attributes": provider_attributes}
+        database["attributes"]["name"] = "Main database"
+        child_dbs = [database]
 
     for child_db in child_dbs:
         attributes = child_db["attributes"]
@@ -110,8 +172,7 @@ def get_list_of_provider_implementations(
         if attributes["base_url"] is None:
             continue
 
-        child_db_name = attributes.pop("name")
-        res.append((child_db_name, attributes))
+        res.append((attributes["name"], attributes))
 
     return res
 
@@ -124,11 +185,11 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     if version.startswith("v"):
         version = version[1:]
 
-    if version != __api_version__:
+    if version != __optimade_version__:
         if raise_on_mismatch:
             raise ApiVersionError(
                 "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
-                    __api_version__, version
+                    __optimade_version__, version
                 )
             )
         return False
@@ -136,7 +197,7 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     return True
 
 
-def perform_optimade_query(  # pylint: disable=too-many-arguments
+def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
     base_url: str,
     endpoint: str = None,
     filter_: Union[dict, str] = None,
@@ -181,7 +242,12 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments
     url_query = urlencode(queries)
     response = requests.get("{}?{}".format(url_path, url_query))
 
-    return response.json()
+    try:
+        response = response.json()
+    except JSONDecodeError:
+        response = {"errors": []}
+
+    return response
 
 
 def get_structures_schema(base_url: str) -> dict:

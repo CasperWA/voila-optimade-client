@@ -6,7 +6,12 @@ AiiDA Lab App that implements an OPTiMaDe client
 import json
 from pathlib import Path
 
-from aiidalab_optimade.optimade_query import OptimadeQueryWidget  # noqa
+from .optimade_query import OptimadeQueryWidget
+from .optimade_results import OptimadeResultsWidget
+
+
+__all__ = ("OptimadeQueryWidget", "OptimadeResultsWidget")
+
 
 PATH_TO_METADATA = Path(__file__).parent.parent.joinpath("metadata.json").resolve()
 with open(PATH_TO_METADATA, "r") as fp:
