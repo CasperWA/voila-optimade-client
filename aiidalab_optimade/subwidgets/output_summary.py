@@ -134,7 +134,6 @@ class StructureDataSites(ipw.HTML):
             dataf = pd.DataFrame(
                 self._format_sites(), columns=["Elements", "Occypancy", "Position"]
             )
-            # self.value += dataf.to_string()
             self.value += dataf.to_html(classes="df", index=False)
 
     def freeze(self):
