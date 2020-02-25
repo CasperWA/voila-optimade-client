@@ -33,6 +33,7 @@ def test_exmpl_not_in_list():
     exmpl = (
         "Example provider",
         {
+            "name": "Example provider",
             "description": "Provider used for examples, not to be assigned to a real database",
             "base_url": "https://example.com/index/optimade",
             "homepage": "https://example.com",
@@ -42,9 +43,10 @@ def test_exmpl_not_in_list():
     materials_cloud = (
         "Materials Cloud",
         {
+            "name": "Materials Cloud",
             "description": "Materials Cloud: A platform for Open Science built for seamless "
             "sharing of resources in computational materials science",
-            "base_url": "https://www.materialscloud.org/optimade",
+            "base_url": "https://www.materialscloud.org/optimade/v0",
             "homepage": "https://www.materialscloud.org",
         },
     )
