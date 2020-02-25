@@ -4,7 +4,7 @@ import traitlets
 import ase
 from aiida.orm import StructureData
 
-from aiidalab_optimade.subwidgets import StructureDataOutput
+from aiidalab_optimade.subwidgets import StructureDataSummary, StructureDataSites
 
 
 class OptimadeResultsWidget(ipw.Tab):
@@ -18,7 +18,10 @@ class OptimadeResultsWidget(ipw.Tab):
     def __init__(self, debug: bool = False, **kwargs):
         self.debug = debug
 
-        self.sections = (("Structure details", StructureDataOutput()),)
+        self.sections = (
+            ("Structure details", StructureDataSummary()),
+            ("Sites", StructureDataSites()),
+        )
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),

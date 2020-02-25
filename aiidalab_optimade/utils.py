@@ -14,7 +14,7 @@ from aiidalab_optimade.exceptions import (
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
-PROVIDERS_URL = "https://www.optimade.org/providers/links"
+PROVIDERS_URL = "https://providers.optimade.org/v1/links"
 
 
 def fetch_providers(providers_url: str = None) -> list:

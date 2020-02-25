@@ -6,11 +6,11 @@ import traitlets
 from aiida.orm import StructureData
 
 
-__all__ = ("StructureDataOutput",)
+__all__ = ("StructureDataSummary", "StructureDataSites")
 
 
-class StructureDataOutput(ipw.VBox):
-    """ Structure Data Output Widget
+class StructureDataSummary(ipw.VBox):
+    """StructureData summary output
     Show structure data as a set of HTML widgets in a VBox widget.
     """
 
@@ -95,3 +95,52 @@ class StructureDataOutput(ipw.VBox):
         out += r" \end{smallmatrix} \Bigr)$"
 
         return out
+
+
+class StructureDataSites(ipw.VBox):
+    """StructureData sites output
+    Show structure data as a set of HTML widgets in a VBox widget.
+    """
+
+    structure = traitlets.Instance(StructureData, allow_none=True)
+
+    _output_format = "<b>{title}</b>: {value}"
+    _widget_data = {
+        "Chemical formula (hill)": ipw.HTMLMath(),
+        "Elements": ipw.HTML(),
+        "Number of sites": ipw.HTML(),
+        "Unit cell": ipw.HTMLMath(),
+        "Unit cell volume": ipw.HTML(),
+    }
+
+    def __init__(self, structure: StructureData = None, **kwargs):
+        super().__init__(children=tuple(self._widget_data.values()), **kwargs)
+        self.observe(self._on_change_structure, names="structure")
+        self.structure = structure
+
+    def _on_change_structure(self, change):
+        """Update output according to change in `data`"""
+        new_structure = change["new"]
+        if new_structure is None:
+            for widget in self._widget_data.values():
+                widget.value = ""
+            return
+        self._update_output()
+
+    def _update_output(self):
+        """Update widget values in self._widget_data"""
+        data = self._extract_data_from_structure()
+        for field, widget in self._widget_data.items():
+            widget.value = self._output_format.format(
+                title=field, value=data.get(field, "")
+            )
+
+    def freeze(self):
+        """Disable widget"""
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+
+    def reset(self):
+        """Reset widget"""
+        self.structure = None
