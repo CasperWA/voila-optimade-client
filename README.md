@@ -1,6 +1,9 @@
 # OPTiMaDe client for AiiDA Lab
 
-AiiDA Lab App that implements an [OPTiMaDe](http://www.optimade.org) client.
+Query for and import structures from [OPTiMaDe](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
+Note, this application handles the structures by converting them to ASE `Atoms` or AiiDA `StructureData` objects.
+
+Current OPTiMaDe API version: `0.10.1`
 
 ## Installation
 
@@ -12,90 +15,38 @@ Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) t
 
 ### Default
 
-To use the OPTiMaDe structure importer in your own Jupyter notebook / AiiDA Lab app write the following:
+To use the OPTiMaDe structure importer in your own AiiDA Lab app write the following:
 
 ```python
-from aiidalab_optimade import OptimadeStructureImport
+from aiidalab_optimade import OptimadeQueryWidget
+from aiidalab_widgets_base.viewers import StructureDataViewer
+from ipywidgets import dlink
 
-structure_import = OptimadeStructureImport()
-structure_import.display()
+structure_query = OptimadeQueryWidget()
+structure_viewer = StructureDataViewer()
+
+_ = dlink((structure_query, 'structure'), (structure_viewer, 'structure'))  # Save to `_` in order to suppress output in App Mode
+
+display(structure_query)
+display(structure_viewer)
 ```
 
-This will immediately display a Dropdown-widget of current structure databases with the OPTiMaDe API implemented.
+This will immediately display a query widget with a dropdown of current structure databases that implements the OPTiMaDe API.
 
 Then you can filter to find a family of structures according to elements, number of elements, chemical formula, and more.
-See the [OPTiMaDe API documentation](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.md) for the full list and their description.
+See the [OPTiMaDe API specification document](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list and their description.
 
-From another Dropdown-widget, you can single out a structure, view its unit cell and a list of relevant data will be shown.
+In order to get tabs delving deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.
+The link for this should then look like: `_ = dlink((structure_query, 'structure'), (structure_output, 'entity'))`, given that you initiate `OptimadeResultsWidget` in the variable `structure_output`.
 
-Finally, the chosen structure can be safed in your local AiiDA Lab database as either `StructureData` or `CifData`.
+See the notebook [`OPTiMaDe general.ipynb`](OPTiMaDe general.ipynb) for an example of how to set up a general purpose OPTiMADe importer.
 
-### Detailed
+### Embedded
 
-#### Display parts
+The query widget may also be embedded into another app.  
+For this a more "minimalistic" version of the widget can be initiated by passing `embedded=True` upon initiating the widget, i.e., `structure_query = OptimadeQueryWidget(embedded=True)`.
 
-You can choose to only display certain parts of the structure importer.
-
-As an example, if you want to pre-specify a specific OPTiMaDe database to query and do not want the user of your app to be able to choose another, you could write:
-
-```python
-from aiidalab_optimade import OptimadeStructureImport
-
-structure_import = OptimadeStructureImport()
-structure_import.database("COD")  # Use Crystallography Open Database
-```
-
-or simply
-
-```python
-structure_import = OptimadeStructureImport(database="COD")  # Use Crystallography Open Database
-```
-
-Then you can display the structure importer without the Dropdown-widget of databases by writing
-
-```python
-structure_import.display(no_host=True)
-```
-
-or you can choose the parts of the structure importer individually, leaving out `"host"`
-
-```python
-structure_import.display(parts=["filter", "select", "viewer", "store"])
-```
-
-> **Note**: If `"host"` is included in `parts`, `no_host` has no effect.
-
-The included databases for now are:
-
-* Crystallography Open Database (COD) - `"cod"`
-* Your local AiiDA Lab database - `"aiida"`
-
-To specify a custom database, one can use:
-
-* Custom database - `"custom"`
-
-> **Note**: When specifying a custom database, one *must* also provide a host URL.
-
-#### Custom OPTiMaDe database - specify host
-
-This can be done when instantiating an object of the `OptimadeStructureImport()` class
-
-```python
-structure_import = OptimadeStructureImport(database="Custom", host="localhost:5000")
-```
-
-or afterwards
-
-```python
-structure_import.host("localhost:5000")
-structure_import.database("Custom")
-```
-
-Another way to do this in a single line:
-
-```python
-structure_import.database("Custom", host="localhost:5000")
-```
+Everything else works the same - so you would still have to link up the query widget to the rest of your app.
 
 ## License
 
@@ -104,3 +55,4 @@ MIT. The terms of the license can be found in the LICENSE file.
 ## Contact
 
 aiidalab@materialscloud.org
+casper.andersen@epfl.ch

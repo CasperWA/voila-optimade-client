@@ -6,9 +6,6 @@
 *.egg*
 .DS_Store
 
-# editors
-.vscode
-
 # jupyter
 .ipynb_checkpoints
 .*.ipynb

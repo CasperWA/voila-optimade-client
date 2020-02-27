@@ -1,9 +1,9 @@
 {
     "title": "OPTiMaDe client",
-    "description": "AiiDA Lab App that implements an OPTiMaDe client",
-    "version": "1.0-alpha1",
+    "description": "Query for and import structures from OPTiMaDe providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)\nNote, this application handles the structures by converting them to ASE Atoms or AiiDA StructureData objects.",
+    "version": "2.0-a1",
     "authors": "AiiDA Lab Team",
     "state": "development",
-    "logo": "img/optimade_square.png",
-    "external_url": "http://www.optimade.org"
+    "logo": "img/optimade_logo.png",
+    "external_url": "https://www.optimade.org"
 }
