@@ -7,7 +7,12 @@ import ase
 
 from aiida.orm import StructureData
 
-from aiidalab_optimade.converters import get_aiida_structure_data
+from optimade.models import StructureResource as OptimadeStructure
+
+from aiidalab_optimade.converters import (
+    get_aiida_structure_data,
+    get_ase_atoms,
+)
 from aiidalab_optimade.exceptions import InputError
 from aiidalab_optimade.subwidgets import (
     ProvidersImplementations,
@@ -180,7 +185,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         """Query helper function"""
 
         # If a complete link is provided, use it straight up
-        print(link)
         if link is not None:
             return requests.get(link).json()
 
@@ -238,7 +242,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         structures = []
 
         for entry in data:
-            structure = get_aiida_structure_data(entry)
+            optimade_structure = OptimadeStructure(**entry)
+            structure = get_aiida_structure_data(optimade_structure)
 
             if structure.has_vacancies or structure.is_alloy:
                 continue
@@ -249,7 +254,10 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             entry_name = "{} (id={})".format(formula, optimade_id)
             entry_add = (
                 entry_name,
-                {"structure": structure, "ase_atoms": structure.get_ase()},
+                {
+                    "structure": structure,
+                    "ase_atoms": get_ase_atoms(optimade_structure),
+                },
             )
             structures.append(entry_add)
 
