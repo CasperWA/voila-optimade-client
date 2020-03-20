@@ -1,19 +1,11 @@
 from typing import Union
+from simplejson import JSONDecodeError
 import requests
 import traitlets
 import ipywidgets as ipw
 
-import ase
-
-from aiida.orm import StructureData
-
-from optimade.models import StructureResource as OptimadeStructure
-
-from aiidalab_optimade.converters import (
-    get_aiida_structure_data,
-    get_ase_atoms,
-)
-from aiidalab_optimade.exceptions import InputError
+from aiidalab_optimade.converters import Structure
+from aiidalab_optimade.exceptions import InputError, BadResource
 from aiidalab_optimade.subwidgets import (
     ProvidersImplementations,
     StructureDropdown,
@@ -35,10 +27,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
     NOTE: Only supports offset-pagination at the moment.
     """
 
-    structure = traitlets.Union(
-        [traitlets.Instance(ase.Atoms), traitlets.Instance(StructureData)],
-        allow_none=True,
-    )
+    structure = traitlets.Instance(Structure, allow_none=True)
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
 
     def __init__(
@@ -186,7 +175,11 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         # If a complete link is provided, use it straight up
         if link is not None:
-            return requests.get(link).json()
+            try:
+                response = requests.get(link).json()
+            except JSONDecodeError:
+                response = {"errors": {}}
+            return response
 
         # Avoid structures that cannot be converted to an ASE.Atoms instance
         add_to_filter = 'NOT structure_features HAS ANY "disorder","unknown_positions"'
@@ -242,24 +235,29 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         structures = []
 
         for entry in data:
-            optimade_structure = OptimadeStructure(**entry)
-            structure = get_aiida_structure_data(optimade_structure)
+            structure = Structure(entry)
 
-            if structure.has_vacancies or structure.is_alloy:
-                continue
+            formula = structure.attributes.chemical_formula_descriptive
+            if formula is None:
+                formula = structure.attributes.chemical_formula_reduced
+            if formula is None:
+                formula = structure.attributes.chemical_formula_anonymous
+            if formula is None:
+                formula = structure.attributes.chemical_formula_hill
+            if formula is None:
+                raise BadResource(
+                    resource=structure,
+                    fields=[
+                        "chemical_formula_descriptive",
+                        "chemical_formula_reduced",
+                        "chemical_formula_anonymous",
+                        "chemical_formula_hill",
+                    ],
+                    msg="At least one of the following chemical formula fields should have a valid value",
+                )
 
-            formula = structure.get_formula(mode="hill_compact")
-
-            optimade_id = entry["id"]
-            entry_name = "{} (id={})".format(formula, optimade_id)
-            entry_add = (
-                entry_name,
-                {
-                    "structure": structure,
-                    "ase_atoms": get_ase_atoms(optimade_structure),
-                },
-            )
-            structures.append(entry_add)
+            entry_name = f"{formula} (id={structure.id})"
+            structures.append((entry_name, {"structure": structure}))
 
         # Update list of structures in dropdown widget
         self.structure_drop.set_options(structures)

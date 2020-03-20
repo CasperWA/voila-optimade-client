@@ -1,52 +1,22 @@
 import re
-from typing import Match, List, Dict, Union
+from typing import Match, List
 import ipywidgets as ipw
 import traitlets
 
 import pandas as pd
 
-from optimade.models import (
-    Species,
-    StructureResource,
-)
-from optimade.models.structures import Vector3D
-
-from aiidalab_optimade.converters import Structure
+from aiida.orm import StructureData
 
 
-__all__ = ("StructureSummary", "StructureSites")
+__all__ = ("StructureDataSummary", "StructureDataSites")
 
 
-def calc_cell_volume(cell: List[Vector3D]):
-    """
-    Calculates the volume of a cell given the three lattice vectors.
-
-    It is calculated as cell[0] . (cell[1] x cell[2]), where . represents
-    a dot product and x a cross product.
-
-    NOTE: Taken from `aiida-core` at aiida.orm.nodes.data.structure
-
-    :param cell: the cell vectors; the must be a 3x3 list of lists of floats,
-            no other checks are done.
-
-    :returns: the cell volume.
-    """
-    # returns the volume of the primitive cell: |a_1 . (a_2 x a_3)|
-    a_1 = cell[0]
-    a_2 = cell[1]
-    a_3 = cell[2]
-    a_mid_0 = a_2[1] * a_3[2] - a_2[2] * a_3[1]
-    a_mid_1 = a_2[2] * a_3[0] - a_2[0] * a_3[2]
-    a_mid_2 = a_2[0] * a_3[1] - a_2[1] * a_3[0]
-    return abs(a_1[0] * a_mid_0 + a_1[1] * a_mid_1 + a_1[2] * a_mid_2)
-
-
-class StructureSummary(ipw.VBox):
-    """Structure Summary Output
+class StructureDataSummary(ipw.VBox):
+    """StructureData Summary Output
     Show structure data as a set of HTML widgets in a VBox widget.
     """
 
-    structure = traitlets.Instance(Structure, allow_none=True)
+    structure = traitlets.Instance(StructureData, allow_none=True)
 
     _output_format = "<b>{title}</b>: {value}"
     _widget_data = {
@@ -57,7 +27,7 @@ class StructureSummary(ipw.VBox):
         "Unit cell volume": ipw.HTML(),
     }
 
-    def __init__(self, structure: Union[Structure, StructureResource] = None, **kwargs):
+    def __init__(self, structure: StructureData = None, **kwargs):
         super().__init__(children=tuple(self._widget_data.values()), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
@@ -90,15 +60,15 @@ class StructureSummary(ipw.VBox):
         self.structure = None
 
     def _extract_data_from_structure(self) -> dict:
-        """Extract and return desired data from Structure"""
+        """Extract and return desired data from StructureData"""
         return {
             "Chemical formula (hill)": self._chemical_formula(
-                self.structure.attributes.chemical_formula_reduced
+                self.structure.get_formula(mode="hill_compact")
             ),
-            "Elements": ", ".join(sorted(self.structure.attributes.elements)),
-            "Number of sites": str(self.structure.attributes.nsites),
-            "Unit cell": self._unit_cell(self.structure.attributes.lattice_vectors),
-            "Unit cell volume": f"{calc_cell_volume(self.structure.attributes.lattice_vectors):.2f} Å<sup>3</sup>",
+            "Elements": ", ".join(sorted(self.structure.get_symbols_set())),
+            "Number of sites": str(len(self.structure.sites)),
+            "Unit cell": self._unit_cell(self.structure.cell),
+            "Unit cell volume": f"{self.structure.get_cell_volume():.2f} Å<sup>3</sup>",
         }
 
     @staticmethod
@@ -129,14 +99,14 @@ class StructureSummary(ipw.VBox):
         return out
 
 
-class StructureSites(ipw.HTML):
-    """Structure Sites Output
-    Reimplements the viewer for AiiDA Dicts (from AiiDA lab)
+class StructureDataSites(ipw.HTML):
+    """StructureData Sites Output
+    Reimplements the viewer for AiiDA Dicts
     """
 
-    structure = traitlets.Instance(Structure, allow_none=True)
+    structure = traitlets.Instance(StructureData, allow_none=True)
 
-    def __init__(self, structure: Union[Structure, StructureResource] = None, **kwargs):
+    def __init__(self, structure: StructureData = None, **kwargs):
         # For more information on how to control the table appearance please visit:
         # https://css-tricks.com/complete-guide-table-element/
         self._style = """
@@ -176,42 +146,26 @@ class StructureSites(ipw.HTML):
         self.structure = None
 
     def _format_sites(self) -> List[str]:
-        """Format OPTIMADE Structure into list of formatted HTML strings
-        Columns:
-        - Elements
-        - Occupancy
-        - Position
-        """
-        species: Dict[str, Species] = {
-            _.name: _ for _ in self.structure.attributes.species.copy()
-        }
-
+        """Format AiiDA StructureData into list of formatted HTML strings"""
         res = []
-        for site_number in range(self.structure.attributes.nsites):
-            symbol_name = self.structure.attributes.species_at_sites[site_number]
-
-            for index, symbol in enumerate(species[symbol_name].chemical_symbols):
-                if symbol == "vacancy":
-                    species[symbol_name].chemical_symbols.pop(index)
-                    species[symbol_name].concentration.pop(index)
+        for site in self.structure.sites:
+            for kind in self.structure.kinds:
+                if kind.name == site.kind_name:
+                    site_kind = kind
                     break
+            else:
+                raise Exception(
+                    f"Kind cannot be found for site: {site}. Kinds: {self.structure.kinds}"
+                )
+            occupancies = site_kind.weights
+            if re.match(r".*X[^e]", site.kind_name):
+                occupancies.append(round(1.0 - sum(occupancies), 2))
 
             res.append(
                 (
-                    ", ".join(species[symbol_name].chemical_symbols),
-                    ", ".join(
-                        [
-                            str(occupation)
-                            for occupation in species[symbol_name].concentration
-                        ]
-                    ),
-                    str(
-                        tuple(
-                            self.structure.attributes.cartesian_site_positions[
-                                site_number
-                            ]
-                        )
-                    ),
+                    ", ".join([str(_) for _ in site_kind.symbols]),
+                    ", ".join([str(_) for _ in occupancies]),
+                    str(site.position),
                 )
             )
         return res

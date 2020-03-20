@@ -1,26 +1,27 @@
 import ipywidgets as ipw
 import traitlets
 
-import ase
-from aiida.orm import StructureData
+from aiidalab_optimade.converters import Structure
 
-from aiidalab_optimade.subwidgets import StructureDataSummary, StructureDataSites
+from aiidalab_optimade.subwidgets import (
+    # StructureDataSummary,
+    # StructureDataSites,
+    StructureSummary,
+    StructureSites,
+)
 
 
 class OptimadeResultsWidget(ipw.Tab):
     """Summarize OPTiMaDe entity"""
 
-    entity = traitlets.Union(
-        [traitlets.Instance(ase.Atoms), traitlets.Instance(StructureData)],
-        allow_none=True,
-    )
+    entity = traitlets.Instance(Structure, allow_none=True,)
 
     def __init__(self, debug: bool = False, **kwargs):
         self.debug = debug
 
         self.sections = (
-            ("Structure details", StructureDataSummary()),
-            ("Sites", StructureDataSites()),
+            ("Structure details", StructureSummary()),
+            ("Sites", StructureSites()),
         )
 
         super().__init__(
@@ -38,13 +39,9 @@ class OptimadeResultsWidget(ipw.Tab):
         new_entity = change["new"]
         if new_entity is None:
             self.reset()
-            return
-
-        if isinstance(new_entity, ase.Atoms):
-            new_entity = StructureData(ase=new_entity)
-
-        for _, widgets in self.sections:
-            widgets.structure = new_entity
+        else:
+            for _, widgets in self.sections:
+                widgets.structure = new_entity
 
     def freeze(self):
         """Disable widget"""

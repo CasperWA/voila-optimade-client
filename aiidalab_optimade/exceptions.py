@@ -1,4 +1,6 @@
-from typing import Any
+from typing import Any, List, Union
+
+from optimade.models import Resource
 
 
 class ApiVersionError(Exception):
@@ -40,5 +42,52 @@ class ParserError(Exception):
         self.value = value if value is not None else ""
         self.msg = msg if msg is not None else "A general error occured during parsing."
         super().__init__(
-            f"Field: {self.field}, Value: {self.value}, Message: {self.msg}"
+            "ParserError\n"
+            f"  Field: {self.field}, Value: {self.value}, Message: {self.msg}"
+        )
+
+
+class ImplementationError(Exception):
+    """Base error related to the current OPTIMADE implementation being handled/queried"""
+
+
+class BadResource(ImplementationError):
+    """Resource does not fulfill requirements from supported version of the OPTIMADE API spec"""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self, resource: Resource, fields: Union[List[str], str] = None, msg: str = None,
+    ):
+        self.resource = resource
+        self.fields = fields if fields is not None else []
+        self.msg = (
+            msg
+            if msg is not None
+            else f"A bad resource broke my flow: <id: {self.resource.id}, type: {self.resource.type}>"
+        )
+
+        if not isinstance(self.fields, list):
+            self.fields = [self.fields]
+
+        self.values = []
+        for field in self.fields:
+            value = getattr(self.resource, field, None)
+
+            if value is None:
+                value = getattr(self.resource.attributes, field, None)
+
+            if value is None:
+                # Cannot find value for field
+                value = f"<Cannot be retrieved based on given field: {field}>"
+
+            self.values.append(value)
+
+        super().__init__(
+            f"BadResource <id: {self.resource.id}, type: {self.resource.type}>\n"
+            f"Message: {self.msg}\n"
+            f"\n".join(
+                [
+                    f"  Field: {field}, Value: {value}"
+                    for field, value in zip(self.fields, self.values)
+                ]
+            )
         )
