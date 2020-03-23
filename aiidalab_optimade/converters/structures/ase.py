@@ -3,7 +3,13 @@ from typing import Dict
 from optimade.models import Species as OptimadeStructureSpecies
 from optimade.models import StructureResource as OptimadeStructure
 
-from ase import Atoms, Atom
+try:
+    from ase import Atoms, Atom
+except (ImportError, ModuleNotFoundError):
+    from warnings import warn
+
+    Atoms = None
+    ASE_NOT_FOUND = "ASE not found, cannot convert structure to an ASE Atoms"
 
 
 __all__ = ("get_ase_atoms",)
@@ -17,6 +23,9 @@ def get_ase_atoms(optimade_structure: OptimadeStructure) -> Atoms:
     :param optimade_structure: OPTiMaDe structure
     :return: ASE.Atoms
     """
+    if globals().get("Atoms", None) is None:
+        warn(ASE_NOT_FOUND)
+        return None
 
     attributes = optimade_structure.attributes
 

@@ -4,7 +4,15 @@ from optimade.models import Species as OptimadeStructureSpecies
 from optimade.models import StructureResource as OptimadeStructure
 from optimade.models.structures import Periodicity
 
-from pymatgen import Structure, Molecule
+try:
+    from pymatgen import Structure, Molecule
+
+except (ImportError, ModuleNotFoundError):
+    from warnings import warn
+
+    Structure = None
+    Molecule = None
+    PYMATGEN_NOT_FOUND = "Pymatgen not found, cannot convert structure to a pymatgen Structure or Molecule"
 
 
 __all__ = ("get_pymatgen_structure",)
@@ -18,6 +26,9 @@ def get_pymatgen_structure(
     :param optimade_structure: OPTiMaDe structure
     :return: pymatgen.Structure , pymatgen.Molecule
     """
+    if globals().get("Structure", None) is None:
+        warn(PYMATGEN_NOT_FOUND)
+        return None
 
     if optimade_structure.attributes.dimension_types == (Periodicity.PERIODIC,) * 3:
         return _get_structure(optimade_structure)

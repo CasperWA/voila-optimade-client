@@ -7,6 +7,7 @@ PATH_TO_METADATA = Path(__file__).parent.joinpath("metadata.json").resolve()
 with open(PATH_TO_METADATA, "r") as fp:
     METADATA = json.load(fp)
 
+AIIDALAB = ["aiidalab-widgets-base~=1.0.0b2"]
 TESTING = ["pytest", "pytest-cov", "codecov"]
 DEV = ["pylint", "black", "pre-commit"] + TESTING
 
@@ -17,12 +18,8 @@ setup(
     license="MIT Licence",
     author="The AiiDA Lab team",
     python_requires=">=3.6",
-    install_requires=[
-        "optimade~=0.7",
-        "requests~=2.23",
-        "aiidalab-widgets-base~=1.0.0b2",
-    ],
-    extras_require={"dev": DEV, "testing": TESTING},
+    install_requires=["optimade~=0.7", "requests~=2.23"],
+    extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: AiiDA",

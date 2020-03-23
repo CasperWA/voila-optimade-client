@@ -1,5 +1,14 @@
-from aiida.orm.nodes.data.structure import StructureData, Kind, Site
 from optimade.models import StructureResource as OptimadeStructure
+
+try:
+    from aiida.orm.nodes.data.structure import StructureData, Kind, Site
+except (ImportError, ModuleNotFoundError):
+    from warnings import warn
+
+    StructureData = None
+    AIIDA_NOT_FOUND = (
+        "AiiDA not found, cannot convert structure to an AiiDA StructureData"
+    )
 
 
 __all__ = ("get_aiida_structure_data",)
@@ -10,6 +19,9 @@ def get_aiida_structure_data(optimade_structure: OptimadeStructure) -> Structure
     :param optimade_structure: OPTiMaDe structure
     :return: StructureData
     """
+    if globals().get("StructureData", None) is None:
+        warn(AIIDA_NOT_FOUND)
+        return None
 
     attributes = optimade_structure.attributes
     structure = StructureData(cell=attributes.lattice_vectors)

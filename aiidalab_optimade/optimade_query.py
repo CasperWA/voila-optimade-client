@@ -253,7 +253,8 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                         "chemical_formula_anonymous",
                         "chemical_formula_hill",
                     ],
-                    msg="At least one of the following chemical formula fields should have a valid value",
+                    msg="At least one of the following chemical formula fields "
+                    "should have a valid value",
                 )
 
             entry_name = f"{formula} (id={structure.id})"

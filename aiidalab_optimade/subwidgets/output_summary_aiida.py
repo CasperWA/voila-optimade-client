@@ -5,7 +5,12 @@ import traitlets
 
 import pandas as pd
 
-from aiida.orm import StructureData
+try:
+    from aiida.orm import StructureData
+except (ImportError, ModuleNotFoundError):
+    from warnings import warn
+
+    warn("AiiDA not found, cannot convert structure to an AiiDA StructureData")
 
 
 __all__ = ("StructureDataSummary", "StructureDataSites")

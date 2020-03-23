@@ -98,7 +98,8 @@ class StructureSummary(ipw.VBox):
             "Elements": ", ".join(sorted(self.structure.attributes.elements)),
             "Number of sites": str(self.structure.attributes.nsites),
             "Unit cell": self._unit_cell(self.structure.attributes.lattice_vectors),
-            "Unit cell volume": f"{calc_cell_volume(self.structure.attributes.lattice_vectors):.2f} Å<sup>3</sup>",
+            "Unit cell volume": f"{calc_cell_volume(self.structure.attributes.lattice_vectors):.2f}"
+            " Å<sup>3</sup>",
         }
 
     @staticmethod
