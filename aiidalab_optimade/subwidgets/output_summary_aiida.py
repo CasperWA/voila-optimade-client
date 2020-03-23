@@ -10,7 +10,13 @@ try:
 except (ImportError, ModuleNotFoundError):
     from warnings import warn
 
-    warn("AiiDA not found, cannot convert structure to an AiiDA StructureData")
+    class StructureData:
+        """Dummy class for traitlets"""
+
+    AIIDA_NOT_FOUND = (
+        "AiiDA not found. Install aiida-core>=1.1.0 before continuing "
+        "to use the classes in this file."
+    )
 
 
 __all__ = ("StructureDataSummary", "StructureDataSites")
@@ -33,6 +39,9 @@ class StructureDataSummary(ipw.VBox):
     }
 
     def __init__(self, structure: StructureData = None, **kwargs):
+        if globals().get("StructureData", None) is None:
+            warn(AIIDA_NOT_FOUND)
+
         super().__init__(children=tuple(self._widget_data.values()), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
