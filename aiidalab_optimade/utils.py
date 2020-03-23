@@ -1,7 +1,11 @@
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
 import requests
-from simplejson import JSONDecodeError
+
+try:
+    from simplejson import JSONDecodeError
+except (ImportError, ModuleNotFoundError):
+    from json import JSONDecodeError
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,

@@ -1,8 +1,12 @@
 from typing import Union
-from simplejson import JSONDecodeError
 import requests
 import traitlets
 import ipywidgets as ipw
+
+try:
+    from simplejson import JSONDecodeError
+except (ImportError, ModuleNotFoundError):
+    from json import JSONDecodeError
 
 from aiidalab_optimade.converters import Structure
 from aiidalab_optimade.exceptions import InputError, BadResource
