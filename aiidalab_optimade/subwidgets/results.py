@@ -45,7 +45,7 @@ class StructureDropdown(ipw.Dropdown):
 
 
 class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attributes
-    """Flip through the OPTiMaDe 'pages'
+    """Flip through the OPTIMADE 'pages'
 
     NOTE: Only supports offset-pagination at the moment.
     """

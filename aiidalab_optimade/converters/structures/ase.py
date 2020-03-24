@@ -16,11 +16,11 @@ __all__ = ("get_ase_atoms",)
 
 
 def get_ase_atoms(optimade_structure: OptimadeStructure) -> Atoms:
-    """ Get ASE Atoms from OPTiMaDe structure
+    """ Get ASE Atoms from OPTIMADE structure
 
     NOTE: Cannot handle partial occupancies (this includes vacancies)
 
-    :param optimade_structure: OPTiMaDe structure
+    :param optimade_structure: OPTIMADE structure
     :return: ASE.Atoms
     """
     if globals().get("Atoms", None) is None:

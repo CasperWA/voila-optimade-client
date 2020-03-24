@@ -1,9 +1,9 @@
-# OPTiMaDe client for AiiDA Lab
+# OPTIMADE client (in Jupyter)
 
-Query for and import structures from [OPTiMaDe](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
+Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
 Note, this application handles the structures by converting them to ASE `Atoms` or AiiDA `StructureData` objects.
 
-Current OPTiMaDe API version: `0.10.1`
+Current OPTIMADE API version: `0.10.1`
 
 ## Installation
 
@@ -15,7 +15,7 @@ Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) t
 
 ### Default
 
-To use the OPTiMaDe structure importer in your own AiiDA Lab app write the following:
+To use the OPTIMADE structure importer in your own AiiDA Lab app write the following:
 
 ```python
 from aiidalab_optimade import OptimadeQueryWidget
@@ -31,15 +31,15 @@ display(structure_query)
 display(structure_viewer)
 ```
 
-This will immediately display a query widget with a dropdown of current structure databases that implements the OPTiMaDe API.
+This will immediately display a query widget with a dropdown of current structure databases that implements the OPTIMADE API.
 
 Then you can filter to find a family of structures according to elements, number of elements, chemical formula, and more.
-See the [OPTiMaDe API specification document](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list and their description.
+See the [OPTIMADE API specification document](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list and their description.
 
 In order to get tabs delving deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.
 The link for this should then look like: `_ = dlink((structure_query, 'structure'), (structure_output, 'entity'))`, given that you initiate `OptimadeResultsWidget` in the variable `structure_output`.
 
-See the notebook [`OPTiMaDe general.ipynb`](OPTiMaDe general.ipynb) for an example of how to set up a general purpose OPTiMADe importer.
+See the notebook [`OPTIMADE general.ipynb`](OPTIMADE general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
 
 ### Embedded
 

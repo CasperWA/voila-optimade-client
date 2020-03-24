@@ -15,8 +15,8 @@ __all__ = ("get_aiida_structure_data",)
 
 
 def get_aiida_structure_data(optimade_structure: OptimadeStructure) -> StructureData:
-    """ Get StructureData from OPTiMaDe structure
-    :param optimade_structure: OPTiMaDe structure
+    """ Get StructureData from OPTIMADE structure
+    :param optimade_structure: OPTIMADE structure
     :return: StructureData
     """
     if globals().get("StructureData", None) is None:

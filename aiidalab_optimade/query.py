@@ -26,7 +26,7 @@ DEFAULT_FILTER_VALUE = (
 
 
 class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attributes
-    """Structure search and import widget for OPTiMaDe
+    """Structure search and import widget for OPTIMADE
 
     NOTE: Only supports offset-pagination at the moment.
     """
@@ -51,7 +51,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         )
         self.base_url.observe(self._on_database_select, names="database")
 
-        self.filter_header = ipw.HTML("<br><h4>Apply filters</h4>")
+        self.filter_header = ipw.HTML(
+            '<br><h4 style="margin-bottom:0px;padding:0px;">Apply filters</h4>'
+        )
         self.filters = FilterInputs()
         self.filters.freeze()
         self.filters.on_submit(self.retrieve_data)
@@ -64,7 +66,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         )
         self.query_button.on_click(self.retrieve_data)
 
-        self.structures_header = ipw.HTML("<br><h4>Results</h4>")
+        self.structures_header = ipw.HTML(
+            '<br><h4 style="margin-bottom:0px;padding:0px;">Results</h4>'
+        )
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
         self.error_or_status_messages = ipw.HTML("")
@@ -85,7 +89,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
                 self.error_or_status_messages,
                 self.structure_page_chooser,
             ],
-            layout=ipw.Layout(width="100%"),
+            layout=ipw.Layout(width="100%", height="auto"),
             **kwargs,
         )
 
@@ -197,7 +201,7 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         if self.debug:
             print(filter_)
 
-        # OPTiMaDe queries
+        # OPTIMADE queries
         queries = {
             "base_url": self.database[1]["base_url"],
             "filter_": filter_,

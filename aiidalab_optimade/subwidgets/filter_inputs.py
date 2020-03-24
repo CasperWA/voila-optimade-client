@@ -218,6 +218,7 @@ class FilterInputs(ipw.VBox):
         sections = [
             self.new_section(title, inputs) for title, inputs in self.FILTER_SECTIONS
         ]
+        sections[0].children[0].value = sections[0].children[0].value[len("<br>") :]
         super().__init__(children=sections, layout=self._layout, **kwargs)
 
     def reset(self):
@@ -259,7 +260,7 @@ class FilterInputs(ipw.VBox):
         return ipw.VBox(children=text_inputs, layout=self._layout)
 
     def collect_value(self) -> str:
-        """Collect inputs to a single OPTiMaDe filter query string"""
+        """Collect inputs to a single OPTIMADE filter query string"""
         parser = FilterInputParser()
 
         result = " AND ".join(

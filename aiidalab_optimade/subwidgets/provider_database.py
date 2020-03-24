@@ -11,7 +11,7 @@ __all__ = ("ProvidersImplementations",)
 
 
 class ProviderImplementationChooser(ipw.VBox):
-    """List all OPTiMaDe providers and their implementations"""
+    """List all OPTIMADE providers and their implementations"""
 
     provider = traitlets.Dict(allow_none=True)
     database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
@@ -21,6 +21,8 @@ class ProviderImplementationChooser(ipw.VBox):
 
     def __init__(self, debug: bool = False, **kwargs):
         self.debug = debug
+
+        dropdown_layout = ipw.Layout(width="auto")
 
         providers = []
         providers = get_list_of_valid_providers()
@@ -37,8 +39,10 @@ class ProviderImplementationChooser(ipw.VBox):
             providers.insert(1, ("Local server", local_provider))
         implementations = [(self.NO_OPTIONS, None)]
 
-        self.providers = ipw.Dropdown(options=providers)
-        self.child_dbs = ipw.Dropdown(options=implementations, disabled=True)
+        self.providers = ipw.Dropdown(options=providers, layout=dropdown_layout)
+        self.child_dbs = ipw.Dropdown(
+            options=implementations, layout=dropdown_layout, disabled=True
+        )
 
         self.providers.observe(self._observe_providers, names="index")
         self.child_dbs.observe(self._observe_child_dbs, names="index")

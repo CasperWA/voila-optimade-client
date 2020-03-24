@@ -11,8 +11,8 @@ from aiidalab_optimade.subwidgets import (
 )
 
 
-class OptimadeResultsWidget(ipw.Tab):
-    """Summarize OPTiMaDe entity"""
+class OptimadeSummaryWidget(ipw.Tab):
+    """Summarize OPTIMADE entity"""
 
     entity = traitlets.Instance(Structure, allow_none=True,)
 
@@ -26,7 +26,7 @@ class OptimadeResultsWidget(ipw.Tab):
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="100%"),
+            layout=ipw.Layout(width="100%", height="auto"),
             **kwargs
         )
         for index, title in enumerate([_[0] for _ in self.sections]):

@@ -15,7 +15,7 @@ from aiidalab_optimade.exceptions import (
 )
 
 
-# Supported OPTiMaDe spec version
+# Supported OPTIMADE spec version
 __optimade_version__ = "0.10.1"
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
@@ -24,7 +24,7 @@ PROVIDERS_URL = "https://providers.optimade.org/v1/links"
 
 
 def fetch_providers(providers_url: str = None) -> list:
-    """ Fetch OPTiMaDe database providers (from Materials-Consortia)
+    """ Fetch OPTIMADE database providers (from Materials-Consortia)
 
     :param providers_url: String with URL to providers.json file
     """
@@ -49,7 +49,7 @@ def fetch_providers(providers_url: str = None) -> list:
 
 
 def fetch_provider_child_dbs(base_url: str) -> list:
-    """Fetch an OPTiMaDe provider's child databases"""
+    """Fetch an OPTIMADE provider's child databases"""
     if not isinstance(base_url, str):
         raise TypeError("base_url must be a string")
 
@@ -197,7 +197,7 @@ def get_list_of_provider_implementations(
 
 
 def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
-    """Given an OPTiMaDe API version, validate it against current supported API version"""
+    """Given an OPTIMADE API version, validate it against current supported API version"""
     if not version:
         raise InputError("No version found in response")
 
@@ -207,7 +207,7 @@ def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
     if version != __optimade_version__:
         if raise_on_mismatch:
             raise ApiVersionError(
-                "Only OPTiMaDe {} is supported. Chosen implementation has {}".format(
+                "Only OPTIMADE {} is supported. Chosen implementation has {}".format(
                     __optimade_version__, version
                 )
             )

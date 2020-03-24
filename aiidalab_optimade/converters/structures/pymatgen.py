@@ -21,9 +21,9 @@ __all__ = ("get_pymatgen_structure",)
 def get_pymatgen_structure(
     optimade_structure: OptimadeStructure,
 ) -> Union[Structure, Molecule]:
-    """ Get pymatgen Structure or Molecule from OPTiMaDe structure
+    """ Get pymatgen Structure or Molecule from OPTIMADE structure
 
-    :param optimade_structure: OPTiMaDe structure
+    :param optimade_structure: OPTIMADE structure
     :return: pymatgen.Structure , pymatgen.Molecule
     """
     if globals().get("Structure", None) is None:

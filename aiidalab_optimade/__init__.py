@@ -1,16 +1,16 @@
 """
-OPTiMaDe
+OPTIMADE
 
-AiiDA Lab App that implements an OPTiMaDe client
+AiiDA Lab App that implements an OPTIMADE client
 """
 import json
 from pathlib import Path
 
-from .optimade_query import OptimadeQueryWidget
-from .optimade_results import OptimadeResultsWidget
+from .query import OptimadeQueryWidget
+from .summary import OptimadeSummaryWidget
 
 
-__all__ = ("OptimadeQueryWidget", "OptimadeResultsWidget")
+__all__ = ("OptimadeQueryWidget", "OptimadeSummaryWidget")
 
 
 PATH_TO_METADATA = Path(__file__).parent.parent.joinpath("metadata.json").resolve()
