@@ -290,3 +290,28 @@ def get_structures_schema(base_url: str) -> dict:
             result[field] = properties[field]
 
     return result
+
+
+def handle_errors(response: dict, debug: bool = False) -> str:
+    """Handle any errors"""
+    if "data" not in response and "errors" not in response:
+        raise InputError(f"No data and no errors reported in response: {response}")
+
+    if "errors" in response:
+        if "data" in response:
+            msg = (
+                '<font color="red">Error(s) during querying,</font> but '
+                f"<strong>{len(response['data'])}</strong> structures found."
+            )
+        else:
+            msg = (
+                '<font color="red">Error during querying, '
+                "please try again later.</font>"
+            )
+        if debug:
+            import json
+
+            print(json.dumps(response, indent=2))
+        return msg
+
+    return ""

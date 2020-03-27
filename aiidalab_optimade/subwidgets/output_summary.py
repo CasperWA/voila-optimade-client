@@ -62,12 +62,10 @@ class StructureSummary(ipw.VBox):
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
 
-    def _on_change_structure(self, change):
+    def _on_change_structure(self, change: dict):
         """Update output according to change in `data`"""
-        new_structure = change["new"]
-        if new_structure is None:
-            for widget in self._widget_data.values():
-                widget.value = ""
+        if change["new"] is None:
+            self.reset()
             return
         self._update_output()
 
@@ -87,7 +85,8 @@ class StructureSummary(ipw.VBox):
 
     def reset(self):
         """Reset widget"""
-        self.structure = None
+        for widget in self._widget_data.values():
+            widget.value = ""
 
     def _extract_data_from_structure(self) -> dict:
         """Extract and return desired data from Structure"""
@@ -158,7 +157,7 @@ class StructureSites(ipw.HTML):
     def _on_change_structure(self, change: dict):
         """When traitlet 'structure' is updated"""
         if change["new"] is None:
-            self.value = ""
+            self.reset()
         else:
             self.value = self._style
             dataf = pd.DataFrame(
@@ -174,7 +173,7 @@ class StructureSites(ipw.HTML):
 
     def reset(self):
         """Reset widget"""
-        self.structure = None
+        self.value = ""
 
     def _format_sites(self) -> List[str]:
         """Format OPTIMADE Structure into list of formatted HTML strings

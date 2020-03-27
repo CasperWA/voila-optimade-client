@@ -7,14 +7,16 @@ from aiidalab_optimade.utils import (
 )
 
 
-__all__ = ("ProvidersImplementations",)
+__all__ = ("ProviderImplementationChooser", "ProviderImplementationSummary")
 
 
 class ProviderImplementationChooser(ipw.VBox):
     """List all OPTIMADE providers and their implementations"""
 
     provider = traitlets.Dict(allow_none=True)
-    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
+    database = traitlets.Tuple(
+        traitlets.Unicode(), traitlets.Dict(allow_none=True), default_value=("", None)
+    )
 
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
     NO_OPTIONS = "No provider chosen"
@@ -131,9 +133,8 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
 
     def _on_provider_change(self, change):
         """Update provider summary, since self.provider has been changed"""
-        new_provider = change["new"]
         self.database_summary.value = ""
-        if new_provider is None:
+        if change["new"] is None:
             self.provider_summary.value = ""
         else:
             self._update_provider()
@@ -148,14 +149,14 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
 
     def _update_provider(self):
         """Update provider summary"""
-        html_text = f"""<h4>{self.provider.get('name', 'Provider')}</h4>
-        <p style="line-height:1.2;">{self.provider['description']}</p>"""
+        html_text = f"""<h4 style="margin-top:0px;padding-top:4px;margin-bottom:0px;padding-bottom:2px;">{self.provider.get('name', 'Provider')}</h4>
+        <p style="line-height:1.2;margin-top:0px;padding-top;0px;margin-bottom:0px;padding-bottom:4px;">{self.provider.get('description', '')}</p>"""
         self.provider_summary.value = html_text
 
     def _update_database(self):
         """Update database summary"""
-        html_text = f"""<h4>{self.database.get('name', 'Database')}</h4>
-        <p style="line-height:1.2;">{self.database['description']}</p>"""
+        html_text = f"""<h4 style="margin-top:2px;padding-top:2px;">{self.database.get('name', 'Database')}</h4>
+        <p style="line-height:1.2;margin-top:0px;padding-top;0px;margin-bottom:0px;padding-bottom:4px;">{self.database.get('description', '')}</p>"""
         self.database_summary.value = html_text
 
     def freeze(self):
@@ -167,57 +168,3 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
     def reset(self):
         """Reset widget"""
         self.provider = None
-
-
-class ProvidersImplementations(ipw.GridspecLayout):
-    """Combining chooser and summary widgets"""
-
-    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
-
-    def __init__(self, include_summary: bool = True, debug: bool = False, **kwargs):
-        self.summary_included = include_summary
-        self.debug = debug
-
-        self.chooser = ProviderImplementationChooser(debug=self.debug)
-
-        self.sections = [self.chooser]
-        if self.summary_included:
-            self.summary = ProviderImplementationSummary()
-            self.sections.append(self.summary)
-
-        if self.summary_included:
-            super().__init__(n_rows=2, n_columns=31, **kwargs)
-            self[:, :10] = self.chooser
-            self[:, 11:] = self.summary
-        else:
-            super().__init__(n_rows=1, n_columns=1, **kwargs)
-            self[:, :] = self.chooser
-
-        self.chooser.observe(self._update_database, names="database")
-        if self.summary_included:
-            self.chooser.observe(self._update_provider, names="provider")
-
-    def _update_database(self, change):
-        """Patch database through to own traitlet and pass info to summary"""
-        self.database = change["new"]
-        if self.summary_included:
-            self.summary.database = self.database[1]
-
-    def _update_provider(self, change):
-        """Pass information to summary"""
-        self.summary.provider = change["new"]
-
-    def freeze(self):
-        """Disable widget"""
-        for widget in self.sections:
-            widget.freeze()
-
-    def unfreeze(self):
-        """Activate widget (in its current state)"""
-        for widget in self.sections:
-            widget.unfreeze()
-
-    def reset(self):
-        """Reset widget"""
-        for widget in self.sections:
-            widget.reset()

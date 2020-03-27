@@ -9,14 +9,17 @@ except (ImportError, ModuleNotFoundError):
     from json import JSONDecodeError
 
 from aiidalab_optimade.converters import Structure
-from aiidalab_optimade.exceptions import InputError, BadResource
+from aiidalab_optimade.exceptions import BadResource
 from aiidalab_optimade.subwidgets import (
-    ProvidersImplementations,
     StructureDropdown,
     FilterInputs,
     ResultsPageChooser,
 )
-from aiidalab_optimade.utils import validate_api_version, perform_optimade_query
+from aiidalab_optimade.utils import (
+    validate_api_version,
+    perform_optimade_query,
+    handle_errors,
+)
 
 
 DEFAULT_FILTER_VALUE = (
@@ -25,7 +28,9 @@ DEFAULT_FILTER_VALUE = (
 )
 
 
-class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attributes
+class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
+    ipw.VBox
+):
     """Structure search and import widget for OPTIMADE
 
     NOTE: Only supports offset-pagination at the moment.
@@ -45,11 +50,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         self.embedded = embedded
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
-
-        self.base_url = ProvidersImplementations(
-            include_summary=not self.embedded, debug=self.debug
-        )
-        self.base_url.observe(self._on_database_select, names="database")
 
         self.filter_header = ipw.HTML(
             '<br><h4 style="margin-bottom:0px;padding:0px;">Apply filters</h4>'
@@ -80,7 +80,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
         super().__init__(
             children=[
-                self.base_url,
                 self.filter_header,
                 self.filters,
                 self.query_button,
@@ -93,9 +92,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             **kwargs,
         )
 
-    def _on_database_select(self, change):
+    @traitlets.observe("database")
+    def _on_database_select(self, _):
         """Load chosen database"""
-        self.database = change["new"]
         if self.database[1] is None or self.database[1].get("base_url", None) is None:
             self.query_button.disabled = True
             self.query_button.tooltip = "Search - No database chosen"
@@ -135,7 +134,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
             # Query database
             response = self._query(offset_or_link)
-            if self.handle_errors(response):
+            msg = handle_errors(response, self.debug)
+            if msg:
+                self.error_or_status_messages.value = msg
                 return
 
             # Update list of structures in dropdown widget
@@ -156,7 +157,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         """Disable widget"""
         self.query_button.disabled = True
         self.filters.freeze()
-        self.base_url.freeze()
         self.structure_drop.freeze()
         self.structure_page_chooser.freeze()
 
@@ -164,7 +164,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         """Activate widget (in its current state)"""
         self.query_button.disabled = False
         self.filters.unfreeze()
-        self.base_url.unfreeze()
         self.structure_drop.unfreeze()
         self.structure_page_chooser.unfreeze()
 
@@ -174,7 +173,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
             self.query_button.disabled = False
             self.query_button.tooltip = "Search - No database chosen"
             self.filters.reset()
-            self.base_url.reset()
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
 
@@ -213,30 +211,6 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
         }
 
         return perform_optimade_query(**queries)
-
-    def handle_errors(self, response: dict) -> bool:
-        """Handle any errors"""
-        if "data" not in response and "errors" not in response:
-            raise InputError(f"No data and no errors reported in response: {response}")
-
-        if "errors" in response:
-            if "data" in response:
-                self.error_or_status_messages.value = (
-                    '<font color="red">Error(s) during querying,</font> but '
-                    f"<strong>{len(response['data'])}</strong> structures found."
-                )
-            else:
-                self.error_or_status_messages.value = (
-                    '<font color="red">Error during querying, '
-                    "please try again later.</font>"
-                )
-            if self.debug:
-                import json
-
-                print(json.dumps(response, indent=2))
-            return True
-
-        return False
 
     def _update_structures(self, data: list):
         """Update structures dropdown from response data"""
@@ -289,7 +263,9 @@ class OptimadeQueryWidget(ipw.VBox):  # pylint: disable=too-many-instance-attrib
 
             # Query database
             response = self._query()
-            if self.handle_errors(response):
+            msg = handle_errors(response, self.debug)
+            if msg:
+                self.error_or_status_messages.value = msg
                 return
 
             # Check implementation API version

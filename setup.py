@@ -14,8 +14,10 @@ setup(
     install_requires=[
         "optimade~=0.7",
         "requests~=2.23",
-        "jupyterlab~=0.35",
+        "jupyterlab~=2.0",
         "ipywidgets~=7.5",
+        "nglview~=2.7",
+        "numpy~=1.18",
         "pandas~=1.0",
     ],
     extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
