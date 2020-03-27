@@ -48,7 +48,7 @@ def get_aiida_structure_data(optimade_structure: OptimadeStructure) -> Structure
         )
 
     # Add Sites
-    for index in range(len(attributes.cartesian_site_positions)):
+    for index in range(attributes.nsites):
         # range() to ensure 1-to-1 between kind and site
         structure.append_site(
             Site(
