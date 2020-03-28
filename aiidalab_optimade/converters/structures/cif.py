@@ -10,7 +10,7 @@ from aiidalab_optimade.converters.structures.utils import cell_to_cellpar
 __all__ = ("get_cif",)
 
 
-def get_cif(
+def get_cif(  # pylint: disable=too-many-locals,too-many-branches
     optimade_structure: OptimadeStructure, formatting: str = "default"
 ) -> Union[str, bytes]:
     """ Get CIF file as string from OPTIMADE structure
@@ -18,7 +18,8 @@ def get_cif(
     Based on `ase.io.cif:write_cif()`.
 
     :param optimade_structure: OPTIMADE structure
-    :param formatting: What formatting to use for the CIF file data keys. Can be either "mp" or "default".
+    :param formatting: What formatting to use for the CIF file data keys.
+        Can be either "mp" or "default".
     :param encoding: Encoding used for the string. CIF files use "latin-1" as standard.
         If encoding is "str", a Python str object will be returned.
     :return: str
@@ -73,7 +74,6 @@ def get_cif(
     coord_type = (
         "fract" if hasattr(attributes, "fractional_site_positions") else "Cartn"
     )
-    coord_type = "Cartn"
 
     cif += "loop_\n"
     if formatting == "mp":
@@ -128,8 +128,14 @@ def get_cif(
                     label = f"{symbol}{index + 1}"
 
             if formatting == "mp":
-                cif += f"  {symbol:2}  {label:4s}  {'1':4}  {site[0]:8.5f}  {site[1]:8.5f}  {site[2]:8.5f}  {current_species.concentration[index]:6.1f}\n"
+                cif += (
+                    f"  {symbol:2}  {label:4s}  {'1':4}  {site[0]:8.5f}  {site[1]:8.5f}  "
+                    f"{site[2]:8.5f}  {current_species.concentration[index]:6.1f}\n"
+                )
             else:
-                cif += f"  {label:8} {current_species.concentration[index]:6.4f} {site[0]:8.5f}  {site[1]:8.5f}  {site[2]:8.5f}  {'Biso':4}  {'1.000':6}  {symbol}\n"
+                cif += (
+                    f"  {label:8} {current_species.concentration[index]:6.4f} {site[0]:8.5f}  "
+                    f"{site[1]:8.5f}  {site[2]:8.5f}  {'Biso':4}  {'1.000':6}  {symbol}\n"
+                )
 
     return cif
