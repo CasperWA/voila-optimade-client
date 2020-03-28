@@ -109,6 +109,8 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
     provider = traitlets.Dict(allow_none=True)
     database = traitlets.Dict(allow_none=True)
 
+    text_style = "margin:0px;padding-top:6px;padding-bottom:4px;padding-left:4px;padding-right:4px;"
+
     def __init__(self, **kwargs):
         self.provider_summary = ipw.HTML()
         provider_section = ipw.VBox(
@@ -141,22 +143,21 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
 
     def _on_database_change(self, change):
         """Update database summary, since self.database has been changed"""
-        new_database = change["new"]
-        if new_database is None:
+        if change["new"] is None:
             self.database_summary.value = ""
         else:
             self._update_database()
 
     def _update_provider(self):
         """Update provider summary"""
-        html_text = f"""<h4 style="margin-top:0px;padding-top:4px;margin-bottom:0px;padding-bottom:2px;">{self.provider.get('name', 'Provider')}</h4>
-        <p style="line-height:1.2;margin-top:0px;padding-top;0px;margin-bottom:0px;padding-bottom:4px;">{self.provider.get('description', '')}</p>"""
+        html_text = f"""<h4 style="line-height:1;{self.text_style}">{self.provider.get('name', 'Provider')}</h4>
+        <p style="line-height:1.2;{self.text_style}">{self.provider.get('description', '')}</p>"""
         self.provider_summary.value = html_text
 
     def _update_database(self):
         """Update database summary"""
-        html_text = f"""<h4 style="margin-top:2px;padding-top:2px;">{self.database.get('name', 'Database')}</h4>
-        <p style="line-height:1.2;margin-top:0px;padding-top;0px;margin-bottom:0px;padding-bottom:4px;">{self.database.get('description', '')}</p>"""
+        html_text = f"""<h4 style="line-height:1;{self.text_style}">{self.database.get('name', 'Database')}</h4>
+        <p style="line-height:1.2;{self.text_style}">{self.database.get('description', '')}</p>"""
         self.database_summary.value = html_text
 
     def freeze(self):

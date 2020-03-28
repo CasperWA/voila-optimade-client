@@ -21,14 +21,16 @@ class OptimadeSummaryWidget(ipw.GridspecLayout):
         self.debug = debug
 
         self.viewer = StructureViewer(debug=self.debug, **kwargs)
-
         self.summary = SummaryTabs(debug=self.debug, **kwargs)
 
         super().__init__(
-            n_rows=1, n_columns=31, layout={"width": "100%", "height": "auto"}, **kwargs
+            n_rows=2,
+            n_columns=1,
+            layout={"width": "100%", "height": "auto", "min-width": "200px"},
+            **kwargs,
         )
-        self[:, :16] = self.viewer
-        self[:, 17:] = self.summary
+        self[0, :] = self.viewer
+        self[1, :] = self.summary
 
         self.observe(self._on_change_entity, names="entity")
 
@@ -66,17 +68,25 @@ class StructureViewer(ipw.VBox):
         self.debug = debug
         self._current_view = None
 
-        self.viewer = nglview.NGLWidget(layout={"width": "auto", "height": "auto"})
+        self.viewer = nglview.NGLWidget()
         self.viewer.camera = "orthographic"
         self.viewer.stage.set_parameters(mouse_preset="pymol")
+        self.viewer_box = ipw.Box(
+            children=(self.viewer,),
+            layout={
+                "width": "auto",
+                "height": "auto",
+                "border": "solid 0.5px",
+                "margin": "0px",
+                "padding": "0.5px",
+            },
+        )
 
         self.download_button = ipw.Button(
             description="Download", tooltip="Download structure"
         )
 
-        super().__init__(
-            children=(self.viewer, self.download_button), layout={"width": "auto"},
-        )
+        super().__init__(children=(self.viewer_box, self.download_button))
 
         self.observe(self._on_change_structure, names="structure")
 
@@ -98,7 +108,7 @@ class StructureViewer(ipw.VBox):
         self.viewer.layout.height = "auto"
         # self.viewer.handle_resize()
         component = self._current_view if self._current_view is not None else 0
-        self.viewer.center("all", component=component)
+        self.viewer.center(component=component)
 
     def freeze(self):
         """Disable widget"""
@@ -128,8 +138,8 @@ class SummaryTabs(ipw.Tab):
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="auto", height="auto"),
-            **kwargs
+            layout=ipw.Layout(width="auto", height="300px"),
+            **kwargs,
         )
         for index, title in enumerate([_[0] for _ in self.sections]):
             self.set_title(index, title)

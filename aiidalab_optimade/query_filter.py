@@ -52,7 +52,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.offset = 0
 
         self.filter_header = ipw.HTML(
-            '<br><h4 style="margin-bottom:0px;padding:0px;">Apply filters</h4>'
+            '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
         )
         self.filters = FilterInputs()
         self.filters.freeze()
@@ -67,7 +67,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.query_button.on_click(self.retrieve_data)
 
         self.structures_header = ipw.HTML(
-            '<br><h4 style="margin-bottom:0px;padding:0px;">Results</h4>'
+            '<h4 style="margin-bottom:0px;padding:0px;">Results</h4>'
         )
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
@@ -88,7 +88,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.error_or_status_messages,
                 self.structure_page_chooser,
             ],
-            layout=ipw.Layout(width="100%", height="auto"),
+            layout=ipw.Layout(width="100%", height="auto", min_width="310px"),
             **kwargs,
         )
 
