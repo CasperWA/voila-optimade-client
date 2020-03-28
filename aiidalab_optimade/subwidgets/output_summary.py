@@ -139,18 +139,59 @@ class StructureSites(ipw.HTML):
     def __init__(self, structure: Union[Structure, StructureResource] = None, **kwargs):
         # For more information on how to control the table appearance please visit:
         # https://css-tricks.com/complete-guide-table-element/
-        self._style = """
-        <style>
-            .df { border: none; }
-            .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
-            .df tbody tr:hover { background-color:   #f5b7b1; }
-            .df tbody td { min-width: 100px; text-align: center; border: none; padding: 5px }
-            .df th { text-align: center; border: none;  border-bottom: 1px solid black;}
-        </style>
-        """
+        #
+        # Voila doesn't run the scripts, which should set a color upon choosing a row.
+        # Furthermore, if it will ever work, one can remove the hover definition in the css styling.
+        self._style = """<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+<script>
+    var row_color;
+
+    function updateRowBackground(row) {
+        if (row_color != 'rgb(244, 151, 184)') {
+            $(row).css('background-color', '#f497b8');
+        } else {
+            if ($('tr').index(row) % 2 == 0) {
+                // even
+                $(row).css('background-color', 'white');
+            } else {
+                // odd
+                $(row).css('background-color', '#e5e7e9');
+            }
+        }
+        row_color = $(row).css('background-color');
+    }
+
+    $(document).ready(function(){
+        $('tbody > tr').click(function(){
+            updateRowBackground(this)
+        });
+        $('tbody > tr').hover(function(){
+            row_color = $(this).css('background-color');
+            $(this).css('background-color', '#f5b7b1');
+        },
+        function(){
+            $(this).css('background-color', row_color);
+        });
+    });
+</script>
+<style>
+    .df { border: none; width: 100%; }
+    .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
+    .df tbody tr:hover { background-color: #f5b7b1; }
+    .df tbody td {
+        min-width: 50px;
+        text-align: center;
+        border: none;
+        padding: 0px;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .df th { text-align: center; border: none;  border-bottom: 1px solid black; }
+</style>
+"""
         pd.set_option("max_colwidth", 100)
 
-        super().__init__(layout=ipw.Layout(width="auto"), **kwargs)
+        super().__init__(layout=ipw.Layout(width="auto", height="auto"), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
 
