@@ -142,46 +142,99 @@ class StructureSites(ipw.HTML):
         #
         # Voila doesn't run the scripts, which should set a color upon choosing a row.
         # Furthermore, if it will ever work, one can remove the hover definition in the css styling.
-        self._style = """<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
-<script>
-    var row_color;
+        self._script = """
+var row_color;
 
-    function updateRowBackground(row) {
-        if (row_color != 'rgb(244, 151, 184)') {
-            $(row).css('background-color', '#f497b8');
+function index(el) {
+  if (!el) return -1;
+  var i = 0;
+  do {
+    i++;
+  } while (el = el.previousElementSibling);
+  return i;
+}
+
+function updateRowBackground(row) {
+    if (row_color != 'rgb(244, 151, 184)') {
+        row.style.backgroundColor = '#f497b8';
+    } else {
+        if ( index(row) % 2 == 0) {
+            // even
+            row.style.backgroundColor = 'white';
         } else {
-            if ($('tr').index(row) % 2 == 0) {
-                // even
-                $(row).css('background-color', 'white');
-            } else {
-                // odd
-                $(row).css('background-color', '#e5e7e9');
-            }
+            // odd
+            row.style.backgroundColor = '#e5e7e9';
         }
-        row_color = $(row).css('background-color');
     }
+    row_color = getComputedStyle(row)['backgroundColor'];
+}
 
-    $(document).ready(function(){
-        $('tbody > tr').click(function(){
-            updateRowBackground(this)
-        });
-        $('tbody > tr').hover(function(){
-            row_color = $(this).css('background-color');
-            $(this).css('background-color', '#f5b7b1');
-        },
-        function(){
-            $(this).css('background-color', row_color);
-        });
+function doYourStuff() {
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('click', function() {
+            updateRowBackground(el);
+        }, false);
     });
-</script>
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('mouseover', function() {
+            row_color = getComputedStyle(el)['backgroundColor'];
+            this.style.backgroundColor = '#f5b7b1';
+        }, false);
+    });
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('mouseout', function() {
+            el.style.backgroundColor = row_color;
+        }, false);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    doYourStuff();
+});
+// doYourStuff()
+"""
+        #         self._style = """<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+        # <script>
+        #     var row_color;
+
+        #     function updateRowBackground(row) {
+        #         if (row_color != 'rgb(244, 151, 184)') {
+        #             $(row).css('background-color', '#f497b8');
+        #         } else {
+        #             if ($('tr').index(row) % 2 == 0) {
+        #                 // even
+        #                 $(row).css('background-color', 'white');
+        #             } else {
+        #                 // odd
+        #                 $(row).css('background-color', '#e5e7e9');
+        #             }
+        #         }
+        #         row_color = $(row).css('background-color');
+        #     }
+
+        #     $(document).ready(function(){
+        #         $('tbody > tr').click(function(){
+        #             updateRowBackground(this)
+        #         });
+        #         $('tbody > tr').hover(function(){
+        #             row_color = $(this).css('background-color');
+        #             $(this).css('background-color', '#f5b7b1');
+        #         },
+        #         function(){
+        #             $(this).css('background-color', row_color);
+        #         });
+        #     });
+        # </script>
+
+        # .df tbody tr:hover { background-color: #f5b7b1; }
+        self._style = """
 <style>
     .df { border: none; width: 100%; }
     .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
-    .df tbody tr:hover { background-color: #f5b7b1; }
     .df tbody td {
         min-width: 50px;
         text-align: center;
-        border: none;
+        border: 3px solid white;
         padding: 0px;
         padding-left: 5px;
         padding-right: 5px;
@@ -204,7 +257,16 @@ class StructureSites(ipw.HTML):
             dataf = pd.DataFrame(
                 self._format_sites(), columns=["Elements", "Occupancy", "Position"]
             )
-            self.value += dataf.to_html(classes="df", index=False)
+            self.value += dataf.to_html(
+                classes="df", index=False, table_id="sites", notebook=False
+            )
+            # display(Javascript(self._script))
+
+    #             self.value += f"""<script>
+    # {self._script}
+    # </script>"""
+    # with open("/home/cwa/venv/jupyter/test_js.html", "w") as test_out:
+    #     test_out.write(self.value)
 
     def freeze(self):
         """Disable widget"""

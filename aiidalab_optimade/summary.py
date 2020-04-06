@@ -1,3 +1,4 @@
+from IPython.display import display
 import ipywidgets as ipw
 import traitlets
 
@@ -10,7 +11,7 @@ from aiidalab_optimade.subwidgets import (
 )
 
 
-class OptimadeSummaryWidget(ipw.GridspecLayout):
+class OptimadeSummaryWidget(ipw.VBox):
     """Overview of OPTIMADE entity (focusing on structure)
     Combined view of structure viewer on the left and tabs on the right for detailed information
     """
@@ -23,14 +24,12 @@ class OptimadeSummaryWidget(ipw.GridspecLayout):
         self.viewer = StructureViewer(debug=self.debug, **kwargs)
         self.summary = SummaryTabs(debug=self.debug, **kwargs)
 
+        self.children = (self.viewer, self.summary)
         super().__init__(
-            n_rows=2,
-            n_columns=1,
-            layout={"width": "100%", "height": "auto", "min-width": "200px"},
+            children=self.children,
+            layout=ipw.Layout(width="100%", height="auto", min_width="550px"),
             **kwargs,
         )
-        self[0, :] = self.viewer
-        self[1, :] = self.summary
 
         self.observe(self._on_change_entity, names="entity")
 
@@ -59,10 +58,97 @@ class OptimadeSummaryWidget(ipw.GridspecLayout):
             widget.reset()
 
 
+class DownloadChooser(ipw.HBox):
+    """Download chooser for structure download"""
+
+    chosen_format = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict())
+    structure = traitlets.Instance(Structure, allow_none=True)
+
+    _formats = [
+        ("Select a format", {}),
+        (
+            "Crystallographic Information File v1.0 (.cif)",
+            {"ext": "cif", "adapter_format": "cif"},
+        ),
+        ("Protein Data Bank (.pdb)", {"ext": "pdb", "adapter_format": "pdb"}),
+        # Not yet implemented:
+        # (
+        #     "Protein Data Bank, macromolecular CIF v1.1 (PDBx/mmCIF) (.cif)",
+        #     {"ext": "cif", "adapter_format": "pdbx_mmcif"},
+        # ),
+    ]
+
+    def __init__(self, debug: bool = False, **kwargs):
+        self.debug = debug
+
+        self.dropdown = ipw.Dropdown(options=self._formats, width="100px")
+        self.button = ipw.Button(
+            description="Download", tooltip="Download structure", width="50px"
+        )
+
+        self.children = (self.dropdown, self.button)
+        super().__init__(children=self.children, layout={"width": "auto"})
+        self.reset()
+
+        self.button.on_click(self._on_download_request)
+
+    @traitlets.observe("structure")
+    def _on_change_structure(self, change: dict):
+        """Update widget when a new structure is chosen"""
+        if change["new"] is None:
+            self.reset()
+        self.unfreeze()
+
+    def _on_download_request(self, _):
+        """Initiate download"""
+        import base64
+        from IPython.display import Javascript
+
+        desired_format = self.dropdown.value
+        if not desired_format:
+            return
+
+        output = getattr(self.structure, f"get_{desired_format['adapter_format']}")
+        encoding = "utf-8"
+
+        # Specifically for CIF: v1.x CIF needs to be in "latin-1" formatting
+        if desired_format["ext"] == "cif":
+            encoding = "latin-1"
+
+        filename = f"optimade_structure_{self.structure.id}.{desired_format['ext']}"
+
+        javascript = Javascript(
+            f"""
+var link = document.createElement('a');
+link.href = "data:charset={encoding};base64,{base64.b64encode(output.encode(encoding)).decode()}"
+link.download = "{filename}"
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+"""
+        )
+        display(javascript)
+
+    def freeze(self):
+        """Disable widget"""
+        for widget in self.children:
+            widget.disabled = True
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        for widget in self.children:
+            widget.disabled = False
+
+    def reset(self):
+        """Reset widget"""
+        self.dropdown.index = 0
+        self.freeze()
+
+
 class StructureViewer(ipw.VBox):
     """NGL structure viewer including download button"""
 
-    structure = traitlets.Instance(Structure)
+    structure = traitlets.Instance(Structure, allow_none=True)
 
     def __init__(self, debug: bool = False, **kwargs):
         self.debug = debug
@@ -82,13 +168,16 @@ class StructureViewer(ipw.VBox):
             },
         )
 
-        self.download_button = ipw.Button(
-            description="Download", tooltip="Download structure"
+        self.download = DownloadChooser(debug=debug, **kwargs)
+
+        super().__init__(
+            children=(self.viewer_box, self.download),
+            layout={"width": "auto", "height": "auto"},
         )
 
-        super().__init__(children=(self.viewer_box, self.download_button))
-
         self.observe(self._on_change_structure, names="structure")
+
+        traitlets.dlink((self, "structure"), (self.download, "structure"))
 
     def _on_change_structure(self, change):
         """Update viewer for new structure"""
@@ -112,12 +201,15 @@ class StructureViewer(ipw.VBox):
 
     def freeze(self):
         """Disable widget"""
+        self.download.freeze()
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
+        self.download.unfreeze()
 
     def reset(self):
         """Reset widget"""
+        self.download.reset()
         if self._current_view is not None:
             self.viewer.remove_component(self._current_view)
             self._current_view = None
@@ -138,7 +230,7 @@ class SummaryTabs(ipw.Tab):
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="auto", height="300px"),
+            layout=ipw.Layout(width="auto", height="225px"),
             **kwargs,
         )
         for index, title in enumerate([_[0] for _ in self.sections]):
