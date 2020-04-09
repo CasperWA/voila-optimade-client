@@ -1,32 +1,115 @@
+import logging
+import os
+import re
+import sys
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
-import requests
 
 try:
-    from simplejson import JSONDecodeError
+    import simplejson as json
 except (ImportError, ModuleNotFoundError):
-    from json import JSONDecodeError
+    import json
+
+from json import JSONDecodeError
+
+import requests
+
+from optimade.models import ProviderResource
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
     InputError,
-    NonExistent,
-    NotOkResponse,
 )
 
+
+LOGGER = logging.getLogger("OPTIMADE_Client")
+LOG_LEVEL = logging.INFO
+if os.environ.get("OPTIMADE_CLIENT_DEBUG", False):
+    LOG_LEVEL = logging.DEBUG
+LOGGER.setLevel(LOG_LEVEL)
+HANDLER = logging.StreamHandler(sys.stdout)
+FORMATTER = logging.Formatter(
+    "[%(name)s %(levelname)s %(filename)s:%(lineno)d] %(message)s"
+)
+HANDLER.setFormatter(FORMATTER)
+LOGGER.handlers = [HANDLER]
 
 # Supported OPTIMADE spec version
 __optimade_version__ = "0.10.1"
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
-PROVIDERS_URL = "https://providers.optimade.org/v1/links"
+PROVIDERS_URL = "https://providers.optimade.org/v1"
+
+
+def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
+    base_url: str,
+    endpoint: str = None,
+    filter: Union[dict, str] = None,  # pylint: disable=redefined-builtin
+    response_format: str = None,
+    response_fields: str = None,
+    email_address: str = None,
+    page_limit: int = None,
+    page_offset: int = None,
+) -> dict:
+    """Perform query of database"""
+    queries = {}
+
+    if endpoint is None:
+        endpoint = "/structures"
+    elif not endpoint.startswith("/"):
+        endpoint = f"/{endpoint}"
+
+    url_path = (
+        base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
+    )
+
+    if filter is not None:
+        if isinstance(filter, dict):
+            pass
+        elif isinstance(filter, str):
+            queries["filter"] = filter
+        else:
+            raise TypeError("'filter' must be either a dict or a str")
+
+    if response_format is None:
+        response_format = "json"
+    queries["response_format"] = response_format
+
+    if response_fields is not None:
+        queries["response_fields"] = response_fields
+
+    if email_address is not None:
+        queries["email_address"] = email_address
+
+    if page_limit is not None:
+        queries["page_limit"] = page_limit
+
+    if page_offset is not None:
+        queries["page_offset"] = page_offset
+
+    # Make query - get data
+    url_query = urlencode(queries)
+    complete_url = f"{url_path}?{url_query}"
+    try:
+        response = requests.get(complete_url, timeout=TIMEOUT_SECONDS)
+    except Exception as exc:  # pylint: disable=broad-except
+        response = {
+            "errors": f"CLIENT: The URL cannot be opened: {complete_url}. Exception: {exc}"
+        }
+
+    try:
+        response = response.json()
+    except JSONDecodeError:
+        response = {"errors": "CLIENT: Cannot decode response to JSON format."}
+
+    return response
 
 
 def fetch_providers(providers_url: str = None) -> list:
     """ Fetch OPTIMADE database providers (from Materials-Consortia)
 
-    :param providers_url: String with URL to providers.json file
+    :param providers_url: String with versioned base URL to Materials-Consortia providers database
     """
     if providers_url and not isinstance(providers_url, str):
         raise TypeError("providers_url must be a string")
@@ -34,80 +117,11 @@ def fetch_providers(providers_url: str = None) -> list:
     if not providers_url:
         providers_url = PROVIDERS_URL
 
-    try:
-        providers = requests.get(providers_url, timeout=TIMEOUT_SECONDS)
-    except Exception:
-        raise NonExistent("The URL cannot be opened: {}".format(providers_url))
+    providers = perform_optimade_query(base_url=providers_url, endpoint="/links")
+    if handle_errors(providers):
+        return []
 
-    if providers.status_code == 200:
-        providers = providers.json()
-    else:
-        raise NotOkResponse("Received a {} response".format(providers.status_code))
-
-    # Return list of providers
-    return providers["data"]
-
-
-def fetch_provider_child_dbs(base_url: str) -> list:
-    """Fetch an OPTIMADE provider's child databases"""
-    if not isinstance(base_url, str):
-        raise TypeError("base_url must be a string")
-
-    links_endpoint = "/links"
-    links_endpoint = (
-        base_url + links_endpoint[1:]
-        if base_url.endswith("/")
-        else base_url + links_endpoint
-    )
-
-    try:
-        implementations = requests.get(links_endpoint, timeout=TIMEOUT_SECONDS)
-    except Exception:
-        raise NonExistent(f"The URL cannot be opened: {links_endpoint}")
-
-    if implementations.status_code == 200:
-        implementations = implementations.json()
-    else:
-        implementations = {}
-
-    # Return all implementations of type "child"
-    implementations = [
-        implementation
-        for implementation in implementations.get("data", [])
-        if implementation.get("type", "") == "child"
-    ]
-
-    # If there are no implementations, try if index meta-database == implementation database
-    if not implementations:
-        structures_endpoint = "/structures?page_limit=1"
-        structures_endpoint = (
-            base_url + structures_endpoint[1:]
-            if base_url.endswith("/")
-            else base_url + structures_endpoint
-        )
-
-        try:
-            implementations = requests.get(structures_endpoint, timeout=TIMEOUT_SECONDS)
-        except Exception:  # pylint: disable=broad-except
-            return []
-
-        if implementations.status_code == 200:
-            implementations = implementations.json()
-        else:
-            return []
-
-        attributes = implementations.get("meta", {}).get("provider", {})
-        implementations = []
-        if attributes:
-            attributes.update({"base_url": base_url})
-            for field in ("prefix", "index_base_url"):
-                attributes.pop(field, None)
-            implementations = [{"attributes": attributes}]
-
-        if not implementations:
-            implementations = "structures found"
-
-    return implementations
+    return providers.get("data", [])
 
 
 _VERSION_PARTS = [
@@ -117,17 +131,32 @@ _VERSION_PARTS = [
 ]
 
 
-def _get_versioned_base_url(base_url: str) -> str:
-    """Retrieve the versioned base URL"""
-    res = ""
+def get_versioned_base_url(base_url: str) -> str:
+    """Retrieve the versioned base URL
+    First, check if the given base URL is already a versioned base URL.
+    Then try to going through valid version extensions to the URL.
+    """
+    for version in _VERSION_PARTS:
+        if version in base_url:
+            if re.match(fr".+{version}$", base_url):
+                return base_url
+            if re.match(fr".+{version}/$", base_url):
+                return base_url[:-1]
+            LOGGER.debug(
+                "Found version '%s' in base URL '%s', but not at the end of it.",
+                version,
+                base_url,
+            )
+            return ""
+
     for version in _VERSION_PARTS:
         versioned_base_url = (
             base_url + version[1:] if base_url.endswith("/") else base_url + version
         )
         if requests.get(f"{versioned_base_url}/info").status_code == 200:
-            res = versioned_base_url
-            break
-    return res
+            return versioned_base_url
+
+    return ""
 
 
 def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
@@ -138,135 +167,57 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
     providers = fetch_providers()
     res = []
 
-    for provider in providers:
+    for entry in providers:
+        provider = ProviderResource(**entry)
+
         # Skip if "exmpl"
-        if provider["id"] == "exmpl":
+        if provider.id == "exmpl":
+            LOGGER.debug("Skipping example provider.")
             continue
 
-        attributes = provider["attributes"]
+        attributes = provider.attributes
 
         # Skip if there is no base URL
-        if attributes["base_url"] is None:
+        if attributes.base_url is None:
+            LOGGER.debug("Base URL found to be None for provider: %s", str(provider))
             continue
 
-        versioned_base_url = _get_versioned_base_url(attributes["base_url"])
+        versioned_base_url = get_versioned_base_url(attributes.base_url)
         if versioned_base_url:
-            attributes["base_url"] = versioned_base_url
+            attributes.base_url = versioned_base_url
         else:
             # Not a valid/supported provider: skip
+            LOGGER.debug(
+                "Could not determine versioned base URL for provider: %s", str(provider)
+            )
             continue
 
-        res.append((attributes["name"], attributes))
+        res.append((attributes.name, attributes))
 
     return res
 
 
-def get_list_of_provider_implementations(
-    provider_attributes: dict,
-) -> List[Tuple[str, dict]]:
-    """Get list of provider implementations
-
-    Return formatted list of tuples to use with a dropdown-widget.
-    """
-    child_dbs = fetch_provider_child_dbs(provider_attributes["base_url"])
-    res = []
-
-    if isinstance(child_dbs, str) and child_dbs == "structures found":
-        # Use info from provider attributes
-        database = {"attributes": provider_attributes}
-        database["attributes"]["name"] = "Main database"
-        child_dbs = [database]
-
-    for child_db in child_dbs:
-        attributes = child_db["attributes"]
-
-        # Skip if there is no base_url
-        if attributes["base_url"] is None:
-            continue
-
-        versioned_base_url = _get_versioned_base_url(attributes["base_url"])
-        if versioned_base_url:
-            attributes["base_url"] = versioned_base_url
-        else:
-            # Not a valid/supported provider: skip
-            continue
-
-        res.append((attributes["name"], attributes))
-
-    return res
-
-
-def validate_api_version(version: str, raise_on_mismatch: bool = True) -> bool:
+def validate_api_version(version: str, raise_on_fail: bool = True) -> str:
     """Given an OPTIMADE API version, validate it against current supported API version"""
     if not version:
-        raise InputError("No version found in response")
+        msg = f"No version found in response. Should have been v{__optimade_version__}"
+        if raise_on_fail:
+            raise ApiVersionError(msg)
+        return msg
 
     if version.startswith("v"):
         version = version[1:]
 
     if version != __optimade_version__:
-        if raise_on_mismatch:
-            raise ApiVersionError(
-                "Only OPTIMADE {} is supported. Chosen implementation has {}".format(
-                    __optimade_version__, version
-                )
-            )
-        return False
+        msg = (
+            f"Only OPTIMADE v{__optimade_version__} is supported. "
+            f"Chosen implementation has v{version}"
+        )
+        if raise_on_fail:
+            raise ApiVersionError(msg)
+        return msg
 
-    return True
-
-
-def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
-    base_url: str,
-    endpoint: str = None,
-    filter_: Union[dict, str] = None,
-    format_: str = None,
-    email: str = None,
-    fields: str = None,
-    limit: int = None,
-    offset: int = None,
-) -> dict:
-    """Perform query of database"""
-    queries = {}
-
-    if endpoint is None:
-        endpoint = "/structures"
-    elif not endpoint.startswith("/"):
-        endpoint = "/" + endpoint
-
-    url_path = (
-        base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
-    )
-
-    if filter_ is not None:
-        if isinstance(filter_, dict):
-            pass
-        elif isinstance(filter_, str):
-            queries["filter"] = filter_
-        else:
-            raise TypeError("'filter_' must be either a dict or a str")
-
-    if format_:
-        queries["response_format"] = format_
-    if email:
-        queries["email_address"] = email
-    if fields:
-        queries["response_fields"] = fields
-    if limit:
-        queries["page_limit"] = limit
-    if offset:
-        queries["page_offset"] = offset
-
-    # Make query - get data
-    url_query = urlencode(queries)
-    response = requests.get("{}?{}".format(url_path, url_query))
-
-    try:
-        response = response.json()
-    except JSONDecodeError:
-        response = {"errors": []}
-
-    return response
+    return ""
 
 
 def get_structures_schema(base_url: str) -> dict:
@@ -292,7 +243,7 @@ def get_structures_schema(base_url: str) -> dict:
     return result
 
 
-def handle_errors(response: dict, debug: bool = False) -> str:
+def handle_errors(response: dict) -> str:
     """Handle any errors"""
     if "data" not in response and "errors" not in response:
         raise InputError(f"No data and no errors reported in response: {response}")
@@ -308,10 +259,7 @@ def handle_errors(response: dict, debug: bool = False) -> str:
                 '<font color="red">Error during querying, '
                 "please try again later.</font>"
             )
-        if debug:
-            import json
-
-            print(json.dumps(response, indent=2))
+        LOGGER.debug("Errored response:\n%s", json.dumps(response, indent=2))
         return msg
 
     return ""

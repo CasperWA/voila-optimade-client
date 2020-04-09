@@ -91,15 +91,30 @@ class StructureSummary(ipw.VBox):
     def _extract_data_from_structure(self) -> dict:
         """Extract and return desired data from Structure"""
         return {
-            "Chemical formula (hill)": self._chemical_formula(
-                self.structure.attributes.chemical_formula_reduced
+            "Chemical formula (hill)": self._add_style(
+                self._chemical_formula(
+                    self.structure.attributes.chemical_formula_reduced
+                )
             ),
-            "Elements": ", ".join(sorted(self.structure.attributes.elements)),
-            "Number of sites": str(self.structure.attributes.nsites),
-            "Unit cell": self._unit_cell(self.structure.attributes.lattice_vectors),
-            "Unit cell volume": f"{calc_cell_volume(self.structure.attributes.lattice_vectors):.2f}"
-            " Å<sup>3</sup>",
+            "Elements": self._add_style(
+                ", ".join(sorted(self.structure.attributes.elements))
+            ),
+            "Number of sites": self._add_style(str(self.structure.attributes.nsites)),
+            "Unit cell": self._add_style(
+                self._unit_cell(self.structure.attributes.lattice_vectors),
+                font_size="18px",
+            ),
+            "Unit cell volume": f"{self._add_style('%.2f' % calc_cell_volume(self.structure.attributes.lattice_vectors))} Å<sup>3</sup>",
         }
+
+    @staticmethod
+    def _add_style(html_value: str, font_size: str = None) -> str:
+        """Wrap 'html_value' with HTML CSS style"""
+        font_size = f"font-size:{font_size};" if font_size is not None else ""
+        return (
+            f'<span style="font-family:Courier New,Courier,monospace;{font_size}">'
+            f"{html_value}</span>"
+        )
 
     @staticmethod
     def _chemical_formula(formula: str) -> str:
@@ -118,7 +133,7 @@ class StructureSummary(ipw.VBox):
             row = list()
             for vector in unitcell:
                 row.append(vector[i])
-            out += r" & ".join([str(_) for _ in row])
+            out += r" & ".join([f"{_:.5f}" for _ in row])
             out += r" \\ "
         row = list()
         for vector in unitcell:
@@ -231,6 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
     .df { border: none; width: 100%; }
     .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
+    .df tbody tr { font-family: "Courier New", Courier, monospoace; font-style: normal; }
     .df tbody td {
         min-width: 50px;
         text-align: center;
@@ -255,7 +271,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else:
             self.value = self._style
             dataf = pd.DataFrame(
-                self._format_sites(), columns=["Elements", "Occupancy", "Position"]
+                self._format_sites(),
+                columns=["Elements", "Occupancy", "x (Å)", "y (Å)", "z (Å)"],
             )
             self.value += dataf.to_html(
                 classes="df", index=False, table_id="sites", notebook=False
@@ -283,7 +300,9 @@ document.addEventListener('DOMContentLoaded', function() {
         Columns:
         - Elements
         - Occupancy
-        - Position
+        - Position (x)
+        - Position (y)
+        - Position (z)
         """
         species: Dict[str, Species] = {
             _.name: _ for _ in self.structure.attributes.species.copy()
@@ -304,17 +323,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     ", ".join(species[symbol_name].chemical_symbols),
                     ", ".join(
                         [
-                            str(occupation)
+                            f"{occupation:.2f}"
                             for occupation in species[symbol_name].concentration
                         ]
                     ),
-                    str(
-                        tuple(
-                            self.structure.attributes.cartesian_site_positions[
-                                site_number
-                            ]
-                        )
-                    ),
+                    f"{self.structure.attributes.cartesian_site_positions[site_number][0]:.5f}",
+                    f"{self.structure.attributes.cartesian_site_positions[site_number][1]:.5f}",
+                    f"{self.structure.attributes.cartesian_site_positions[site_number][2]:.5f}",
                 )
             )
         return res

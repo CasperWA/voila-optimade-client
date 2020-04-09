@@ -18,16 +18,14 @@ class OptimadeSummaryWidget(ipw.VBox):
 
     entity = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, debug: bool = False, **kwargs):
-        self.debug = debug
-
-        self.viewer = StructureViewer(debug=self.debug, **kwargs)
-        self.summary = SummaryTabs(debug=self.debug, **kwargs)
+    def __init__(self, **kwargs):
+        self.viewer = StructureViewer(**kwargs)
+        self.summary = SummaryTabs(**kwargs)
 
         self.children = (self.viewer, self.summary)
         super().__init__(
             children=self.children,
-            layout=ipw.Layout(width="100%", height="auto", min_width="550px"),
+            layout=ipw.Layout(width="auto", height="auto"),
             **kwargs,
         )
 
@@ -78,9 +76,7 @@ class DownloadChooser(ipw.HBox):
         # ),
     ]
 
-    def __init__(self, debug: bool = False, **kwargs):
-        self.debug = debug
-
+    def __init__(self, **kwargs):
         self.dropdown = ipw.Dropdown(options=self._formats, width="100px")
         self.button = ipw.Button(
             description="Download", tooltip="Download structure", width="50px"
@@ -150,8 +146,7 @@ class StructureViewer(ipw.VBox):
 
     structure = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, debug: bool = False, **kwargs):
-        self.debug = debug
+    def __init__(self, **kwargs):
         self._current_view = None
 
         self.viewer = nglview.NGLWidget()
@@ -162,17 +157,22 @@ class StructureViewer(ipw.VBox):
             layout={
                 "width": "auto",
                 "height": "auto",
-                "border": "solid 0.5px",
+                "border": "solid 0.5px darkgrey",
                 "margin": "0px",
                 "padding": "0.5px",
             },
         )
 
-        self.download = DownloadChooser(debug=debug, **kwargs)
+        self.download = DownloadChooser(**kwargs)
 
         super().__init__(
             children=(self.viewer_box, self.download),
-            layout={"width": "auto", "height": "auto"},
+            layout={
+                "width": "auto",
+                "height": "auto",
+                "margin": "0px 0px 0px 0px",
+                "padding": "0px 0px 10px 0px",
+            },
         )
 
         self.observe(self._on_change_structure, names="structure")
@@ -211,6 +211,7 @@ class StructureViewer(ipw.VBox):
         """Reset widget"""
         self.download.reset()
         if self._current_view is not None:
+            self.viewer.clear()
             self.viewer.remove_component(self._current_view)
             self._current_view = None
 
@@ -220,9 +221,7 @@ class SummaryTabs(ipw.Tab):
 
     entity = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, debug: bool = False, **kwargs):
-        self.debug = debug
-
+    def __init__(self, **kwargs):
         self.sections = (
             ("Structure details", StructureSummary()),
             ("Sites", StructureSites()),
@@ -230,7 +229,7 @@ class SummaryTabs(ipw.Tab):
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="auto", height="225px"),
+            layout=ipw.Layout(width="auto", height="235px"),
             **kwargs,
         )
         for index, title in enumerate([_[0] for _ in self.sections]):

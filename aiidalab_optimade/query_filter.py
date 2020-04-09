@@ -8,17 +8,20 @@ try:
 except (ImportError, ModuleNotFoundError):
     from json import JSONDecodeError
 
+from optimade.models import LinksResourceAttributes
+
 from aiidalab_optimade.converters import Structure
-from aiidalab_optimade.exceptions import BadResource
+from aiidalab_optimade.exceptions import BadResource, QueryError
 from aiidalab_optimade.subwidgets import (
     StructureDropdown,
-    FilterInputs,
+    FilterTabs,
     ResultsPageChooser,
 )
 from aiidalab_optimade.utils import (
     validate_api_version,
     perform_optimade_query,
     handle_errors,
+    LOGGER,
 )
 
 
@@ -37,26 +40,24 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     """
 
     structure = traitlets.Instance(Structure, allow_none=True)
-    database = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict(allow_none=True))
+    database = traitlets.Tuple(
+        traitlets.Unicode(),
+        traitlets.Instance(LinksResourceAttributes, allow_none=True),
+    )
 
-    def __init__(
-        self,
-        debug: bool = False,
-        embedded: bool = False,
-        result_limit: int = None,
-        **kwargs,
-    ):
-        self.debug = debug
+    def __init__(self, embedded: bool = False, result_limit: int = None, **kwargs):
         self.embedded = embedded
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
+        self.__perform_query = True
 
         self.filter_header = ipw.HTML(
             '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
         )
-        self.filters = FilterInputs()
+        self.filters = FilterTabs()
         self.filters.freeze()
         self.filters.on_submit(self.retrieve_data)
+
         self.query_button = ipw.Button(
             description="Search",
             button_style="primary",
@@ -88,18 +89,22 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.error_or_status_messages,
                 self.structure_page_chooser,
             ],
-            layout=ipw.Layout(width="100%", height="auto", min_width="310px"),
+            layout=ipw.Layout(width="auto", height="auto"),
             **kwargs,
         )
 
     @traitlets.observe("database")
     def _on_database_select(self, _):
         """Load chosen database"""
-        if self.database[1] is None or self.database[1].get("base_url", None) is None:
+        if (
+            self.database[1] is None
+            or getattr(self.database[1], "base_url", None) is None
+        ):
             self.query_button.disabled = True
             self.query_button.tooltip = "Search - No database chosen"
             self.filters.freeze()
         else:
+            self.offset = 0
             self.query_button.disabled = False
             self.query_button.tooltip = "Search"
             self.filters.unfreeze()
@@ -121,6 +126,15 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         if isinstance(offset_or_link, int):
             self.offset = offset_or_link
             offset_or_link = None
+        else:
+            # It is needed to update page_offset, but we do not wish to query again
+            with self.hold_trait_notifications():
+                self.__perform_query = False
+                self.structure_page_chooser.update_offset()
+
+        if not self.__perform_query:
+            self.__perform_query = True
+            return
 
         try:
             # Freeze and disable list of structures in dropdown widget
@@ -134,7 +148,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
             # Query database
             response = self._query(offset_or_link)
-            msg = handle_errors(response, self.debug)
+            msg = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
                 return
@@ -169,6 +183,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
     def reset(self):
         """Reset widget"""
+        self.offset = 0
         with self.hold_trait_notifications():
             self.query_button.disabled = False
             self.query_button.tooltip = "Search - No database chosen"
@@ -178,7 +193,6 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
     def _query(self, link: str = None) -> dict:
         """Query helper function"""
-
         # If a complete link is provided, use it straight up
         if link is not None:
             try:
@@ -188,26 +202,22 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             return response
 
         # Avoid structures that cannot be converted to an ASE.Atoms instance
-        add_to_filter = 'NOT structure_features HAS ANY "disorder","unknown_positions"'
+        add_to_filter = 'NOT structure_features HAS ANY "unknown_positions"'
 
-        filter_ = self.filters.collect_value()
-        filter_ = (
-            "( {} ) AND ( {} )".format(filter_, add_to_filter)
-            if filter_
+        optimade_filter = self.filters.collect_value()
+        optimade_filter = (
+            "( {} ) AND ( {} )".format(optimade_filter, add_to_filter)
+            if optimade_filter
             else add_to_filter
         )
-        if self.debug:
-            print(filter_)
+        LOGGER.debug("Querying with filter: %s", optimade_filter)
 
         # OPTIMADE queries
         queries = {
-            "base_url": self.database[1]["base_url"],
-            "filter_": filter_,
-            "format_": "json",
-            "email": None,
-            "fields": None,
-            "limit": self.page_limit,
-            "offset": self.offset,
+            "base_url": self.database[1].base_url,
+            "filter": optimade_filter,
+            "page_limit": self.page_limit,
+            "page_offset": self.offset,
         }
 
         return perform_optimade_query(**queries)
@@ -247,6 +257,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
+        self.offset = 0
         try:
             # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
@@ -263,13 +274,18 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
             # Query database
             response = self._query()
-            msg = handle_errors(response, self.debug)
+            msg = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
-                return
+                raise QueryError(remove_target=False)
 
             # Check implementation API version
-            validate_api_version(response.get("meta", {}).get("api_version", ""))
+            msg = validate_api_version(
+                response.get("meta", {}).get("api_version", ""), raise_on_fail=False
+            )
+            if msg:
+                self.error_or_status_messages.value = msg
+                raise QueryError(remove_target=True)
 
             # Update list of structures in dropdown widget
             self._update_structures(response["data"])
@@ -280,6 +296,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 links_to_page=response.get("links", {}),
                 reset_cache=True,
             )
+
+        except QueryError:
+            self.structure_drop.reset()
+            self.structure_page_chooser.reset()
 
         finally:
             self.query_button.description = "Search"

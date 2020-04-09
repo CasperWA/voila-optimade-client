@@ -62,7 +62,10 @@ class BadResource(ImplementationError):
         self.msg = (
             msg
             if msg is not None
-            else f"A bad resource broke my flow: <id: {self.resource.id}, type: {self.resource.type}>"
+            else (
+                "A bad resource broke my flow: "
+                f"<id: {self.resource.id}, type: {self.resource.type}>"
+            )
         )
 
         if not isinstance(self.fields, list):
@@ -91,3 +94,13 @@ class BadResource(ImplementationError):
                 ]
             )
         )
+
+
+class QueryError(ImplementationError):
+    """Error while querying specific implementation (or provider)"""
+
+    def __init__(self, msg: str = None, remove_target: bool = False):
+        msg = msg if msg is not None else ""
+        self.remove_target = remove_target
+
+        super().__init__(msg)

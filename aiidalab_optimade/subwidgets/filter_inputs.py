@@ -7,14 +7,104 @@ import traitlets
 from aiidalab_optimade.exceptions import ParserError
 
 
-__all__ = ("FilterInputs",)
+__all__ = ("FilterTabs",)
+
+
+class FilterTabs(ipw.Tab):
+    """Separate filter inputs into tabs"""
+
+    def __init__(self, **kwargs):
+
+        self.sections = (
+            ("Basic", FilterInputs()),
+            # ("Advanced", ipw.HTML("This input tab has not yet been implemented.")),
+            ("Raw", FilterRaw()),
+        )
+
+        super().__init__(
+            children=tuple(_[1] for _ in self.sections),
+            layout={"width": "auto", "height": "auto"},
+        )
+        for index, title in enumerate([_[0] for _ in self.sections]):
+            self.set_title(index, title)
+
+    def freeze(self):
+        """Disable widget"""
+        for widget in self.children:
+            if not isinstance(widget, ipw.HTML):
+                widget.freeze()
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        for widget in self.children:
+            if not isinstance(widget, ipw.HTML):
+                widget.unfreeze()
+
+    def reset(self):
+        """Reset widget"""
+        for widget in self.children:
+            if not isinstance(widget, ipw.HTML):
+                widget.reset()
+
+    def collect_value(self) -> str:
+        """Collect inputs to a single OPTIMADE filter query string"""
+        active_widget = self.sections[self.selected_index][1]
+        if not isinstance(active_widget, ipw.HTML):
+            return active_widget.collect_value()
+        return ""
+
+    def on_submit(self, callback, remove=False):
+        """(Un)Register a callback to handle text submission"""
+        active_widget = self.sections[self.selected_index][1]
+        if not isinstance(active_widget, ipw.HTML):
+            active_widget.on_submit(callback=callback, remove=remove)
+
+
+class FilterRaw(ipw.VBox):
+    """Filter inputs for raw input"""
+
+    def __init__(self, **kwargs):
+        self.inputs = [
+            FilterText(
+                field="Filter",
+                hint="Raw 'filter' query string ...",
+                field_width="50px",
+            )
+        ]
+
+        super().__init__(children=self.inputs, layout={"width": "auto"}, **kwargs)
+
+    def reset(self):
+        """Reset widget"""
+        for text in self.inputs:
+            text.reset()
+
+    def freeze(self):
+        """Disable widget"""
+        for text in self.inputs:
+            text.freeze()
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        for text in self.inputs:
+            text.unfreeze()
+
+    def collect_value(self) -> str:
+        """Collect inputs to a single OPTIMADE filter query string"""
+        filter_ = self.inputs[0]
+        return filter_.user_input.strip()
+
+    def on_submit(self, callback, remove=False):
+        """(Un)Register a callback to handle text submission"""
+        for text in self.inputs:
+            text.on_submit(callback=callback, remove=remove)
 
 
 class FilterText(ipw.HBox):
     """Combination of HTML and Text for filter inputs"""
 
     def __init__(self, field: str, hint: str = None, field_width: str = None, **kwargs):
-        _field_width = field_width if field_width is not None else "150px"
+        _field_width = field_width if field_width is not None else "170px"
         description = ipw.HTML(field, layout=ipw.Layout(width=_field_width))
         self.text_input = ipw.Text(layout=ipw.Layout(width="100%"))
         if hint:
@@ -218,7 +308,10 @@ class FilterInputs(ipw.VBox):
         sections = [
             self.new_section(title, inputs) for title, inputs in self.FILTER_SECTIONS
         ]
+
+        # Remove initial line-break
         sections[0].children[0].value = sections[0].children[0].value[len("<br>") :]
+
         super().__init__(children=sections, layout=self._layout, **kwargs)
 
     def reset(self):
