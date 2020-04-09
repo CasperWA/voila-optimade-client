@@ -1,5 +1,7 @@
 # OPTIMADE client (in Jupyter)
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/pure_jupyter_version?urlpath=%2Fapps%2FOPTIMADE_general.ipynb)
+
 Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
 Note, this application handles the structures by converting them to ASE `Atoms` or AiiDA `StructureData` objects.
 
