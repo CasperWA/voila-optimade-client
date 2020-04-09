@@ -32,9 +32,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 ):
     """List all OPTIMADE providers and their implementations"""
 
-    provider: LinksResourceAttributes = traitlets.Instance(
-        LinksResourceAttributes, allow_none=True
-    )
+    provider = traitlets.Instance(LinksResourceAttributes, allow_none=True)
     database = traitlets.Tuple(
         traitlets.Unicode(),
         traitlets.Instance(LinksResourceAttributes, allow_none=True),
@@ -96,8 +94,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
     def freeze(self):
         """Disable widget"""
-        self.providers.disabled = False
-        self.child_dbs.disabled = False
+        self.providers.disabled = True
+        self.child_dbs.disabled = True
         self.page_chooser.freeze()
 
     def unfreeze(self):
@@ -128,7 +126,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 self.providers.index = 0
                 self.child_dbs.index = 0
         else:
-            self.provider: LinksResourceAttributes = self.providers.value
+            self.provider = self.providers.value
             self._initialize_child_dbs()
             self.child_dbs.disabled = False
 

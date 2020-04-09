@@ -188,17 +188,6 @@ class StructureViewer(ipw.VBox):
         self.viewer.add_representation("ball+stick", aspectRatio=4)
         self.viewer.add_representation("unitcell")
 
-    @traitlets.observe("layout")
-    def _on_change_layout(self, _):
-        """Resize NGL viewer when the VBox changes size"""
-        self.viewer.layout.width = "100%"
-        self.viewer.layout.height = "100%"
-        self.viewer.layout.width = "auto"
-        self.viewer.layout.height = "auto"
-        # self.viewer.handle_resize()
-        component = self._current_view if self._current_view is not None else 0
-        self.viewer.center(component=component)
-
     def freeze(self):
         """Disable widget"""
         self.download.freeze()

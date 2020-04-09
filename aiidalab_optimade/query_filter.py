@@ -45,8 +45,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         traitlets.Instance(LinksResourceAttributes, allow_none=True),
     )
 
-    def __init__(self, embedded: bool = False, result_limit: int = None, **kwargs):
-        self.embedded = embedded
+    def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
         self.__perform_query = True
@@ -201,8 +200,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 response = {"errors": {}}
             return response
 
-        # Avoid structures that cannot be converted to an ASE.Atoms instance
-        add_to_filter = 'NOT structure_features HAS ANY "unknown_positions"'
+        # Avoid structures with null positions and with assemblies.
+        add_to_filter = (
+            'NOT structure_features HAS ANY "unknown_positions","assemblies"'
+        )
 
         optimade_filter = self.filters.collect_value()
         optimade_filter = (
