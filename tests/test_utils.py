@@ -1,6 +1,3 @@
-import pytest
-
-from aiidalab_optimade import exceptions as exc
 from aiidalab_optimade import utils
 
 
@@ -8,8 +5,8 @@ def test_fetch_providers_wrong_url():
     """Test when fetch_providers is provided a wrong URL"""
     wrong_url = "https://this.is.a.wrong.url"
 
-    with pytest.raises(exc.NonExistent):
-        utils.fetch_providers(providers_url=wrong_url)
+    providers = utils.fetch_providers(providers_url=wrong_url)
+    assert providers == []
 
 
 def test_fetch_providers_content():

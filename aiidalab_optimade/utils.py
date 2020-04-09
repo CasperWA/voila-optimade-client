@@ -94,14 +94,14 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     try:
         response = requests.get(complete_url, timeout=TIMEOUT_SECONDS)
     except Exception as exc:  # pylint: disable=broad-except
-        response = {
+        return {
             "errors": f"CLIENT: The URL cannot be opened: {complete_url}. Exception: {exc}"
         }
 
     try:
         response = response.json()
     except JSONDecodeError:
-        response = {"errors": "CLIENT: Cannot decode response to JSON format."}
+        return {"errors": "CLIENT: Cannot decode response to JSON format."}
 
     return response
 
