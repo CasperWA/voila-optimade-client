@@ -1,0 +1,8 @@
+optimade~=0.7
+requests~=2.23
+jupyterlab~=2.0
+ipywidgets~=7.5
+nglview~=2.7
+numpy~=1.18
+pandas~=1.0
+appmode

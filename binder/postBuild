@@ -1,9 +1,8 @@
-#!/bin/bash
+set -ex
 
-python -m pip install .
-
-jupyter nbextension     enable --py --sys-prefix appmode
+# APP mode
+jupyter nbextension enable --py --sys-prefix appmode
 jupyter serverextension enable --py --sys-prefix appmode
-jupyter nbextension     enable --py --sys-prefix nglview
 
-#EOF
+# NGLViewer
+jupyter nbextension enable --py --sys-prefix nglview
