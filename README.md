@@ -41,7 +41,7 @@ See the [OPTIMADE API specification document](https://github.com/Materials-Conso
 In order to get tabs delving deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.
 The link for this should then look like: `_ = dlink((structure_query, 'structure'), (structure_output, 'entity'))`, given that you initiate `OptimadeResultsWidget` in the variable `structure_output`.
 
-See the notebook [`OPTIMADE general.ipynb`](OPTIMADE general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
+See the notebook [`OPTIMADE general.ipynb`](OPTIMADE_general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
 
 ### Embedded
 
