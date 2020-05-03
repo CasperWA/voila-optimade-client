@@ -1,7 +1,5 @@
 import logging
-import os
 import re
-import sys
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
 
@@ -23,16 +21,23 @@ from aiidalab_optimade.exceptions import (
 
 
 LOGGER = logging.getLogger("OPTIMADE_Client")
-LOG_LEVEL = logging.INFO
-if os.environ.get("OPTIMADE_CLIENT_DEBUG", False):
-    LOG_LEVEL = logging.DEBUG
-LOGGER.setLevel(LOG_LEVEL)
-HANDLER = logging.StreamHandler(sys.stdout)
-FORMATTER = logging.Formatter(
+LOGGER.setLevel(logging.DEBUG)
+
+DEBUG_HANDLER = logging.FileHandler("optimade_client_full.log")
+DEBUG_HANDLER.setLevel(logging.DEBUG)
+
+INFO_HANDLER = logging.FileHandler("optimade_client.log")
+INFO_HANDLER.setLevel(logging.INFO)
+
+DEBUG_FORMATTER = logging.Formatter(
     "[%(name)s %(levelname)s %(filename)s:%(lineno)d] %(message)s"
 )
-HANDLER.setFormatter(FORMATTER)
-LOGGER.handlers = [HANDLER]
+INFO_FORMATTER = logging.Formatter("[%(levelname)s] %(message)s")
+DEBUG_HANDLER.setFormatter(DEBUG_FORMATTER)
+INFO_HANDLER.setFormatter(INFO_FORMATTER)
+
+LOGGER.addHandler(DEBUG_HANDLER)
+LOGGER.addHandler(INFO_HANDLER)
 
 # Supported OPTIMADE spec version
 __optimade_version__ = "0.10.1"
