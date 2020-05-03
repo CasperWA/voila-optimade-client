@@ -220,6 +220,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             "page_limit": self.page_limit,
             "page_offset": self.offset,
         }
+        LOGGER.debug(
+            "Parameters (excluding filter) sent to query util func: %s",
+            {key: value for key, value in queries.items() if key != "filter"},
+        )
 
         return perform_optimade_query(**queries)
 
