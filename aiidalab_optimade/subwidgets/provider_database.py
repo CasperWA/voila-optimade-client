@@ -2,9 +2,9 @@ import os
 from typing import List, Tuple, Union
 
 try:
-    from simplejson import JSONDecodeError
+    import simplejson as json
 except ImportError:
-    from json import JSONDecodeError
+    import json
 
 import ipywidgets as ipw
 import requests
@@ -13,6 +13,7 @@ import traitlets
 from optimade.models import LinksResourceAttributes, ChildResource
 
 from aiidalab_optimade.exceptions import QueryError
+from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets.results import ResultsPageChooser
 from aiidalab_optimade.utils import (
     get_list_of_valid_providers,
@@ -20,7 +21,6 @@ from aiidalab_optimade.utils import (
     handle_errors,
     perform_optimade_query,
     validate_api_version,
-    LOGGER,
 )
 
 
@@ -275,7 +275,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if link is not None:
             try:
                 response = requests.get(link).json()
-            except JSONDecodeError:
+            except json.JSONDecodeError:
                 response = {"errors": {}}
         else:
             response = perform_optimade_query(
@@ -300,8 +300,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             raise QueryError(remove_target=True)
 
         LOGGER.debug(
-            "First attempt (in /links): Found implementations: %s",
-            str(response.get("data", [])),
+            "First attempt (in /links): Found implementations:\n%s",
+            str(json.dumps(response.get("data", []), indent=2)),
         )
         # Return all implementations of type "child"
         implementations = [

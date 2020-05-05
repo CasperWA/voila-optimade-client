@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Tuple, List, Union
 from urllib.parse import urlencode
@@ -18,26 +17,8 @@ from aiidalab_optimade.exceptions import (
     ApiVersionError,
     InputError,
 )
+from aiidalab_optimade.logger import LOGGER
 
-
-LOGGER = logging.getLogger("OPTIMADE_Client")
-LOGGER.setLevel(logging.DEBUG)
-
-DEBUG_HANDLER = logging.FileHandler("optimade_client_full.log")
-DEBUG_HANDLER.setLevel(logging.DEBUG)
-
-INFO_HANDLER = logging.FileHandler("optimade_client.log")
-INFO_HANDLER.setLevel(logging.INFO)
-
-DEBUG_FORMATTER = logging.Formatter(
-    "[%(name)s %(levelname)s %(filename)s:%(lineno)d] %(message)s"
-)
-INFO_FORMATTER = logging.Formatter("[%(levelname)s] %(message)s")
-DEBUG_HANDLER.setFormatter(DEBUG_FORMATTER)
-INFO_HANDLER.setFormatter(INFO_FORMATTER)
-
-LOGGER.addHandler(DEBUG_HANDLER)
-LOGGER.addHandler(INFO_HANDLER)
 
 # Supported OPTIMADE spec version
 __optimade_version__ = "0.10.1"

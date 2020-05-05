@@ -1,9 +1,12 @@
+import logging
+import os
 from pathlib import Path
 from typing import Union
 
 import ipywidgets as ipw
 
-from aiidalab_optimade.utils import LOGGER, __optimade_version__
+from aiidalab_optimade.logger import LOGGER, WIDGET_HANDLER
+from aiidalab_optimade.utils import __optimade_version__
 
 
 IMG_DIR = Path(__file__).parent.parent.joinpath("img")
@@ -140,42 +143,55 @@ Finally, a provider may choose to expose only a subset of their database.
         return ipw.HTML(value)
 
 
-# faq = ipw.HTML(
-#     value= \
-# """<h4 style="font-weight:bold;">Why is a provider from Materials-Consortia's list of providers not shown in the client?</h4>
-# <p style="font-size:14px;">There may be different reasons:</p>
-# <ul style="line-height:1.5;font-size:14px;">
-#   <li>The provider has not supplied a link to an OPTIMADE index meta-database</li>
-#   <li>The provider has implemented an unsupported version</li>
-#   <li>The provider has supplied a link that could not be reached</li>
-# </ul>
-# <p style="line-height:1.5;font-size:14px;">Please go to <a href="https://github.com/Materials-Consortia/providers" target="_blank">the Materials-Consortia list of providers repository</a> to update the provider in question's details.</p>
+class OptimadeLog(ipw.Accordion):
+    """Accordion containing non-editable log output"""
 
-# <h4 style="font-weight:bold;margin-top:25px;">When I choose a provider, why can I not find any databases?</h4>
-# <p style="font-size:14px;">There may be different reasons:</p>
-# <ul style="line-height:1.5;font-size:14px;">
-#   <li>The provider does not have a <code>/structures</code> endpoint</li>
-#   <li>The implementation is of an unsupported version</li>
-#   <li>The implementation could not be reached</li>
-# </ul>
-# <p style="line-height:1.5;font-size:14px;">An implementation may also be removed upon choosing it. This is do to OPTIMADE API version incompatibility between the implementation and this client.</p>
+    def __init__(self, **kwargs):
+        self._debug = bool(os.environ.get("OPTIMADE_CLIENT_DEBUG", False))
 
-# <h4 style="font-weight:bold;margin-top:25px;">I know a database hosts X number of structures, why can I only find Y?</h4>
-# <p style="line-height:1.5;font-size:14px;">
-# All searches (including the raw input search) will be pre-processed prior to sending the query.
-# This is done to ensure the best experience when using the client.
-# Specifically, all structures with <code>"assemblies"</code> and <code>"unknown_positions"</code>
-# in the <code>"structural_features"</code> property are excluded.
-# </p>
-# <p style="line-height:1.5;font-size:14px;">
-# <code>"assemblies"</code> handling will be implemented at a later time.
-# See <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target="_blank">this issue</a> for more information.
-# </p>
-# <p style="line-height:1.5;font-size:14px;">
-# <code>"unknown_positions"</code> may be handled later, however, since these structures present difficulties for viewing, it will not be prioritized.
-# </p>
-# <p style="line-height:1.5;font-size:14px;">
-# Finally, a provider may choose to expose only a subset of their database.
-# </p>
-# """
-# )
+        self.toggle_debug = ipw.Checkbox(
+            value=self._debug,
+            description="Show DEBUG messages",
+            disabled=False,
+            indent=False,
+        )
+        self.log_output = WIDGET_HANDLER.get_widget()
+        super().__init__(
+            children=(ipw.VBox(children=(self.toggle_debug, self.log_output)),),
+            **kwargs,
+        )
+        self.set_title(0, "Log")
+        self.selected_index = None
+
+        self.toggle_debug.observe(self._toggle_debug_logging, names="value")
+
+    def freeze(self):
+        """Disable widget"""
+        self.toggle_debug.disabled = True
+        self.log_output.freeze()
+
+    def unfreeze(self):
+        """Activate widget (in its current state)"""
+        self.toggle_debug.disabled = False
+        self.log_output.unfreeze()
+
+    def reset(self):
+        """Reset widget"""
+        self.selected_index = None
+        self.toggle_debug.value = self._debug
+        self.toggle_debug.disabled = False
+        self.log_output.reset()
+
+    @staticmethod
+    def _toggle_debug_logging(change: dict):
+        """Set logging level depending on toggle button"""
+        if change["new"]:
+            # Set logging level DEBUG
+            WIDGET_HANDLER.setLevel(logging.DEBUG)
+            LOGGER.info("Set log output in widget to level DEBUG")
+            LOGGER.debug("This should now be shown")
+        else:
+            # Set logging level to INFO
+            WIDGET_HANDLER.setLevel(logging.INFO)
+            LOGGER.info("Set log output in widget to level INFO")
+            LOGGER.debug("This should now NOT be shown")

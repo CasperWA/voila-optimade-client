@@ -12,6 +12,7 @@ from optimade.models import LinksResourceAttributes
 
 from aiidalab_optimade.converters import Structure
 from aiidalab_optimade.exceptions import BadResource, QueryError
+from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets import (
     StructureDropdown,
     FilterTabs,
@@ -21,7 +22,6 @@ from aiidalab_optimade.utils import (
     validate_api_version,
     perform_optimade_query,
     handle_errors,
-    LOGGER,
 )
 
 

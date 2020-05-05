@@ -3,7 +3,7 @@ from urllib.parse import urlparse, parse_qs
 import ipywidgets as ipw
 import traitlets
 
-from aiidalab_optimade.utils import LOGGER
+from aiidalab_optimade.logger import LOGGER
 
 
 __all__ = ("StructureDropdown", "ResultsPageChooser")
