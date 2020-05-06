@@ -5,6 +5,7 @@ import traitlets
 import nglview
 
 from aiidalab_optimade.converters import Structure
+from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets import (
     StructureSummary,
     StructureSites,
@@ -75,18 +76,29 @@ class DownloadChooser(ipw.HBox):
         #     {"ext": "cif", "adapter_format": "pdbx_mmcif"},
         # ),
     ]
+    _download_button_format = """
+<input type="button" class="jupyter-widgets jupyter-button widget-button" value="Download" title="Download structure" style="width:auto;" {disabled}
+onclick="var link = document.createElement('a');
+link.href = 'data:charset={encoding};base64,{data}';
+link.download = '{filename}';
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);" />
+"""
 
     def __init__(self, **kwargs):
-        self.dropdown = ipw.Dropdown(options=self._formats, width="100px")
-        self.button = ipw.Button(
-            description="Download", tooltip="Download structure", width="50px"
+        self.dropdown = ipw.Dropdown(options=self._formats, width="auto")
+        self.download_button = ipw.HTML(
+            self._download_button_format.format(
+                disabled="disabled", encoding="", data="", filename=""
+            )
         )
 
-        self.children = (self.dropdown, self.button)
+        self.children = (self.dropdown, self.download_button)
         super().__init__(children=self.children, layout={"width": "auto"})
         self.reset()
 
-        self.button.on_click(self._on_download_request)
+        self.dropdown.observe(self._update_download_button, names="value")
 
     @traitlets.observe("structure")
     def _on_change_structure(self, change: dict):
@@ -95,13 +107,16 @@ class DownloadChooser(ipw.HBox):
             self.reset()
         self.unfreeze()
 
-    def _on_download_request(self, _):
-        """Initiate download"""
+    def _update_download_button(self, change: dict):
+        """Update Download button with correct onclick value"""
         import base64
-        from IPython.display import Javascript
 
-        desired_format = self.dropdown.value
-        if not desired_format:
+        desired_format = change["new"]
+        LOGGER.info("%s", desired_format)
+        if not desired_format or desired_format is None:
+            self.download_button.value = self._download_button_format.format(
+                disabled="disabled", encoding="", data="", filename=""
+            )
             return
 
         output = getattr(self.structure, f"get_{desired_format['adapter_format']}")
@@ -113,17 +128,11 @@ class DownloadChooser(ipw.HBox):
 
         filename = f"optimade_structure_{self.structure.id}.{desired_format['ext']}"
 
-        javascript = Javascript(
-            f"""
-var link = document.createElement('a');
-link.href = "data:charset={encoding};base64,{base64.b64encode(output.encode(encoding)).decode()}"
-link.download = "{filename}"
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-"""
+        data = base64.b64encode(output.encode(encoding)).decode()
+
+        self.download_button.value = self._download_button_format.format(
+            disabled="", encoding=encoding, data=data, filename=filename
         )
-        display(javascript)
 
     def freeze(self):
         """Disable widget"""
