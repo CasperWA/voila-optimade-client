@@ -5,7 +5,7 @@ from typing import Union
 
 import ipywidgets as ipw
 
-from aiidalab_optimade.logger import LOGGER, WIDGET_HANDLER
+from aiidalab_optimade.logger import LOGGER, WIDGET_HANDLER, REPORT_HANDLER
 from aiidalab_optimade.utils import __optimade_version__
 
 
@@ -13,14 +13,30 @@ IMG_DIR = Path(__file__).parent.parent.joinpath("img")
 
 
 class HeaderDescription(ipw.VBox):
-    """Top logo and description of the OPTIMADE Client"""
+    """Top logo and description of the OPTIMADE Client
 
-    DESCRIPTION = f"""<p style="font-size:14px;"><b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__}</code></p>
-<p style="font-size:14px;"><b>Source code</b>: <a href="https://github.com/aiidalab/aiidalab-optimade/" target="_blank">GitHub</a></p>
-<p style="font-size:14px;"><a href="https://github.com/aiidalab/aiidalab-optimade/issues/new" target="_blank">
-<b>Click here to report an issue and help improve the application!</b>
-</a></p>
-<p style="line-height:1.5;font-size:14px;">
+    Special buttons are needed for reporting, hence HTML widgets are instantiated.
+    Each button is also different from each other, hence the templates below are either
+    HTML-encoded or not.
+    The bug report button utilizes the special REPORT_LOGGER, which stays below a certain maximum
+    number of bytes-length (of logs), in order to not surpass the allowed URL length for GitHub and
+    get an errornous 414 response.
+    After some testing I am estimating the limit to be at 8 kB.
+    The suggestion report button utilizes instead the HTML Form element to "submit" the GitHub issue
+    template. While an actual markdown template could be used, it seems GitHub is coercing its users
+    to create these templates via their GUI and the documentation for creating them directly in the
+    repository is disappearing. Hence, I have chosen to use templates in this manner instead, where
+    I have more control over them.
+    """
+
+    HEADER = f"""<p style="font-size:14px;">
+<b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__}</code>
+</p>
+<p style="font-size:14px;">
+<b>Source code</b>: <a href="https://github.com/aiidalab/aiidalab-optimade/" target="_blank">GitHub</a>
+</p>
+"""
+    DESCRIPTION = f"""<p style="line-height:1.5;font-size:14px;">
 This is a friendly client to search through databases and other implementations exposing an OPTIMADE RESTful API.
 To get more information about the OPTIMADE API,
 please see <a href="https://www.optimade.org/" target="_blank">the offical web page</a>.
@@ -31,26 +47,89 @@ All providers are retrieved from <a href="https://providers.optimade.org/" targe
 Follow <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target="_blank">the issue on GitHub</a> to learn more.
 </p>
 """
+    BUG_TEMPLATE = {
+        "title": "%5BBUG%5D - TITLE",
+        "body": (
+            "%23%23 Bug description%0A%0AWhat happened?%0A%0A"
+            "%23%23%23 Expected behaviour (optional)%0A%0AWhat should have happened?%0A%0A"
+            "%23%23%23 Actual behavior (optional)%0A%0AWhat happened instead?%0A%0A"
+            "%23%23 Reproducibility (optional)%0A%0AHow may it be reproduced?%0A%0A"
+            "%23%23%23 For developers (do not alter this section)%0A"
+        ),
+    }
+    SUGGESTION_TEMPLATE = {
+        "title": "[FEATURE/CHANGE] - TITLE",
+        "body": (
+            "## Feature/change description\n\nWhat should it be able to do?"
+            "Or what should be changed?\n\n### Reasoning (optional)\n\n"
+            "Why is this feature or change needed?"
+        ),
+    }
 
     def __init__(self, logo: str = None, **kwargs):
         logo = logo if logo is not None else "optimade-text-right-transparent-bg.png"
         logo = self._get_file(str(IMG_DIR.joinpath(logo)))
         logo = ipw.Image(value=logo, format="png", width=375, height=137.5)
 
+        header = ipw.HTML(self.HEADER)
+
+        self._debug_log = REPORT_HANDLER.get_widget()
+        self.report_bug = ipw.HTML(
+            f"""
+<button type="button" class="jupyter-widgets jupyter-button widget-button" title="Create a bug issue on GitHub that includes a log file" style="width:auto;"
+onclick="
+var log = document.getElementById('{self._debug_log.element_id}');
+
+var link = document.createElement('a');
+link.target = '_blank';
+link.href = 'https://github.com/aiidalab/aiidalab-optimade/issues/new?title={self.BUG_TEMPLATE["title"].replace(" ", "+")}&body={self.BUG_TEMPLATE["body"].replace(" ", "+")}' + log.getAttribute('value');
+
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);">
+<i class="fa fa-bug"></i>Report a bug</button>"""
+        )
+        self.report_suggestion = ipw.HTML(
+            f"""
+<form target="_blank" style="width:auto;height:auto;display:inline;" action="https://github.com/aiidalab/aiidalab-optimade/issues/new">
+<input type="hidden" name="title" value="{self.SUGGESTION_TEMPLATE["title"]}" />
+<input type="hidden" name="body" value="{self.SUGGESTION_TEMPLATE["body"]}" />
+<button type="submit" class="jupyter-widgets jupyter-button widget-button" title="Create an enhancement issue on GitHub" style="width:auto;">
+<i class="fa fa-star"></i>Suggest a feature/change</button></form>"""
+        )
+        reports = ipw.HBox(
+            children=(
+                ipw.HTML(
+                    '<p style="font-size:14px;margin-top:0px;margin-bottom:0px">'
+                    "<b>Help improve the application:</b></p>"
+                ),
+                self.report_bug,
+                self.report_suggestion,
+            ),
+        )
+
         description = ipw.HTML(self.DESCRIPTION)
 
         super().__init__(
-            children=(logo, description), layout=ipw.Layout(width="auto"), **kwargs
+            children=(self._debug_log, logo, header, reports, description),
+            layout=ipw.Layout(width="auto"),
+            **kwargs,
         )
 
     def freeze(self):
         """Disable widget"""
+        self.report_suggestion.disabled = True
+        self._debug_log.freeze()
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
+        self.report_suggestion.disabled = False
+        self._debug_log.unfreeze()
 
     def reset(self):
         """Reset widget"""
+        self.report_suggestion.disabled = False
+        self._debug_log.reset()
 
     @staticmethod
     def _get_file(filename: str) -> Union[str, bytes]:

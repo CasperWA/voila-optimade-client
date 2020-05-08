@@ -11,4 +11,4 @@
 .*.ipynb
 
 # logging
-optimade_client.log
+optimade_client.log*

@@ -1,11 +1,9 @@
-from IPython.display import display
 import ipywidgets as ipw
 import traitlets
 
 import nglview
 
 from aiidalab_optimade.converters import Structure
-from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets import (
     StructureSummary,
     StructureSites,
@@ -58,7 +56,12 @@ class OptimadeSummaryWidget(ipw.VBox):
 
 
 class DownloadChooser(ipw.HBox):
-    """Download chooser for structure download"""
+    """Download chooser for structure download
+
+    To be able to have the download button work no matter the widget's final environment,
+    (as long as it supports JavaScript), the very helpful insight from the following page is used:
+    https://stackoverflow.com/questions/2906582/how-to-create-an-html-button-that-acts-like-a-link
+    """
 
     chosen_format = traitlets.Tuple(traitlets.Unicode(), traitlets.Dict())
     structure = traitlets.Instance(Structure, allow_none=True)
@@ -112,7 +115,6 @@ document.body.removeChild(link);" />
         import base64
 
         desired_format = change["new"]
-        LOGGER.info("%s", desired_format)
         if not desired_format or desired_format is None:
             self.download_button.value = self._download_button_format.format(
                 disabled="disabled", encoding="", data="", filename=""
