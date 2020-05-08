@@ -41,7 +41,7 @@ def test_exmpl_not_in_list():
         "Materials Cloud",
         {
             "name": "Materials Cloud",
-            "description": "Materials Cloud: A platform for Open Science built for seamless "
+            "description": "A platform for Open Science built for seamless "
             "sharing of resources in computational materials science",
             "base_url": "https://www.materialscloud.org/optimade/v0",
             "homepage": "https://www.materialscloud.org",
