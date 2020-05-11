@@ -10,6 +10,7 @@ from aiidalab_optimade.utils import __optimade_version__
 
 
 IMG_DIR = Path(__file__).parent.parent.joinpath("img")
+SOURCE_URL = "https://github.com/aiidalab/aiidalab-optimade/"
 
 
 class HeaderDescription(ipw.VBox):
@@ -33,7 +34,7 @@ class HeaderDescription(ipw.VBox):
 <b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__}</code>
 </p>
 <p style="font-size:14px;">
-<b>Source code</b>: <a href="https://github.com/aiidalab/aiidalab-optimade/" target="_blank">GitHub</a>
+<b>Source code</b>: <a href="{SOURCE_URL}" target="_blank">GitHub</a>
 </p>
 """
     DESCRIPTION = f"""<p style="line-height:1.5;font-size:14px;">
@@ -44,7 +45,7 @@ All providers are retrieved from <a href="https://providers.optimade.org/" targe
 </p>
 <p style="line-height:1.5;font-size:14px;margin-top:5px;">
 <i>Note</i>: The structure property <code>assemblies</code> is currently not supported.
-Follow <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target="_blank">the issue on GitHub</a> to learn more.
+Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> to learn more.
 </p>
 """
     BUG_TEMPLATE = {
@@ -60,8 +61,9 @@ Follow <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target=
     SUGGESTION_TEMPLATE = {
         "title": "[FEATURE/CHANGE] - TITLE",
         "body": (
-            "## Feature/change description\n\nWhat should it be able to do?"
-            "Or what should be changed?\n\n### Reasoning (optional)\n\n"
+            "## Feature/change description\n\n"
+            "What should it be able to do? Or what should be changed?\n\n"
+            "### Reasoning (optional)\n\n"
             "Why is this feature or change needed?"
         ),
     }
@@ -76,13 +78,14 @@ Follow <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target=
         self._debug_log = REPORT_HANDLER.get_widget()
         self.report_bug = ipw.HTML(
             f"""
-<button type="button" class="jupyter-widgets jupyter-button widget-button" title="Create a bug issue on GitHub that includes a log file" style="width:auto;"
+<button type="button" class="jupyter-widgets jupyter-button widget-button"
+title="Create a bug issue on GitHub that includes a log file" style="width:auto;"
 onclick="
 var log = document.getElementById('{self._debug_log.element_id}');
 
 var link = document.createElement('a');
 link.target = '_blank';
-link.href = 'https://github.com/aiidalab/aiidalab-optimade/issues/new?title={self.BUG_TEMPLATE["title"].replace(" ", "+")}&body={self.BUG_TEMPLATE["body"].replace(" ", "+")}' + log.getAttribute('value');
+link.href = '{SOURCE_URL}issues/new?title={self.BUG_TEMPLATE["title"].replace(" ", "+")}&body={self.BUG_TEMPLATE["body"].replace(" ", "+")}' + log.getAttribute('value');
 
 document.body.appendChild(link);
 link.click();
@@ -91,10 +94,11 @@ document.body.removeChild(link);">
         )
         self.report_suggestion = ipw.HTML(
             f"""
-<form target="_blank" style="width:auto;height:auto;display:inline;" action="https://github.com/aiidalab/aiidalab-optimade/issues/new">
+<form target="_blank" style="width:auto;height:auto;" action="{SOURCE_URL}issues/new">
 <input type="hidden" name="title" value="{self.SUGGESTION_TEMPLATE["title"]}" />
 <input type="hidden" name="body" value="{self.SUGGESTION_TEMPLATE["body"]}" />
-<button type="submit" class="jupyter-widgets jupyter-button widget-button" title="Create an enhancement issue on GitHub" style="width:auto;">
+<button type="submit" class="jupyter-widgets jupyter-button widget-button"
+title="Create an enhancement issue on GitHub" style="width:auto;">
 <i class="fa fa-star"></i>Suggest a feature/change</button></form>"""
         )
         reports = ipw.HBox(
@@ -176,7 +180,7 @@ An implementation may also be removed upon choosing it. This is do to OPTIMADE A
         },
         {
             "Q": "I know a database hosts X number of structures, why can I only find Y?",
-            "A": """<p style="line-height:1.5;font-size:14px;">
+            "A": f"""<p style="line-height:1.5;font-size:14px;">
 All searches (including the raw input search) will be pre-processed prior to sending the query.
 This is done to ensure the best experience when using the client.
 Specifically, all structures with <code>"assemblies"</code> and <code>"unknown_positions"</code>
@@ -184,7 +188,7 @@ in the <code>"structural_features"</code> property are excluded.
 </p>
 <p style="line-height:1.5;font-size:14px;">
 <code>"assemblies"</code> handling will be implemented at a later time.
-See <a href="https://github.com/aiidalab/aiidalab-optimade/issues/12" target="_blank">this issue</a> for more information.
+See <a href="{SOURCE_URL}issues/12" target="_blank">this issue</a> for more information.
 </p>
 <p style="line-height:1.5;font-size:14px;">
 <code>"unknown_positions"</code> may be handled later, however, since these structures present difficulties for viewing, it will not be prioritized.
@@ -218,7 +222,10 @@ Finally, a provider may choose to expose only a subset of their database.
             if value == "":
                 value += f'<h4 style="font-weight:bold;">{faq["Q"]}</h4>\n{faq["A"]}'
             else:
-                value += f'\n\n<h4 style="font-weight:bold;margin-top:25px;">{faq["Q"]}</h4>\n{faq["A"]}'
+                value += (
+                    '\n\n<h4 style="font-weight:bold;margin-top:25px;">'
+                    f'{faq["Q"]}</h4>\n{faq["A"]}'
+                )
         return ipw.HTML(value)
 
 
