@@ -230,7 +230,7 @@ class SummaryTabs(ipw.Tab):
 
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="auto", height="235px"),
+            layout=ipw.Layout(width="auto", height="345px"),
             **kwargs,
         )
         for index, title in enumerate([_[0] for _ in self.sections]):

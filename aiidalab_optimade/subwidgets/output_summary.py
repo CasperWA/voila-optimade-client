@@ -46,11 +46,11 @@ class StructureSummary(ipw.VBox):
 
     _output_format = "<b>{title}</b>: {value}"
     _widget_data = {
-        "Chemical formula (hill)": ipw.HTMLMath(),
+        "Chemical formula": ipw.HTML(),
         "Elements": ipw.HTML(),
         "Number of sites": ipw.HTML(),
-        "Unit cell": ipw.HTMLMath(),
         "Unit cell volume": ipw.HTML(),
+        "Unit cell": ipw.HTML(),
     }
 
     def __init__(self, structure: Structure = None, **kwargs):
@@ -87,14 +87,12 @@ class StructureSummary(ipw.VBox):
     def _extract_data_from_structure(self) -> dict:
         """Extract and return desired data from Structure"""
         return {
-            "Chemical formula (hill)": self._add_style(
+            "Chemical formula": self._add_style(
                 self._chemical_formula(self.structure.chemical_formula_reduced)
             ),
             "Elements": self._add_style(", ".join(sorted(self.structure.elements))),
             "Number of sites": self._add_style(str(self.structure.nsites)),
-            "Unit cell": self._add_style(
-                self._unit_cell(self.structure.lattice_vectors), font_size="18px",
-            ),
+            "Unit cell": self._unit_cell(self.structure.lattice_vectors),
             "Unit cell volume": (
                 f"{self._add_style('%.2f' % calc_cell_volume(self.structure.lattice_vectors))}"
                 " Å<sup>3</sup>"
@@ -102,11 +100,10 @@ class StructureSummary(ipw.VBox):
         }
 
     @staticmethod
-    def _add_style(html_value: str, font_size: str = None) -> str:
+    def _add_style(html_value: str) -> str:
         """Wrap 'html_value' with HTML CSS style"""
-        font_size = f"font-size:{font_size};" if font_size is not None else ""
         return (
-            f'<span style="font-family:Courier New,Courier,monospace;{font_size}">'
+            f'<span style="font-family:Courier New,Courier,monospace;">'
             f"{html_value}</span>"
         )
 
@@ -120,16 +117,59 @@ class StructureSummary(ipw.VBox):
         return re.sub(r"[0-9]+", repl=wrap_number, string=formula)
 
     @staticmethod
-    def _unit_cell(unitcell: list) -> str:
+    def _unit_cell(unitcell: List[Vector3D]) -> str:
+        """Format unit cell to HTML table"""
+        style = """
+<style>
+    .df_uc { border: none; width: auto; display: inline; }
+    .df_uc tbody tr:nth-child(odd) { background-color: #e5e7e9; }
+    .df_uc tbody tr { font-family: "Courier New", Courier, monospace; font-style: normal; font-size: 12px; }
+    .df_uc tbody td {
+        min-width: 50px;
+        text-align: center;
+        border: 0px solid white;
+        padding: 0px;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .df_uc th { text-align: center; border: none; border-bottom: 1px solid black; }
+</style>
+"""
+        pd.set_option("max_colwidth", 100)
+
+        format_unit_cell = []
+        for number, vector in enumerate(unitcell):
+            format_unit_cell.append(
+                (
+                    f"v<sub>{number + 1}</sub>",
+                    f"{vector[0]:.5f}",
+                    f"{vector[1]:.5f}",
+                    f"{vector[2]:.5f}",
+                )
+            )
+
+        data_frame = pd.DataFrame(
+            format_unit_cell, columns=["v", "x (Å)", "y (Å)", "z (Å)"]
+        )
+        return style + data_frame.to_html(
+            classes="df_uc",
+            index=False,
+            table_id="unit_cell",
+            notebook=False,
+            escape=False,
+        )
+
+    @staticmethod
+    def _unit_cell_mathjax(unitcell: list) -> str:
         """Format unit cell to look pretty with ipywidgets.HTMLMath"""
         out = r"$\Bigl(\begin{smallmatrix} "
         for i in range(len(unitcell[0]) - 1):
-            row = list()
+            row = []
             for vector in unitcell:
                 row.append(vector[i])
             out += r" & ".join([f"{_:.5f}" for _ in row])
             out += r" \\ "
-        row = list()
+        row = []
         for vector in unitcell:
             row.append(vector[-1])
         out += r" & ".join([str(_) for _ in row])
@@ -242,14 +282,14 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
     .df { border: none; width: 100%; }
     .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
-    .df tbody tr { font-family: "Courier New", Courier, monospoace; font-style: normal; }
+    .df tbody tr { font-family: "Courier New", Courier, monospace; font-style: normal; font-size: 12px; }
     .df tbody td {
         min-width: 50px;
         text-align: center;
-        border: 3px solid white;
+        border: 0px solid white;
         padding: 0px;
-        padding-left: 5px;
-        padding-right: 5px;
+        padding-left: 1px;
+        padding-right: 1px;
     }
     .df th { text-align: center; border: none;  border-bottom: 1px solid black; }
 </style>
