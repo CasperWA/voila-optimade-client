@@ -3,7 +3,8 @@ import traitlets
 
 import nglview
 
-from aiidalab_optimade.converters import Structure
+from optimade.adapters import Structure
+
 from aiidalab_optimade.subwidgets import (
     StructureSummary,
     StructureSites,
@@ -121,7 +122,7 @@ document.body.removeChild(link);" />
             )
             return
 
-        output = getattr(self.structure, f"get_{desired_format['adapter_format']}")
+        output = getattr(self.structure, f"as_{desired_format['adapter_format']}")
         encoding = "utf-8"
 
         # Specifically for CIF: v1.x CIF needs to be in "latin-1" formatting
@@ -194,7 +195,7 @@ class StructureViewer(ipw.VBox):
         """Update viewer for new structure"""
         self.reset()
         self._current_view = self.viewer.add_structure(
-            nglview.TextStructure(change["new"].get_pdb)
+            nglview.TextStructure(change["new"].as_pdb)
         )
         self.viewer.add_representation("ball+stick", aspectRatio=4)
         self.viewer.add_representation("unitcell")

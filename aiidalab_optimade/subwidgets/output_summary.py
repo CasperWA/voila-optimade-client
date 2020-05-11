@@ -1,17 +1,13 @@
 import re
-from typing import Match, List, Dict, Union
+from typing import Match, List, Dict
 import ipywidgets as ipw
 import traitlets
 
 import pandas as pd
 
-from optimade.models import (
-    Species,
-    StructureResource,
-)
+from optimade.adapters import Structure
+from optimade.models import Species
 from optimade.models.structures import Vector3D
-
-from aiidalab_optimade.converters import Structure
 
 
 __all__ = ("StructureSummary", "StructureSites")
@@ -57,7 +53,7 @@ class StructureSummary(ipw.VBox):
         "Unit cell volume": ipw.HTML(),
     }
 
-    def __init__(self, structure: Union[Structure, StructureResource] = None, **kwargs):
+    def __init__(self, structure: Structure = None, **kwargs):
         super().__init__(children=tuple(self._widget_data.values()), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
@@ -92,19 +88,17 @@ class StructureSummary(ipw.VBox):
         """Extract and return desired data from Structure"""
         return {
             "Chemical formula (hill)": self._add_style(
-                self._chemical_formula(
-                    self.structure.attributes.chemical_formula_reduced
-                )
+                self._chemical_formula(self.structure.chemical_formula_reduced)
             ),
-            "Elements": self._add_style(
-                ", ".join(sorted(self.structure.attributes.elements))
-            ),
-            "Number of sites": self._add_style(str(self.structure.attributes.nsites)),
+            "Elements": self._add_style(", ".join(sorted(self.structure.elements))),
+            "Number of sites": self._add_style(str(self.structure.nsites)),
             "Unit cell": self._add_style(
-                self._unit_cell(self.structure.attributes.lattice_vectors),
-                font_size="18px",
+                self._unit_cell(self.structure.lattice_vectors), font_size="18px",
             ),
-            "Unit cell volume": f"{self._add_style('%.2f' % calc_cell_volume(self.structure.attributes.lattice_vectors))} Å<sup>3</sup>",
+            "Unit cell volume": (
+                f"{self._add_style('%.2f' % calc_cell_volume(self.structure.lattice_vectors))}"
+                " Å<sup>3</sup>"
+            ),
         }
 
     @staticmethod
@@ -151,7 +145,7 @@ class StructureSites(ipw.HTML):
 
     structure = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, structure: Union[Structure, StructureResource] = None, **kwargs):
+    def __init__(self, structure: Structure = None, **kwargs):
         # For more information on how to control the table appearance please visit:
         # https://css-tricks.com/complete-guide-table-element/
         #
@@ -208,7 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 // doYourStuff()
 """
-        #         self._style = """<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+        # self._style = """
+        # <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'>
+        # </script>
         # <script>
         #     var row_color;
 
@@ -304,13 +300,11 @@ document.addEventListener('DOMContentLoaded', function() {
         - Position (y)
         - Position (z)
         """
-        species: Dict[str, Species] = {
-            _.name: _ for _ in self.structure.attributes.species.copy()
-        }
+        species: Dict[str, Species] = {_.name: _ for _ in self.structure.species.copy()}
 
         res = []
-        for site_number in range(self.structure.attributes.nsites):
-            symbol_name = self.structure.attributes.species_at_sites[site_number]
+        for site_number in range(self.structure.nsites):
+            symbol_name = self.structure.species_at_sites[site_number]
 
             for index, symbol in enumerate(species[symbol_name].chemical_symbols):
                 if symbol == "vacancy":
@@ -327,9 +321,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             for occupation in species[symbol_name].concentration
                         ]
                     ),
-                    f"{self.structure.attributes.cartesian_site_positions[site_number][0]:.5f}",
-                    f"{self.structure.attributes.cartesian_site_positions[site_number][1]:.5f}",
-                    f"{self.structure.attributes.cartesian_site_positions[site_number][2]:.5f}",
+                    f"{self.structure.cartesian_site_positions[site_number][0]:.5f}",
+                    f"{self.structure.cartesian_site_positions[site_number][1]:.5f}",
+                    f"{self.structure.cartesian_site_positions[site_number][2]:.5f}",
                 )
             )
         return res

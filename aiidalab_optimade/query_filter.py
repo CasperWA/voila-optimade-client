@@ -8,9 +8,9 @@ try:
 except (ImportError, ModuleNotFoundError):
     from json import JSONDecodeError
 
+from optimade.adapters import Structure
 from optimade.models import LinksResourceAttributes
 
-from aiidalab_optimade.converters import Structure
 from aiidalab_optimade.exceptions import BadResource, QueryError
 from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets import (
