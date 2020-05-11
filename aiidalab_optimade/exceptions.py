@@ -1,22 +1,40 @@
-from typing import Any, List, Union
+from typing import Any, List, Union, Tuple, Sequence
 
 from optimade.models import Resource
 
+from aiidalab_optimade.logger import LOGGER
 
-class ApiVersionError(Exception):
+
+class OptimadeClientError(Exception):
+    """Top-most exception class for OPTIMADE Client
+
+    Log error always
+    """
+
+    def __init__(self, *args: Tuple[Any]):
+        LOGGER.error(
+            "%s raised.\nError message: %s\nAbout this exception: %s",
+            self.__class__.__name__,
+            args[0] if args else "",
+            self.__doc__,
+        )
+        super().__init__(*args)
+
+
+class ApiVersionError(OptimadeClientError):
     """ API Version Error
     The API version does not have the correct semantic.
     The API version cannot be recognized.
     """
 
 
-class NonExistent(Exception):
+class NonExistent(OptimadeClientError):
     """ Non Existent
     An entity does not exist, e.g. a URL location.
     """
 
 
-class InputError(Exception):
+class InputError(OptimadeClientError):
     """ Input Error
     Base input error exception.
     Wrong input to a method.
@@ -30,24 +48,35 @@ class DisplayInputError(InputError):
     """
 
 
-class NotOkResponse(Exception):
+class NotOkResponse(OptimadeClientError):
     """Did not receive a `200 OK` response"""
 
 
-class ParserError(Exception):
+class ParserError(OptimadeClientError):
     """Error during FilterInputParser parsing"""
 
-    def __init__(self, field: str = None, value: Any = None, msg: str = None):
-        self.field = field if field is not None else "General"
+    def __init__(
+        self,
+        field: str = None,
+        value: Any = None,
+        msg: str = None,
+        extras: Union[Sequence[Tuple[str, Any]], Tuple[str, Any]] = None,
+    ):
+        self.field = field if field is not None else "General (no field given)"
         self.value = value if value is not None else ""
+        self.extras = extras if extras is not None else []
         self.msg = msg if msg is not None else "A general error occured during parsing."
+
         super().__init__(
-            "ParserError\n"
-            f"  Field: {self.field}, Value: {self.value}, Message: {self.msg}"
+            f"""
+{self.__class__.__name__}
+  Message: {self.msg}
+  Field: {self.field}, Value: {self.value}
+  Extras: {self.extras}"""
         )
 
 
-class ImplementationError(Exception):
+class ImplementationError(OptimadeClientError):
     """Base error related to the current OPTIMADE implementation being handled/queried"""
 
 
@@ -84,15 +113,18 @@ class BadResource(ImplementationError):
 
             self.values.append(value)
 
+        fields_msg = "\n".join(
+            [
+                f"    Field: {field}, Value: {value}"
+                for field, value in zip(self.fields, self.values)
+            ]
+        )
         super().__init__(
-            f"BadResource <id: {self.resource.id}, type: {self.resource.type}>\n"
-            f"Message: {self.msg}\n"
-            f"\n".join(
-                [
-                    f"  Field: {field}, Value: {value}"
-                    for field, value in zip(self.fields, self.values)
-                ]
-            )
+            f"""
+{self.__class__.__name__}
+  <id: {self.resource.id}, type: {self.resource.type}>
+  Message: {self.msg}
+{fields_msg}"""
         )
 
 
@@ -103,4 +135,9 @@ class QueryError(ImplementationError):
         msg = msg if msg is not None else ""
         self.remove_target = remove_target
 
-        super().__init__(msg)
+        super().__init__(
+            f"""
+{self.__class__.__name__}
+  Message: {msg}
+  Remove target: {self.remove_target!r}"""
+        )

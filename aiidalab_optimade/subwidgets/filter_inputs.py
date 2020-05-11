@@ -5,6 +5,7 @@ import ipywidgets as ipw
 import traitlets
 
 from aiidalab_optimade.exceptions import ParserError
+from aiidalab_optimade.logger import LOGGER
 
 
 __all__ = ("FilterTabs",)
@@ -195,13 +196,29 @@ class FilterInputParser:
     @staticmethod
     def operator_and_integer(field: str, value: str) -> str:
         """Handle operator for values with integers and a possible operator prefixed"""
+        LOGGER.debug(
+            "Parsing input with operator_and_integer. <field: %r>, <value: %r>",
+            field,
+            value,
+        )
+
         match_operator = re.findall(r"[<>]?=?", value)
         match_no_operator = re.findall(r"^\s*[0-9]+", value)
+
+        LOGGER.debug(
+            "Finding all operators (or none):\nmatch_operator: %r\nmatch_no_operator: %r",
+            match_operator,
+            match_no_operator,
+        )
+
         if match_operator and any(match_operator):
             match_operator = [_ for _ in match_operator if _]
             if len(match_operator) != 1:
                 raise ParserError(
-                    field, value, msg="Multiple values given with operators."
+                    field,
+                    value,
+                    msg="Multiple values given with operators.",
+                    extras=("match_operator", match_operator,),
                 )
             number = re.findall(r"[0-9]+", value)[0]
             operator = re.sub(r"\s*", "", match_operator[0])
@@ -214,11 +231,18 @@ class FilterInputParser:
                     value,
                     msg="Multiple values given, must be an integer, "
                     "either with or without an operator prefixed.",
+                    extras=("match_no_operator", match_no_operator,),
                 )
             result = re.sub(r"\s*", "", match_no_operator[0])
             return f"={result}"
         raise ParserError(
-            field, value, msg="Not proper input. Should be, e.g., >=3 or 5"
+            field,
+            value,
+            msg="Not proper input. Should be, e.g., '>=3' or '5'",
+            extras=[
+                ("match_operator", match_operator),
+                ("match_no_operator", match_no_operator),
+            ],
         )
 
     def nsites(self, value: str) -> str:
