@@ -6,3 +6,6 @@ jupyter serverextension enable --py --sys-prefix appmode
 
 # NGLViewer
 jupyter nbextension enable --py --sys-prefix nglview
+
+jupyter nbextension enable --py --sys-prefix voila
+
