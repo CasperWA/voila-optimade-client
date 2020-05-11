@@ -6,3 +6,4 @@ nglview~=2.7
 numpy~=1.18
 pandas~=1.0
 appmode
+voila
