@@ -1,5 +1,6 @@
 # OPTIMADE client (in Jupyter)
 
+[![Materials Cloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/aiidalab/aiidalab-optimade/pure_jupyter_version/docs/resources/mcloud_badge.json)](https://dev-tools.materialscloud.org/optimadeclient/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/pure_jupyter_version?urlpath=%2Fapps%2FOPTIMADE_general.ipynb)
 
 Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  

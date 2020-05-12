@@ -76,6 +76,7 @@ Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> t
 
         header = ipw.HTML(self.HEADER)
 
+        # Hidden input HTML element, storing the log
         self._debug_log = REPORT_HANDLER.get_widget()
         self.report_bug = ipw.HTML(
             f"""
