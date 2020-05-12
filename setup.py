@@ -19,7 +19,9 @@ setup(
         "nglview~=2.7",
         "numpy~=1.18",
         "pandas~=1.0",
+        "ase~=3.19",
         "appmode",
+        "voila",
     ],
     extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
     classifiers=[

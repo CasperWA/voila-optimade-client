@@ -6,17 +6,18 @@ from aiidalab_optimade.logger import LOGGER
 
 
 class OptimadeClientError(Exception):
-    """Top-most exception class for OPTIMADE Client
-
-    Log error always
-    """
+    """Top-most exception class for OPTIMADE Client"""
 
     def __init__(self, *args: Tuple[Any]):
         LOGGER.error(
             "%s raised.\nError message: %s\nAbout this exception: %s",
-            self.__class__.__name__,
-            args[0] if args else "",
-            self.__doc__,
+            args[0].__class__.__name__
+            if args and isinstance(args[0], Exception)
+            else self.__class__.__name__,
+            str(args[0]) if args else "",
+            args[0].__doc__
+            if args and isinstance(args[0], Exception)
+            else self.__doc__,
         )
         super().__init__(*args)
 
@@ -52,6 +53,18 @@ class NotOkResponse(OptimadeClientError):
     """Did not receive a `200 OK` response"""
 
 
+class OptimadeToolsError(OptimadeClientError):
+    """Base error related to `optimade-python-tools` (`optimade` package)"""
+
+
+class AdaptersError(OptimadeToolsError):
+    """Base error related to `optimade.adapters` module"""
+
+
+class WrongPymatgenType(AdaptersError):
+    """Wrong `pymatgen` type, either `Structure` or `Molecule` was needed instead"""
+
+
 class ParserError(OptimadeClientError):
     """Error during FilterInputParser parsing"""
 
@@ -71,8 +84,8 @@ class ParserError(OptimadeClientError):
             f"""
 {self.__class__.__name__}
   Message: {self.msg}
-  Field: {self.field}, Value: {self.value}
-  Extras: {self.extras}"""
+  Field: {self.field!r}, Value: {self.value!r}
+  Extras: {self.extras!r}"""
         )
 
 
@@ -115,14 +128,14 @@ class BadResource(ImplementationError):
 
         fields_msg = "\n".join(
             [
-                f"    Field: {field}, Value: {value}"
+                f"    Field: {field!r}, Value: {value!r}"
                 for field, value in zip(self.fields, self.values)
             ]
         )
         super().__init__(
             f"""
 {self.__class__.__name__}
-  <id: {self.resource.id}, type: {self.resource.type}>
+  <id: {self.resource.id!r}, type: {self.resource.type!r}>
   Message: {self.msg}
 {fields_msg}"""
         )
