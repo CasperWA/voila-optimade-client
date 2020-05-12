@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Union
+from urllib.parse import urlencode
 
 import ipywidgets as ipw
 
@@ -49,13 +50,13 @@ Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> t
 </p>
 """
     BUG_TEMPLATE = {
-        "title": "%5BBUG%5D - TITLE",
+        "title": "[BUG] - TITLE",
         "body": (
-            "%23%23 Bug description%0A%0AWhat happened?%0A%0A"
-            "%23%23%23 Expected behaviour (optional)%0A%0AWhat should have happened?%0A%0A"
-            "%23%23%23 Actual behavior (optional)%0A%0AWhat happened instead?%0A%0A"
-            "%23%23 Reproducibility (optional)%0A%0AHow may it be reproduced?%0A%0A"
-            "%23%23%23 For developers (do not alter this section)%0A"
+            "## Bug description\n\nWhat happened?\n\n"
+            "### Expected behaviour (optional)\n\nWhat should have happened?\n\n"
+            "### Actual behavior (optional)\n\nWhat happened instead?\n\n"
+            "## Reproducibility (optional)\n\nHow may it be reproduced?\n\n"
+            "### For developers (do not alter this section)\n"
         ),
     }
     SUGGESTION_TEMPLATE = {
@@ -85,7 +86,7 @@ var log = document.getElementById('{self._debug_log.element_id}');
 
 var link = document.createElement('a');
 link.target = '_blank';
-link.href = '{SOURCE_URL}issues/new?title={self.BUG_TEMPLATE["title"].replace(" ", "+")}&body={self.BUG_TEMPLATE["body"].replace(" ", "+")}' + log.getAttribute('value');
+link.href = '{SOURCE_URL}issues/new?{urlencode(self.BUG_TEMPLATE, encoding="utf-8")}' + log.getAttribute('value');
 
 document.body.appendChild(link);
 link.click();

@@ -2,6 +2,7 @@
 import logging
 import os
 from typing import List
+import urllib.parse
 import warnings
 
 import ipywidgets as ipw
@@ -119,26 +120,11 @@ class OutputLoggerHandler(logging.Handler):
 class ReportLogger(ipw.HTML):
     """The widget to go with the handler"""
 
-    WRAPPED_LOGS = """<input type='hidden' id='{element_id}' value='<details>%0A++<summary>Log dump</summary>%0A%0A++%60%60%60%0A{logs}++%60%60%60%0A</details>%0A%0A'></input>"""
-    HTML_SAFE_CHARS = {
-        " ": "+",  # Special for GH
-        "#": "%23",
-        "`": "%60",
-        "[": "%5B",
-        "]": "%5D",
-        "\\": "%5C",
-        "/": "%2F",
-        ":": "%3A",
-        "<": "%3C",
-        ">": "%3E",
-        "=": "%3D",
-        "{": "%7B",
-        "}": "%7D",
-        "!": "%21",
-        '"': "%22",
-        "'": "%27",
-        "&": "%26",
-    }
+    WRAPPED_LOGS = """<input type='hidden' id='{element_id}' value='{value}'></input>"""
+    WRAPPED_VALUE = (  # Post-urlencoded
+        "%3Cdetails%3E%0A++%3Csummary%3ELog+dump%3C%2Fsummary%3E%0A%0A++%60%60%60%0A{logs}++"
+        "%60%60%60%0A%3C%2Fdetails%3E%0A%0A"
+    )
     MAX_BYTES = 7400
 
     def __init__(self, value: str = None, **kwargs):
@@ -170,8 +156,20 @@ class ReportLogger(ipw.HTML):
     def _update_logs(self) -> str:
         """Wrap log messages, i.e., use self.wrapped_log to set self.value"""
         return self.WRAPPED_LOGS.format(
-            logs="".join(self.logs), element_id=self.element_id
+            value=self.WRAPPED_VALUE.format(logs="".join(self.logs)),
+            element_id=self.element_id,
         )
+
+    @staticmethod
+    def _urlencode_string(string: str) -> str:
+        """URL encode, while adding specific encoding as well
+
+        Specific encoding:
+        - GitHub wants to turn all spaces into '+'.
+            This is actually already taken care of, since urlencode uses 'quote_plus'.
+        """
+        res = urllib.parse.urlencode({"value": string}, encoding="utf-8")
+        return res[len("value=") :]
 
     def log(self, message: str):
         """Log a message, i.e., add it to the input element's value attribute"""
@@ -181,30 +179,22 @@ class ReportLogger(ipw.HTML):
         while message.startswith("\n"):
             message = message[2:]
 
-        # Use HTML safe chars.
-        # Replace these first, to not unintentionally remove intended chars
-        message = message.replace("%", "%25")
-        message = message.replace("\n", "%0A")
-        message = message.replace("+", "%2B")
-        for unsafe, safe in self.HTML_SAFE_CHARS.items():
-            message = message.replace(unsafe, safe)
-
         # Put all messages within the GitHub Markdown accordion
-        message = f"++{message}%0A"
+        message = self._urlencode_string(f"  {message}\n")
 
         # Truncate logs to not send a too long URI and receive a 414 response from GitHub
-        note_truncation = "..."
-        message_truncation = f"++{note_truncation}%0A"
+        note_truncation = self._urlencode_string("...")
+        message_truncation = self._urlencode_string(f"  {note_truncation}\n")
         suggested_log = "".join(self.logs) + message
-        while len(suggested_log.encode("utf-8")) > self.MAX_BYTES:
+        while len(suggested_log) > self.MAX_BYTES:
             # NOTE: It is expected that the first log message will never be longer than MAX_BYTES
             if len(self.logs) == 1:
                 # The single latest message is too large, cut it down
                 new_line = "%0A"
-                message = (
-                    f"{message[:self.MAX_BYTES - (len(message_truncation) + len(note_truncation) + len(new_line))]}"
-                    f"{note_truncation}{new_line}"
+                truncation_length = (
+                    len(message_truncation) + len(note_truncation) + len(new_line)
                 )
+                message = f"{message[:self.MAX_BYTES - truncation_length]}{note_truncation}{new_line}"
                 break
 
             if not self._truncated:
@@ -225,14 +215,13 @@ class ReportLogger(ipw.HTML):
 
     @logs.setter
     def logs(self, _):  # pylint: disable=no-self-use
-        """Do not allow adding logs this way
-
-        NOTE: Can not log these messages, since there is a risk to end up in an infinite loop
-        """
-        warnings.warn(
+        """Do not allow adding logs this way"""
+        msg = (
             "Will not change 'logs'. Logs should be added through the 'OPTIMADE_Client' logger, "
             "using the 'logging' module."
         )
+        LOGGER.warning("Message: %r", msg)
+        warnings.warn(msg)
 
     @property
     def element_id(self) -> str:
@@ -241,14 +230,14 @@ class ReportLogger(ipw.HTML):
 
     @element_id.setter
     def element_id(self, _):
-        """Do not allow changing the input element's id
-
-        NOTE: Can not log these messages, since there is a risk to end up in an infinite loop
-        """
+        """Do not allow changing the input element's id"""
         if self._element_id:
-            warnings.warn(
-                f"Can not set 'element_id', since it is already set <element_id={self._element_id}>"
+            msg = (
+                "Can not set 'element_id', since it is already set <element_id="
+                f"{self._element_id}>"
             )
+            LOGGER.warning("Message: %r", msg)
+            warnings.warn(msg)
 
 
 class ReportLoggerHandler(logging.Handler):
