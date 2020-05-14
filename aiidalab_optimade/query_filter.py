@@ -22,6 +22,7 @@ from aiidalab_optimade.utils import (
     validate_api_version,
     perform_optimade_query,
     handle_errors,
+    TIMEOUT_SECONDS,
 )
 
 
@@ -195,9 +196,26 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         # If a complete link is provided, use it straight up
         if link is not None:
             try:
-                response = requests.get(link).json()
-            except JSONDecodeError:
-                response = {"errors": {}}
+                response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
+            except (
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError,
+            ) as exc:
+                response = {
+                    "errors": {
+                        "msg": "CLIENT: Connection error or timeout.",
+                        "url": link,
+                        "Exception": exc,
+                    }
+                }
+            except JSONDecodeError as exc:
+                response = {
+                    "errors": {
+                        "msg": "CLIENT: Could not decode response to JSON.",
+                        "url": link,
+                        "Exception": exc,
+                    }
+                }
             return response
 
         # Avoid structures with null positions and with assemblies.
