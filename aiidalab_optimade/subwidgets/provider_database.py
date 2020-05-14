@@ -284,7 +284,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     "errors": {
                         "msg": "CLIENT: Connection error or timeout.",
                         "url": link,
-                        "Exception": exc,
+                        "Exception": repr(exc),
                     }
                 }
             except json.JSONDecodeError as exc:
@@ -292,7 +292,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     "errors": {
                         "msg": "CLIENT: Could not decode response to JSON.",
                         "url": link,
-                        "Exception": exc,
+                        "Exception": repr(exc),
                     }
                 }
         else:

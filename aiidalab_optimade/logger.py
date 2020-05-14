@@ -77,7 +77,7 @@ class OutputLogger(ipw.Output):
             "min_height": "160px",
             "max_height": "240px",
             "border": "1px solid black",
-            "overflow_y": "auto",  # "Internal" scrolling
+            "overflow": "hidden auto",  # "Internal" scrolling
         }
         super().__init__(layout=layout)
 

@@ -37,7 +37,7 @@ def test_exmpl_not_in_list():
         },
     )
 
-    materials_cloud = (
+    mcloud = (
         "Materials Cloud",
         {
             "name": "Materials Cloud",
@@ -48,7 +48,19 @@ def test_exmpl_not_in_list():
         },
     )
 
+    odbx = (
+        "open database of xtals",
+        {
+            "name": "open database of xtals",
+            "description": "A public database of crystal structures mostly derived from ab initio "
+            "structure prediction from the group of Dr Andrew Morris at the University of "
+            "Birmingham https://ajm143.github.io",
+            "base_url": "https://optimade.odbx.science/v0",
+            "homepage": "https://odbx.science",
+        },
+    )
+
     list_of_database_providers = utils.get_list_of_valid_providers()
 
     assert exmpl not in list_of_database_providers
-    assert materials_cloud in list_of_database_providers
+    assert mcloud in list_of_database_providers or odbx in list_of_database_providers

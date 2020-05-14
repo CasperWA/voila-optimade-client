@@ -205,7 +205,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                     "errors": {
                         "msg": "CLIENT: Connection error or timeout.",
                         "url": link,
-                        "Exception": exc,
+                        "Exception": repr(exc),
                     }
                 }
             except JSONDecodeError as exc:
@@ -213,7 +213,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                     "errors": {
                         "msg": "CLIENT: Could not decode response to JSON.",
                         "url": link,
-                        "Exception": exc,
+                        "Exception": repr(exc),
                     }
                 }
             return response

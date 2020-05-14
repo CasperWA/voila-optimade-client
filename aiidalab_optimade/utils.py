@@ -87,7 +87,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
             "errors": {
                 "msg": "CLIENT: Connection error or timeout.",
                 "url": complete_url,
-                "Exception": exc,
+                "Exception": repr(exc),
             }
         }
 
@@ -143,12 +143,13 @@ def get_versioned_base_url(base_url: str) -> str:
             return ""
 
     for version in _VERSION_PARTS:
+        timeout_seconds = 5
         versioned_base_url = (
             base_url + version[1:] if base_url.endswith("/") else base_url + version
         )
         try:
             response = requests.get(
-                f"{versioned_base_url}/info", timeout=TIMEOUT_SECONDS
+                f"{versioned_base_url}/info", timeout=timeout_seconds
             )
         except (
             requests.exceptions.ConnectTimeout,
@@ -242,7 +243,7 @@ def get_structures_schema(base_url: str) -> dict:
             "errors": {
                 "msg": "CLIENT: Connection error or timeout.",
                 "url": url_path,
-                "Exception": exc,
+                "Exception": repr(exc),
             }
         }
     else:
