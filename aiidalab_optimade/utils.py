@@ -79,9 +79,16 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     complete_url = f"{url_path}?{url_query}"
     try:
         response = requests.get(complete_url, timeout=TIMEOUT_SECONDS)
-    except Exception as exc:  # pylint: disable=broad-except
+    except (
+        requests.exceptions.ConnectTimeout,
+        requests.exceptions.ConnectionError,
+    ) as exc:
         return {
-            "errors": f"CLIENT: The URL cannot be opened: {complete_url}. Exception: {exc}"
+            "errors": {
+                "msg": "CLIENT: Connection error or timeout.",
+                "url": complete_url,
+                "Exception": repr(exc),
+            }
         }
 
     try:
@@ -136,11 +143,22 @@ def get_versioned_base_url(base_url: str) -> str:
             return ""
 
     for version in _VERSION_PARTS:
+        timeout_seconds = 5
         versioned_base_url = (
             base_url + version[1:] if base_url.endswith("/") else base_url + version
         )
-        if requests.get(f"{versioned_base_url}/info").status_code == 200:
-            return versioned_base_url
+        try:
+            response = requests.get(
+                f"{versioned_base_url}/info", timeout=timeout_seconds
+            )
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
+            continue
+        else:
+            if response.status_code == 200:
+                return versioned_base_url
 
     return ""
 
@@ -215,18 +233,38 @@ def get_structures_schema(base_url: str) -> dict:
         base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
     )
 
-    response = requests.get(url_path)
+    try:
+        response = requests.get(url_path, timeout=TIMEOUT_SECONDS)
+    except (
+        requests.exceptions.ConnectTimeout,
+        requests.exceptions.ConnectionError,
+    ) as exc:
+        return {
+            "errors": {
+                "msg": "CLIENT: Connection error or timeout.",
+                "url": url_path,
+                "Exception": repr(exc),
+            }
+        }
+    else:
+        if response.status_code != 200:
+            return {
+                "errors": {
+                    "msg": "CLIENT: Not a successful 200 response.",
+                    "url": url_path,
+                    "status": response.status_code,
+                }
+            }
 
-    if response.status_code != 200:
+        properties = response.get("data", {}).get("properties", {})
+        output_fields_by_json = response.get("output_fields_by_format", {}).get(
+            "json", []
+        )
+        for field in output_fields_by_json:
+            if field in properties:
+                result[field] = properties[field]
+
         return result
-
-    properties = response.get("data", {}).get("properties", {})
-    output_fields_by_json = response.get("output_fields_by_format", {}).get("json", [])
-    for field in output_fields_by_json:
-        if field in properties:
-            result[field] = properties[field]
-
-    return result
 
 
 def handle_errors(response: dict) -> str:

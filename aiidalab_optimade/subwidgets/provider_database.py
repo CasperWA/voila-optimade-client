@@ -21,6 +21,7 @@ from aiidalab_optimade.utils import (
     handle_errors,
     perform_optimade_query,
     validate_api_version,
+    TIMEOUT_SECONDS,
 )
 
 
@@ -274,9 +275,26 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         # If a complete link is provided, use it straight up
         if link is not None:
             try:
-                response = requests.get(link).json()
-            except json.JSONDecodeError:
-                response = {"errors": {}}
+                response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
+            except (
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError,
+            ) as exc:
+                response = {
+                    "errors": {
+                        "msg": "CLIENT: Connection error or timeout.",
+                        "url": link,
+                        "Exception": repr(exc),
+                    }
+                }
+            except json.JSONDecodeError as exc:
+                response = {
+                    "errors": {
+                        "msg": "CLIENT: Could not decode response to JSON.",
+                        "url": link,
+                        "Exception": repr(exc),
+                    }
+                }
         else:
             response = perform_optimade_query(
                 base_url=self.provider.base_url,
@@ -287,7 +305,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         msg = handle_errors(response)
         if msg:
             self.error_or_status_messages.value = msg
-            raise QueryError(remove_target=False)
+            raise QueryError(msg=msg, remove_target=False)
 
         # Check implementation API version
         msg = validate_api_version(
@@ -297,11 +315,12 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.error_or_status_messages.value = (
                 f"{msg}.<br>The provider will be removed."
             )
-            raise QueryError(remove_target=True)
+            raise QueryError(msg=msg, remove_target=True)
 
         LOGGER.debug(
-            "First attempt (in /links): Found implementations:\n%s",
-            str(json.dumps(response.get("data", []), indent=2)),
+            "First attempt for %r (in /links): Found implementations:\n%r",
+            self.provider.name,
+            json.dumps(response.get("data", []), indent=2),
         )
         # Return all implementations of type "child"
         implementations = [
@@ -324,7 +343,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 self.error_or_status_messages.value = (
                     f"{msg}.<br>The provider will be removed."
                 )
-                raise QueryError(remove_target=True)
+                raise QueryError(msg=msg, remove_target=True)
 
             if new_response:
                 LOGGER.debug(
