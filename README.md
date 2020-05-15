@@ -51,6 +51,23 @@ For this a more "minimalistic" version of the widget can be initiated by passing
 
 Everything else works the same - so you would still have to link up the query widget to the rest of your app.
 
+### Run general application
+
+Note, you will need to install the package (see above) before being able to run the application.
+
+To run the notebook [`OPTIMADE general.ipynb`](OPTIMADE_general.ipynb) you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
+
+The notebook will be run in Voilà using Voilà's own `tornado`-based server.
+The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
+
+```shell
+/path/to/aiidalab-optimade$ ./run.sh
+...
+[Voila] Voila is running at:
+http://localhost:8866/
+...
+```
+
 ## Configuration (Voilà)
 
 For running the application (in Voilà) on Binder, the configuration can be found in the root file [`jupyter_config.json`](jupyter_config.json).  
