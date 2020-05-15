@@ -1,7 +1,7 @@
 # OPTIMADE client (in Jupyter)
 
 [![Materials Cloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/aiidalab/aiidalab-optimade/v3/docs/resources/mcloud_badge.json)](https://dev-tools.materialscloud.org/optimadeclient/)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fapps%2FOPTIMADE_general.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE_general.ipynb)
 
 Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
 Note, this application handles the structures by converting them to ASE `Atoms` or AiiDA `StructureData` objects.
@@ -50,6 +50,30 @@ The query widget may also be embedded into another app.
 For this a more "minimalistic" version of the widget can be initiated by passing `embedded=True` upon initiating the widget, i.e., `structure_query = OptimadeQueryWidget(embedded=True)`.
 
 Everything else works the same - so you would still have to link up the query widget to the rest of your app.
+
+## Configuration (Voilà)
+
+For running the application (in Voilà) on Binder, the configuration can be found in the root file [`jupyter_config.json`](jupyter_config.json).  
+If you wish to start the Voilà server locally with the same configuration, either copy the [`jupyter_config.json`](jupyter_config.json) file to your Jupyter config directory, renaming it to `voila.json` or pass the configurations when you start the server using the CLI.
+
+Locate your Jupyter config directory:
+
+```shell
+$ jupyter --config-dir
+/path/to/jupyter/config/dir
+```
+
+Example of passing configurations when you start the Voilà server using the CLI:
+
+```shell
+$ voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 OPTIMADE_general.ipynb
+...
+[Voila] Voila is running at:
+http://localhost:8866/
+...
+```
+
+To see the full list of configurations you can call `voila` and pass `--help-all`.
 
 ## License
 
