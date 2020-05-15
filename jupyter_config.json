@@ -1,0 +1,8 @@
+{
+    "VoilaConfiguration": {
+        "enable_nbextensions": true
+    },
+    "VoilaExecutePreprocessor": {
+        "timeout": 180
+    }
+}
