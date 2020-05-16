@@ -41,7 +41,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
     )
 
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
-    NO_OPTIONS = "No provider chosen"
+    INITIAL_CHILD_DBS = [("No provider chosen", None)]
 
     def __init__(self, child_db_limit: int = None, **kwargs):
         self.child_db_limit = (
@@ -67,11 +67,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 "homepage": "https://example.org",
             }
             providers.insert(1, ("Local server", local_provider))
-        implementations = [(self.NO_OPTIONS, None)]
 
         self.providers = ipw.Dropdown(options=providers, layout=dropdown_layout)
         self.child_dbs = ipw.Dropdown(
-            options=implementations, layout=dropdown_layout, disabled=True
+            options=self.INITIAL_CHILD_DBS, layout=dropdown_layout, disabled=True
         )
         self.page_chooser = ResultsPageChooser(self.child_db_limit, **kwargs)
 
@@ -109,25 +108,24 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         """Reset widget"""
         self.page_chooser.reset()
         self.offset = 0
-        with self.hold_trait_notifications():
-            self.providers.index = 0
-            self.providers.disabled = False
 
-            self.child_dbs.options = [(self.NO_OPTIONS, None)]
-            self.child_dbs.disabled = True
+        self.providers.index = 0
+        self.providers.disabled = False
 
-    def _observe_providers(self, change):
+        self.child_dbs.options = self.INITIAL_CHILD_DBS
+        self.child_dbs.disabled = True
+
+    def _observe_providers(self, change: dict):
         """Update child database dropdown upon changing provider"""
         index = change["new"]
         self.child_dbs.disabled = True
+        self.provider = self.providers.value
         if index is None or self.providers.value is None:
-            self.child_dbs.options = [(self.NO_OPTIONS, None)]
+            self.child_dbs.options = self.INITIAL_CHILD_DBS
             self.child_dbs.disabled = True
-            with self.hold_trait_notifications():
-                self.providers.index = 0
-                self.child_dbs.index = 0
+            self.providers.index = 0
+            self.child_dbs.index = 0
         else:
-            self.provider = self.providers.value
             self._initialize_child_dbs()
             self.child_dbs.disabled = False
 
@@ -138,6 +136,16 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.database = "", None
         else:
             self.database = self.child_dbs.options[index]
+
+    @staticmethod
+    def _remove_current_dropdown_option(dropdown: ipw.Dropdown) -> tuple:
+        """Remove the current option from a Dropdown widget and return updated options
+
+        Since Dropdown.options is a tuple there is a need to go through a list.
+        """
+        list_of_options = list(dropdown.options)
+        list_of_options.pop(dropdown.index)
+        return tuple(list_of_options)
 
     def _initialize_child_dbs(self):
         """New provider chosen; initialize child DB dropdown"""
@@ -163,16 +171,29 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
 
         except QueryError as exc:
+            LOGGER.debug("Trying to initalize child DBs. QueryError caught: %r", exc)
             if exc.remove_target:
-                with self.hold_trait_notifications():
-                    self.providers.options.pop(self.providers.index, None)
+                LOGGER.debug(
+                    "Remove target: %r. Will remove target at %r: %r",
+                    exc.remove_target,
+                    self.providers.index,
+                    self.providers.value,
+                )
+                self.providers.options = self._remove_current_dropdown_option(
+                    self.providers
+                )
                 self.reset()
             else:
-                with self.hold_trait_notifications():
-                    self.child_dbs.options = [(self.NO_OPTIONS, None)]
-                    self.child_dbs.disabled = True
+                LOGGER.debug(
+                    "Remove target: %r. Will NOT remove target at %r: %r",
+                    exc.remove_target,
+                    self.providers.index,
+                    self.providers.value,
+                )
+                self.child_dbs.options = self.INITIAL_CHILD_DBS
+                self.child_dbs.disabled = True
 
-        finally:
+        else:
             self.unfreeze()
 
     def _set_child_dbs(self, data: List[Tuple[str, LinksResourceAttributes]]):
@@ -194,7 +215,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             # Skip if there is no base_url
             if attributes.base_url is None:
                 LOGGER.debug(
-                    "Base URL found to be None for child DB: %s", str(child_db)
+                    "Skip: Base URL found to be None for child DB: %r", child_db
                 )
                 continue
 
@@ -204,8 +225,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             else:
                 # Not a valid/supported child DB: skip
                 LOGGER.debug(
-                    "Could not determine versioned base URL for child DB: %s",
-                    str(child_db),
+                    "Skip: Could not determine versioned base URL for child DB: %r",
+                    child_db,
                 )
                 continue
 
@@ -215,18 +236,29 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
     def _get_more_child_dbs(self, change):
         """Query for more child DBs according to page_offset"""
+        if self.providers.value is None:
+            # This may be called if a provider is suddenly removed (bad provider)
+            return
+
         offset_or_link: Union[int, str] = change["new"]
         LOGGER.debug(
-            "Detected change in page_chooser.page_offset or .page_link: %s, type: %s",
-            str(offset_or_link),
-            type(offset_or_link),
+            "Detected change in page_chooser's .page_offset or .page_link: %r",
+            offset_or_link,
         )
         if isinstance(offset_or_link, int):
-            LOGGER.debug("Got offset %d to retrieve more child DBs", offset_or_link)
+            LOGGER.debug(
+                "Got offset %d to retrieve more child DBs from %r",
+                offset_or_link,
+                self.providers.value,
+            )
             self.offset = offset_or_link
             offset_or_link = None
         else:
-            LOGGER.debug("Got link %s to retrieve more child DBs", offset_or_link)
+            LOGGER.debug(
+                "Got link %r to retrieve more child DBs from %r",
+                offset_or_link,
+                self.providers.value,
+            )
             # It is needed to update page_offset, but we do not wish to query again
             with self.hold_trait_notifications():
                 self.__perform_query = False
@@ -235,7 +267,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if not self.__perform_query:
             self.__perform_query = True
             LOGGER.debug(
-                "Will not perform query with offset_or_link: %s", str(offset_or_link)
+                "Will not perform query with offset_or_link: %r", offset_or_link
             )
             return
 
@@ -246,8 +278,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
             # Query index meta-database
             LOGGER.debug(
-                "Querying for more child DBs using offset_or_link: %s",
-                str(offset_or_link),
+                "Querying for more child DBs using offset_or_link: %r", offset_or_link
             )
             child_dbs, links, _ = self._query(offset_or_link)
 
@@ -258,16 +289,32 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.page_chooser.set_pagination_data(links_to_page=links)
 
         except QueryError as exc:
+            LOGGER.debug(
+                "Trying to retrieve more child DBs (new page). QueryError caught: %r",
+                exc,
+            )
             if exc.remove_target:
-                with self.hold_trait_notifications():
-                    self.providers.options.pop(self.providers.index, None)
+                LOGGER.debug(
+                    "Remove target: %r. Will remove target at %r: %r",
+                    exc.remove_target,
+                    self.providers.index,
+                    self.providers.value,
+                )
+                self.providers.options = self._remove_current_dropdown_option(
+                    self.providers
+                )
                 self.reset()
             else:
-                with self.hold_trait_notifications():
-                    self.child_dbs.options = [(self.NO_OPTIONS, None)]
-                    self.child_dbs.disabled = True
+                LOGGER.debug(
+                    "Remove target: %r. Will NOT remove target at %r: %r",
+                    exc.remove_target,
+                    self.providers.index,
+                    self.providers.value,
+                )
+                self.child_dbs.options = self.INITIAL_CHILD_DBS
+                self.child_dbs.disabled = True
 
-        finally:
+        else:
             self.unfreeze()
 
     def _query(self, link: str = None) -> Tuple[List[dict], dict, int]:
@@ -304,8 +351,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
         msg = handle_errors(response)
         if msg:
-            self.error_or_status_messages.value = msg
-            raise QueryError(msg=msg, remove_target=False)
+            self.error_or_status_messages.value = (
+                f"{msg}<br>The provider has been removed."
+            )
+            raise QueryError(msg=msg, remove_target=True)
 
         # Check implementation API version
         msg = validate_api_version(
@@ -313,7 +362,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         )
         if msg:
             self.error_or_status_messages.value = (
-                f"{msg}.<br>The provider will be removed."
+                f"{msg}<br>The provider has been removed."
             )
             raise QueryError(msg=msg, remove_target=True)
 
@@ -341,7 +390,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             msg = handle_errors(new_response)
             if msg:
                 self.error_or_status_messages.value = (
-                    f"{msg}.<br>The provider will be removed."
+                    f"{msg}<br>The provider has been removed."
                 )
                 raise QueryError(msg=msg, remove_target=True)
 
@@ -361,7 +410,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             else:
                 LOGGER.debug(
                     "Second attempt, checking if index db and implementation are the same: "
-                    "Failure. Response:\n%s",
+                    "Failure. Response meta:\n%s",
                     new_response.get("meta", {}),
                 )
 
@@ -405,17 +454,19 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
         self.observe(self._on_provider_change, names="provider")
         self.observe(self._on_database_change, names="database")
 
-    def _on_provider_change(self, change):
+    def _on_provider_change(self, change: dict):
         """Update provider summary, since self.provider has been changed"""
+        LOGGER.debug("Provider changed in summary. New value: %r", change["new"])
         self.database_summary.value = ""
-        if change["new"] is None:
+        if not change["new"] or change["new"] is None:
             self.provider_summary.value = ""
         else:
             self._update_provider()
 
     def _on_database_change(self, change):
         """Update database summary, since self.database has been changed"""
-        if change["new"] is None:
+        LOGGER.debug("Database changed in summary. New value: %r", change["new"])
+        if not change["new"] or change["new"] is None:
             self.database_summary.value = ""
         else:
             self._update_database()

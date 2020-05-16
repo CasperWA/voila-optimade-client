@@ -19,7 +19,6 @@ from aiidalab_optimade.subwidgets import (
     ResultsPageChooser,
 )
 from aiidalab_optimade.utils import (
-    validate_api_version,
     perform_optimade_query,
     handle_errors,
     TIMEOUT_SECONDS,
@@ -300,15 +299,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             msg = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
-                raise QueryError(remove_target=False)
-
-            # Check implementation API version
-            msg = validate_api_version(
-                response.get("meta", {}).get("api_version", ""), raise_on_fail=False
-            )
-            if msg:
-                self.error_or_status_messages.value = msg
-                raise QueryError(remove_target=True)
+                raise QueryError(msg)
 
             # Update list of structures in dropdown widget
             self._update_structures(response["data"])
