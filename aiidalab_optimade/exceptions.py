@@ -70,9 +70,9 @@ class ParserError(OptimadeClientError):
 
     def __init__(
         self,
+        msg: str = None,
         field: str = None,
         value: Any = None,
-        msg: str = None,
         extras: Union[Sequence[Tuple[str, Any]], Tuple[str, Any]] = None,
     ):
         self.field = field if field is not None else "General (no field given)"
@@ -97,7 +97,7 @@ class BadResource(ImplementationError):
     """Resource does not fulfill requirements from supported version of the OPTIMADE API spec"""
 
     def __init__(  # pylint: disable=too-many-arguments
-        self, resource: Resource, fields: Union[List[str], str] = None, msg: str = None,
+        self, resource: Resource, msg: str = None, fields: Union[List[str], str] = None
     ):
         self.resource = resource
         self.fields = fields if fields is not None else []

@@ -49,6 +49,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
         self.__perform_query = True
+        self.__cached_ranges = {}
 
         self.filter_header = ipw.HTML(
             '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
@@ -106,6 +107,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.offset = 0
             self.query_button.disabled = False
             self.query_button.tooltip = "Search"
+            self._set_intslider_ranges()
             self.filters.unfreeze()
         self.structure_drop.reset()
 
@@ -189,6 +191,70 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.filters.reset()
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+
+    def _set_intslider_ranges(self):
+        """Update IntRangeSlider ranges according to chosen database
+
+        Query database to retrieve ranges.
+        Cache ranges in self.__cached_ranges.
+        """
+        db_base_url = self.database[1].base_url
+        if db_base_url not in self.__cached_ranges:
+            self.__cached_ranges[db_base_url] = {}
+
+        for response_field in ("nsites", "nelements"):
+            if response_field in self.__cached_ranges[db_base_url]:
+                # Use cached values
+                continue
+
+            page_limit = 1
+
+            new_range = {}
+            for extremum, sort in [
+                ("min", response_field),
+                ("max", f"-{response_field}"),
+            ]:
+                query_params = {
+                    "base_url": db_base_url,
+                    "page_limit": page_limit,
+                    "response_fields": response_field,
+                    "sort": sort,
+                }
+                LOGGER.debug(
+                    "Querying %s to get %s of %s.\nParameters: %r",
+                    self.database[0],
+                    extremum,
+                    response_field,
+                    query_params,
+                )
+
+                response = perform_optimade_query(**query_params)
+                if handle_errors(response):
+                    raise QueryError(handle_errors(response))
+
+                value = (
+                    response.get("data", [{}])[0]
+                    .get("attributes", {})
+                    .get(response_field, None)
+                )
+                if value is not None:
+                    new_range[extremum] = value
+
+            # Cache new values
+            LOGGER.debug(
+                "Caching newly found range values for %s\nValue: %r",
+                db_base_url,
+                {response_field: new_range},
+            )
+            self.__cached_ranges[db_base_url].update({response_field: new_range})
+
+        # Set widget's new extrema
+        LOGGER.debug(
+            "Updating range extrema for %s\nValues: %r",
+            db_base_url,
+            self.__cached_ranges[db_base_url],
+        )
+        self.filters.update_range_filters(self.__cached_ranges[db_base_url])
 
     def _query(self, link: str = None) -> dict:
         """Query helper function"""
