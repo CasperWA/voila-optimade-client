@@ -32,6 +32,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     base_url: str,
     endpoint: str = None,
     filter: Union[dict, str] = None,  # pylint: disable=redefined-builtin
+    sort: str = None,
     response_format: str = None,
     response_fields: str = None,
     email_address: str = None,
@@ -58,6 +59,9 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
         else:
             raise TypeError("'filter' must be either a dict or a str")
 
+    if sort is not None:
+        queries["sort"] = sort
+
     if response_format is None:
         response_format = "json"
     queries["response_format"] = response_format
@@ -77,6 +81,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     # Make query - get data
     url_query = urlencode(queries)
     complete_url = f"{url_path}?{url_query}"
+    LOGGER.debug("Performing OPTIMADE query:\n%s", complete_url)
     try:
         response = requests.get(complete_url, timeout=TIMEOUT_SECONDS)
     except (
