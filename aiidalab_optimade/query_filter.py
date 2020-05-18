@@ -22,6 +22,7 @@ from aiidalab_optimade.utils import (
     perform_optimade_query,
     handle_errors,
     TIMEOUT_SECONDS,
+    check_entry_properties,
 )
 
 
@@ -202,7 +203,14 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         if db_base_url not in self.__cached_ranges:
             self.__cached_ranges[db_base_url] = {}
 
-        for response_field in ("nsites", "nelements"):
+        sortable_fields = check_entry_properties(
+            base_url=db_base_url,
+            entry_endpoint="structures",
+            properties=["nsites", "nelements"],
+            checks=["sort"],
+        )
+
+        for response_field in sortable_fields:
             if response_field in self.__cached_ranges[db_base_url]:
                 # Use cached values
                 continue

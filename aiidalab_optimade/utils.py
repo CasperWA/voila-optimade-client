@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, List, Union
+from typing import Tuple, List, Union, Iterable
 from urllib.parse import urlencode
 
 try:
@@ -44,8 +44,9 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
 
     if endpoint is None:
         endpoint = "/structures"
-    elif not endpoint.startswith("/"):
-        endpoint = f"/{endpoint}"
+    else:
+        # Make sure we supply the correct slashed format no matter the input
+        endpoint = f"/{endpoint.strip('/')}"
 
     url_path = (
         base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
@@ -292,3 +293,77 @@ def handle_errors(response: dict) -> str:
         return msg
 
     return ""
+
+
+def check_entry_properties(
+    base_url: str,
+    entry_endpoint: str,
+    properties: Union[str, Iterable[str]],
+    checks: Union[str, Iterable[str]],
+) -> List[str]:
+    """Check an entry-endpoint's properties
+
+    :param checks: An iterable, which only recognizes the following str entries:
+    "sort", "sortable", "present", "queryable"
+    The first two and latter two represent the same thing, i.e., whether a property is sortable
+    and whether a property is present in the entry-endpoint's resource's attributes, respsectively.
+    :param properties: Can be either a list or not of properties to check.
+    :param entry_endpoint: A valid entry-endpoint for the OPTIMADE implementation,
+    e.g., "structures", "_exmpl_calculations", or "/extensions/structures".
+    """
+    if isinstance(properties, str):
+        properties = [properties]
+    properties = list(properties)
+
+    if not checks:
+        # Don't make any queries if called improperly (with empty iterable for `checks`)
+        return properties
+
+    if isinstance(checks, str):
+        checks = [checks]
+    checks = set(checks)
+    if "queryable" in checks:
+        checks.update({"present"})
+        checks.remove("queryable")
+    if "sortable" in checks:
+        checks.update({"sort"})
+        checks.remove("sortable")
+
+    query_params = {
+        "endpoint": f"/info/{entry_endpoint.strip('/')}",
+        "base_url": base_url,
+    }
+
+    response = perform_optimade_query(**query_params)
+    if handle_errors(response):
+        LOGGER.error(
+            "Could not retrieve information about entry-endpoint %r.\n  Message: %r\n  Response:"
+            "\n%s",
+            entry_endpoint,
+            handle_errors(response),
+            response,
+        )
+        if "present" in checks:
+            return []
+        return properties
+
+    res = list(properties)  # Copy of input list of properties
+
+    found_properties = response.get("data", {}).get("properties", {})
+    for field in properties:
+        field_property = found_properties.get(field, None)
+        if field_property is None:
+            LOGGER.debug(
+                "Could not find %r in %r for provider with base URL %r. Found properties:\n%s",
+                field,
+                query_params["endpoint"],
+                base_url,
+                json.dumps(found_properties),
+            )
+            if "present" in checks:
+                res.remove(field)
+        elif "sort" in checks:
+            sortable = field_property.get("sortable", False)
+            if not sortable:
+                res.remove(field)
+    return res
