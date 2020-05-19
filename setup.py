@@ -6,7 +6,7 @@ DEV = ["pylint", "black", "pre-commit", "invoke"] + TESTING
 
 setup(
     name="aiidalab-optimade",
-    version="3.0.0",
+    version="3.1.0",
     packages=find_packages(),
     license="MIT Licence",
     author="The AiiDA Lab team",
