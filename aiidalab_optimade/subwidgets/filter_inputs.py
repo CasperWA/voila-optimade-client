@@ -187,12 +187,13 @@ class FilterInputParser:
 
     def __default__(self, value: Any) -> Any:  # pylint: disable=no-self-use
         """Default parsing fallback function"""
-        if isinstance(value, str):
-            value = value.strip()
         return value
 
     def parse(self, key: str, value: Any) -> Any:
         """Reroute to self.<key>(value)"""
+        if isinstance(value, str):
+            # Remove any superfluous whitespace at the beginning and end of string values
+            value = value.strip()
         func = getattr(self, key, None)
         if func is None:
             return self.__default__(value)
@@ -201,7 +202,7 @@ class FilterInputParser:
     @staticmethod
     def chemical_formula_descriptive(value: str) -> str:
         """Chemical formula descriptive is a free form input"""
-        value = re.sub('"', "", value)
+        value = value.replace('"', "")
         return f'"{value}"' if value else ""
 
     @staticmethod
@@ -262,7 +263,7 @@ class FilterInputParser:
                     extras=("match_operator", match_operator,),
                 )
             number = re.findall(r"[0-9]+", value)[0]
-            operator = re.sub(r"\s*", "", match_operator[0])
+            operator = match_operator[0].replace(r"\s*", "")
             return f"{operator}{number}"
         if match_no_operator and any(match_no_operator):
             match_no_operator = [_ for _ in match_no_operator if _]
@@ -274,7 +275,7 @@ class FilterInputParser:
                     value,
                     extras=("match_no_operator", match_no_operator,),
                 )
-            result = re.sub(r"\s*", "", match_no_operator[0])
+            result = match_no_operator[0].replace(r"\s*", "")
             return f"={result}"
         raise ParserError(
             "Not proper input. Should be, e.g., '>=3' or '5'",
@@ -319,7 +320,7 @@ class FilterInputParser:
         for symbol in symbols:
             if symbol == "":
                 continue
-            escaped_symbol = re.sub(r"\W", "", symbol.strip())
+            escaped_symbol = symbol.strip().replace(r"\W", "")
             escaped_symbol = escaped_symbol.capitalize()
             if escaped_symbol not in CHEMICAL_SYMBOLS:
                 raise ParserError(
@@ -500,13 +501,9 @@ class FilterInputs(FilterTabSection):
 
         result = []
         for field, user_input in self.query_fields.items():
-            # if not user_input.get_user_input:
-            #     # If there is no input, skip field
-            #     continue
-
             parsed_value = parser.parse(field, user_input.get_user_input)
             if not parsed_value:
-                # Also, if the parsed value results in an empty value, skip field
+                # If the parsed value results in an empty value, skip field
                 continue
 
             if isinstance(parsed_value, (list, tuple, set)):
@@ -530,7 +527,7 @@ class FilterInputs(FilterTabSection):
                 )
 
         result = " AND ".join(result)
-        return re.sub("'", '"', result)  # OPTIMADE Filter grammar only supports " not '
+        return result.replace("'", '"')  # OPTIMADE Filter grammar only supports " not '
 
     def on_submit(self, callback, remove=False):
         """(Un)Register a callback to handle user input submission"""

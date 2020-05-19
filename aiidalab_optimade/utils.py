@@ -32,7 +32,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     base_url: str,
     endpoint: str = None,
     filter: Union[dict, str] = None,  # pylint: disable=redefined-builtin
-    sort: str = None,
+    sort: Union[str, List[str]] = None,
     response_format: str = None,
     response_fields: str = None,
     email_address: str = None,
@@ -61,7 +61,10 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
             raise TypeError("'filter' must be either a dict or a str")
 
     if sort is not None:
-        queries["sort"] = sort
+        if isinstance(sort, str):
+            queries["sort"] = sort
+        else:
+            queries["sort"] = ",".join(sort)
 
     if response_format is None:
         response_format = "json"
@@ -125,8 +128,8 @@ def fetch_providers(providers_url: str = None) -> list:
 
 _VERSION_PARTS = [
     f"/v{__optimade_version__.split('.')[0]}",  # major
-    f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # minor
-    f"/v{__optimade_version__}",  # patch
+    f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # major.minor
+    f"/v{__optimade_version__}",  # major.minor.patch
 ]
 
 
