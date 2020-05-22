@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-AIIDALAB = ["aiidalab-widgets-base~=1.0.0b2"]
 TESTING = ["pytest", "pytest-cov", "codecov"]
 DEV = ["pylint", "black", "pre-commit", "invoke"] + TESTING
 
@@ -8,22 +7,11 @@ setup(
     name="aiidalab-optimade",
     version="3.3.0",
     packages=find_packages(),
-    license="MIT Licence",
-    author="The AiiDA Lab team",
+    license="MIT License",
+    author="Casper Welzel Andersen",
     python_requires=">=3.6",
-    install_requires=[
-        "optimade~=0.10.0",
-        "requests~=2.24",
-        "jupyterlab~=2.2",
-        "ipywidgets~=7.5",
-        "nglview~=2.7",
-        "numpy~=1.19",
-        "pandas~=1.0",
-        "ase~=3.19",
-        "appmode",
-        "voila",
-    ],
-    extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
+    install_requires=["optimade~=0.10.0"],
+    extras_require={"dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: AiiDA",
