@@ -6,9 +6,6 @@ MODULE_DIR = Path(__file__).resolve().parent
 with open(MODULE_DIR.joinpath("requirements.txt")) as handle:
     REQUIREMENTS = [f"{_.strip()}" for _ in handle.readlines()]
 
-with open(MODULE_DIR.joinpath("requirements_aiidalab.txt")) as handle:
-    AIIDALAB = [f"{_.strip()}" for _ in handle.readlines()]
-
 with open(MODULE_DIR.joinpath("requirements_testing.txt")) as handle:
     TESTING = [f"{_.strip()}" for _ in handle.readlines()]
 
@@ -19,11 +16,11 @@ setup(
     name="aiidalab-optimade",
     version="3.3.0",
     packages=find_packages(),
-    license="MIT Licence",
-    author="The AiiDA Lab team",
+    license="MIT License",
+    author="Casper Welzel Andersen",
     python_requires=">=3.6",
     install_requires=REQUIREMENTS,
-    extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
+    extras_require={"dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: AiiDA",
