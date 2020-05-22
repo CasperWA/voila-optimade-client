@@ -10,3 +10,6 @@ jupyter nbextension enable --py --sys-prefix nglview
 # Voilà
 jupyter nbextension enable --py --sys-prefix voila
 
+# Period Table
+jupyter nbextension enable --py --sys-prefix widget_periodictable
+
