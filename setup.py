@@ -1,6 +1,19 @@
 from setuptools import setup, find_packages
 
-TESTING = ["pytest", "pytest-cov", "codecov"]
+TESTING = [
+    "pytest",
+    "pytest-cov",
+    "codecov",
+    "requests~=2.23",
+    "jupyterlab~=2.1",
+    "ipywidgets~=7.5",
+    "nglview~=2.7",
+    "numpy~=1.18",
+    "pandas~=1.0",
+    "ase~=3.19",
+    "appmode",
+    "voila",
+]
 DEV = ["pylint", "black", "pre-commit", "invoke"] + TESTING
 
 setup(
