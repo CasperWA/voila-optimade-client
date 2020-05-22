@@ -42,5 +42,9 @@ def update_version(_, patch=False, ver=""):
     update_file(
         TOP_DIR.joinpath("setup.py"), ("version=([^,]+),", f'version="{new_ver}",')
     )
+    update_file(
+        TOP_DIR.joinpath("metadata.json"),
+        ('"version": "([^,]+)",', f'"version": "{new_ver}",'),
+    )
 
     print("Bumped version to {}".format(new_ver))
