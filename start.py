@@ -2,7 +2,7 @@ TEMPLATE = """
 <p>Use OPTIMADE to find a structure in common materials databases</p>
 <div align="center">
   <a href="{appbase}/OPTIMADE_general.ipynb" target="_blank">
-    <img src="{appbase}/img/optimade-text-right-transparent-bg.png" alt="OPTIMADE: Open Databases Integration for Materials Design">
+    <img src="{appbase}/img/optimade-text-right-transparent-bg.png" alt="OPTIMADE: Open Databases Integration for Materials Design" width="375px" height="137.5px">
   </a>
 </div>
 """
