@@ -50,6 +50,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         )
         self.offset = 0
         self.__perform_query = True
+        self.__cached_child_dbs = {}
 
         self.debug = bool(os.environ.get("OPTIMADE_CLIENT_DEBUG", None))
 
@@ -160,21 +161,50 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             if self.error_or_status_messages.value:
                 self.error_or_status_messages.value = ""
 
-            # Query database and get child_dbs
-            child_dbs, links, data_returned = self._query()
+            if self.provider.base_url in self.__cached_child_dbs:
+                cache = self.__cached_child_dbs[self.provider.base_url]
 
-            while True:
-                # Update list of structures in dropdown widget
-                exclude_child_dbs, final_child_dbs = self._update_child_dbs(child_dbs)
+                LOGGER.debug(
+                    "Initializing child DBs for %s. Using cached info:\n%r",
+                    self.provider.name,
+                    cache,
+                )
 
-                data_returned -= len(exclude_child_dbs)
-                if exclude_child_dbs and data_returned:
-                    child_dbs, links, data_returned = self._query(
-                        exclude_ids=exclude_child_dbs
+                self._set_child_dbs(cache["child_dbs"])
+                data_returned = cache["data_returned"]
+                links = cache["links"]
+            else:
+                LOGGER.debug("Initializing child DBs for %s.", self.provider.name)
+
+                # Query database and get child_dbs
+                child_dbs, links, data_returned = self._query()
+
+                while True:
+                    # Update list of structures in dropdown widget
+                    exclude_child_dbs, final_child_dbs = self._update_child_dbs(
+                        child_dbs
                     )
-                else:
-                    break
-            self._set_child_dbs(final_child_dbs)
+
+                    data_returned -= len(exclude_child_dbs)
+                    if exclude_child_dbs and data_returned:
+                        child_dbs, links, data_returned = self._query(
+                            exclude_ids=exclude_child_dbs
+                        )
+                    else:
+                        break
+                self._set_child_dbs(final_child_dbs)
+
+                # Cache initial child_dbs and related information
+                self.__cached_child_dbs[self.provider.base_url] = {
+                    "child_dbs": final_child_dbs,
+                    "data_returned": data_returned,
+                    "links": links,
+                }
+
+                LOGGER.debug(
+                    "Found the following, which has now been cached:\n%r",
+                    self.__cached_child_dbs[self.provider.base_url],
+                )
 
             # Update pageing
             self.page_chooser.set_pagination_data(
@@ -212,8 +242,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         first_choice = (
             self.HINT["child_dbs"] if data else "No valid implementations found"
         )
-        data.insert(0, (first_choice, {}))
-        self.child_dbs.options = data
+        new_data = list(data)
+        new_data.insert(0, (first_choice, {}))
+        self.child_dbs.options = new_data
         with self.hold_trait_notifications():
             self.child_dbs.index = 0
 
