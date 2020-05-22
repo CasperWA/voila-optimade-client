@@ -1,0 +1,3 @@
+[submodule "materialscloud-voila-template"]
+	path = materialscloud-voila-template
+	url = https://github.com/materialscloud-org/materialscloud-voila-template
