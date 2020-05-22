@@ -3,6 +3,7 @@ from urllib.parse import urlparse, parse_qs
 import ipywidgets as ipw
 import traitlets
 
+from aiidalab_optimade.exceptions import InputError
 from aiidalab_optimade.logger import LOGGER
 
 
@@ -61,7 +62,7 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self._layout = ipw.Layout(width="auto")
 
         self._page_limit = page_limit
-        self.data_returned = 0
+        self._data_returned = 0
         self.pages_links = {}
 
         self._button_layout = {
@@ -134,6 +135,21 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.button_prev.disabled = self._cache["buttons"]["prev"]
         self.button_next.disabled = self._cache["buttons"]["next"]
         self.button_last.disabled = self._cache["buttons"]["last"]
+
+    @property
+    def data_returned(self) -> int:
+        """Total number of entities"""
+        return self._data_returned
+
+    @data_returned.setter
+    def data_returned(self, value: int):
+        """Set total number of entities"""
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise InputError("data_returned must be an integer")
+        else:
+            self._data_returned = value
 
     @property
     def _last_page_offset(self):

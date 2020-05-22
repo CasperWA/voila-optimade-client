@@ -1,5 +1,6 @@
 import os
 from typing import List, Tuple, Union
+import urllib.parse
 
 try:
     import simplejson as json
@@ -162,8 +163,18 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             # Query database and get child_dbs
             child_dbs, links, data_returned = self._query()
 
-            # Update list of structures in dropdown widget
-            self._update_child_dbs(child_dbs)
+            while True:
+                # Update list of structures in dropdown widget
+                exclude_child_dbs, final_child_dbs = self._update_child_dbs(child_dbs)
+
+                data_returned -= len(exclude_child_dbs)
+                if exclude_child_dbs and data_returned:
+                    child_dbs, links, data_returned = self._query(
+                        exclude_ids=exclude_child_dbs
+                    )
+                else:
+                    break
+            self._set_child_dbs(final_child_dbs)
 
             # Update pageing
             self.page_chooser.set_pagination_data(
@@ -198,14 +209,19 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
     def _set_child_dbs(self, data: List[Tuple[str, LinksResourceAttributes]]):
         """Update the child_dbs options with `data`"""
-        data.insert(0, (self.HINT["child_dbs"], {}))
+        first_choice = (
+            self.HINT["child_dbs"] if data else "No valid implementations found"
+        )
+        data.insert(0, (first_choice, {}))
         self.child_dbs.options = data
         with self.hold_trait_notifications():
             self.child_dbs.index = 0
 
-    def _update_child_dbs(self, data: List[dict]):
+    @staticmethod
+    def _update_child_dbs(data: List[dict]) -> Tuple[List[str], List[ChildResource]]:
         """Update child DB dropdown from response data"""
         child_dbs = []
+        exclude_dbs = []
 
         for entry in data:
             child_db = ChildResource(**entry)
@@ -217,6 +233,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 LOGGER.debug(
                     "Skip: Base URL found to be None for child DB: %r", child_db
                 )
+                exclude_dbs.append(child_db.id)
                 continue
 
             versioned_base_url = get_versioned_base_url(attributes.base_url)
@@ -228,11 +245,12 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     "Skip: Could not determine versioned base URL for child DB: %r",
                     child_db,
                 )
+                exclude_dbs.append(child_db.id)
                 continue
 
             child_dbs.append((attributes.name, attributes))
 
-        self._set_child_dbs(child_dbs)
+        return exclude_dbs, child_dbs
 
     def _get_more_child_dbs(self, change):
         """Query for more child DBs according to page_offset"""
@@ -282,11 +300,24 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
             child_dbs, links, _ = self._query(offset_or_link)
 
-            # Update child DB dropdown widget
-            self._update_child_dbs(child_dbs)
+            data_returned = self.page_chooser.data_returned
+            while True:
+                # Update list of structures in dropdown widget
+                exclude_child_dbs, final_child_dbs = self._update_child_dbs(child_dbs)
+
+                data_returned -= len(exclude_child_dbs)
+                if exclude_child_dbs and data_returned:
+                    child_dbs, links, data_returned = self._query(
+                        link=offset_or_link, exclude_ids=exclude_child_dbs
+                    )
+                else:
+                    break
+            self._set_child_dbs(final_child_dbs)
 
             # Update pageing
-            self.page_chooser.set_pagination_data(links_to_page=links)
+            self.page_chooser.set_pagination_data(
+                data_returned=data_returned, links_to_page=links
+            )
 
         except QueryError as exc:
             LOGGER.debug(
@@ -317,11 +348,33 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         else:
             self.unfreeze()
 
-    def _query(self, link: str = None) -> Tuple[List[dict], dict, int]:
+    def _query(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        self, link: str = None, exclude_ids: List[str] = None
+    ) -> Tuple[List[dict], dict, int]:
         """Query helper function"""
         # If a complete link is provided, use it straight up
         if link is not None:
             try:
+                if exclude_ids:
+                    filter_value = " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+
+                    parsed_url = urllib.parse.urlparse(link)
+                    queries = urllib.parse.parse_qs(parsed_url.query)
+                    # Since parse_qs wraps all values in a list,
+                    # this extracts the values from the list(s).
+                    queries = {key: value[0] for key, value in queries.items()}
+
+                    if "filter" in queries:
+                        queries[
+                            "filter"
+                        ] = f"( {queries['filter']} ) AND ( {filter_value} )"
+                    else:
+                        queries["filter"] = filter_value
+
+                    parsed_query = urllib.parse.urlencode(queries)
+
+                    link = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{parsed_query}"
+
                 response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
             except (
                 requests.exceptions.ConnectTimeout,
@@ -343,7 +396,12 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     }
                 }
         else:
+            filter_ = None
+            if exclude_ids:
+                filter_ = " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+
             response = perform_optimade_query(
+                filter=filter_,
                 base_url=self.provider.base_url,
                 endpoint="/links",
                 page_limit=self.child_db_limit,
