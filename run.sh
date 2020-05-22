@@ -11,5 +11,12 @@ else
     OPTIMADE_CLIENT_DEBUG=
 fi
 
+# Update sub-module
+git submodule init
+git submodule update
+
+# Copy template to Jupyter data dir
+./copy_voila_template.py materialscloud
+
 # Start the tornado voila server (no browser)
 voila --no-browser "OPTIMADE Client.ipynb"
