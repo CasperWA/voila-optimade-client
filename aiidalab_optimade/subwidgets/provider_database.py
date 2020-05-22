@@ -129,7 +129,18 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.child_dbs.index = 0
         else:
             self._initialize_child_dbs()
-            self.child_dbs.disabled = False
+            if len(self.child_dbs.options) <= 2:
+                # The provider either has 0 or 1 implementations
+                # or we have failed to retrieve any implementations.
+                # Automatically choose the 1 implementation (if there),
+                # while otherwise keeping the dropdown disabled.
+                self.child_dbs.disabled = True
+                try:
+                    self.child_dbs.index = 1
+                except IndexError:
+                    pass
+            else:
+                self.child_dbs.disabled = False
 
     def _observe_child_dbs(self, change):
         """Update database traitlet with base URL for chosen child database"""
@@ -456,9 +467,18 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             raise QueryError(msg=msg, remove_target=True)
 
         LOGGER.debug(
-            "First attempt for %r (in /links): Found implementations:\n%r",
+            "First attempt for %r (in /links): Found implementations (names+base_url only):\n%s",
             self.provider.name,
-            json.dumps(response.get("data", []), indent=2),
+            [
+                f"id: {name}; base_url: {base_url}"
+                for name, base_url in [
+                    (
+                        impl.get("id", "N/A"),
+                        impl.get("attributes", {}).get("base_url", "N/A"),
+                    )
+                    for impl in response.get("data", [])
+                ]
+            ],
         )
         # Return all implementations of type "child"
         implementations = [
