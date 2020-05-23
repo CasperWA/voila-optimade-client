@@ -4,6 +4,8 @@ from typing import Dict, List, Union, Tuple, Callable, Any
 import ipywidgets as ipw
 import traitlets
 
+from widget_periodictable import PTableWidget
+
 from optimade.models.utils import CHEMICAL_SYMBOLS
 
 from aiidalab_optimade.exceptions import ParserError
@@ -141,11 +143,10 @@ class FilterInput(ipw.HBox):
         )
         description = ipw.HTML(description, layout={"width": _description_width})
 
-        _layout = {"width": "100%"}
         self.input_widget = (
-            input_widget(layout=_layout, **kwargs)
+            input_widget(**kwargs)
             if input_widget is not None
-            else ipw.Text(layout=_layout)
+            else ipw.Text(layout={"width": "100%"})
         )
 
         if hint and isinstance(self.input_widget, ipw.widgets.widget_string._String):
@@ -158,7 +159,25 @@ class FilterInput(ipw.HBox):
     @property
     def get_user_input(self):
         """The Widget.value"""
-        return self.input_widget.value
+        try:
+            # IPyWidget
+            res = self.input_widget.value
+        except AttributeError:
+            try:
+                # Periodic Table
+                res = [
+                    (element, state)
+                    for element, state in zip(
+                        self.input_widget.selected_elements,
+                        self.input_widget.selected_states,
+                    )
+                ]
+            except AttributeError:
+                raise ParserError(
+                    msg="Correct attribute can not be found to retrieve widget value",
+                    extras=[("Widget", self.input_widget)],
+                )
+        return res
 
     def reset(self):
         """Reset widget"""
@@ -313,21 +332,53 @@ class FilterInputParser:
         return self.ranged_int("nelements", value)
 
     @staticmethod
-    def elements(value: str) -> str:
-        """Check against optimade-python-tools list of elememnts"""
-        results = []
-        symbols = re.findall(r",?\s*[\"']?([A-Za-z]+)[\"']?,?\s*", value)
-        for symbol in symbols:
-            if symbol == "":
-                continue
-            escaped_symbol = symbol.strip().replace(r"\W", "")
-            escaped_symbol = escaped_symbol.capitalize()
-            if escaped_symbol not in CHEMICAL_SYMBOLS:
-                raise ParserError(
-                    f"{escaped_symbol} is not a valid element.", "elements", value
-                )
-            results.append(escaped_symbol)
-        return ",".join([f'"{symbol}"' for symbol in results])
+    def elements(value: List[Tuple[str, int]]) -> Union[List[str], List[Tuple[str]]]:
+        """Extract included and excluded elements"""
+        include = []
+        exclude = []
+        for element, state in value:
+            if state == 0:
+                # Include
+                include.append(element)
+            elif state == 1:
+                # Exclude
+                exclude.append(element)
+
+        LOGGER.debug(
+            "elements: With value %r the following are included: %r. And excluded: %r",
+            value,
+            include,
+            exclude,
+        )
+
+        res = []
+        if exclude:
+            elements = ",".join([f'"{element}"' for element in exclude])
+            res.append(("NOT", elements))
+        if include:
+            include_elements = ",".join([f'"{element}"' for element in include])
+            res.append(include_elements)
+
+        LOGGER.debug("elements: Resulting parsed value: %r", res)
+
+        return res
+
+    # @staticmethod
+    # def elements(value: str) -> str:
+    #     """Check against optimade-python-tools list of elememnts"""
+    #     results = []
+    #     symbols = re.findall(r",?\s*[\"']?([A-Za-z]+)[\"']?,?\s*", value)
+    #     for symbol in symbols:
+    #         if symbol == "":
+    #             continue
+    #         escaped_symbol = symbol.strip().replace(r"\W", "")
+    #         escaped_symbol = escaped_symbol.capitalize()
+    #         if escaped_symbol not in CHEMICAL_SYMBOLS:
+    #             raise ParserError(
+    #                 f"{escaped_symbol} is not a valid element.", "elements", value
+    #             )
+    #         results.append(escaped_symbol)
+    #     return ",".join([f'"{symbol}"' for symbol in results])
 
 
 class FilterInputs(FilterTabSection):
@@ -341,9 +392,22 @@ class FilterInputs(FilterTabSection):
             [
                 (
                     "chemical_formula_descriptive",
-                    {"description": "Chemical Formula", "hint": "e.g., (H2O)2 Na"},
+                    {
+                        "description": "Chemical Formula",
+                        "hint": "e.g., (H2O)2 Na",
+                        "layout": {"width": "100%"},
+                    },
                 ),
-                ("elements", {"description": "Elements", "hint": "H, O, Cl, ..."}),
+                (
+                    "elements",
+                    {
+                        "description": "Elements",
+                        "input_widget": PTableWidget,
+                        "states": 2,  # Included/Excluded
+                        "unselected_color": "#5096f1",  # Blue
+                        "selected_colors": ["#66BB6A", "#EF5350"],  # Green, red
+                    },
+                ),
                 (
                     "nelements",
                     {
@@ -352,6 +416,7 @@ class FilterInputs(FilterTabSection):
                         "min": 0,
                         "max": len(CHEMICAL_SYMBOLS),
                         "value": (0, len(CHEMICAL_SYMBOLS)),
+                        "layout": {"width": "100%"},
                     },
                 ),
             ],
@@ -364,6 +429,7 @@ class FilterInputs(FilterTabSection):
                     {
                         "description": "Dimensions",
                         "hint": "0: Molecule, 3: Bulk, (Not supported: 1: Wire, 2: Planar)",
+                        "layout": {"width": "100%"},
                     },
                 ),
                 (
@@ -374,6 +440,7 @@ class FilterInputs(FilterTabSection):
                         "min": 0,
                         "max": 10000,
                         "value": (0, 10000),
+                        "layout": {"width": "100%"},
                     },
                 ),
             ],
@@ -383,7 +450,11 @@ class FilterInputs(FilterTabSection):
             [
                 (
                     "id",
-                    {"description": "Provider ID", "hint": "NB! Will take precedence"},
+                    {
+                        "description": "Provider ID",
+                        "hint": "NB! Will take precedence",
+                        "layout": {"width": "100%"},
+                    },
                 )
             ],
         ),
@@ -393,7 +464,7 @@ class FilterInputs(FilterTabSection):
 
     OPERATOR_MAP = {
         "chemical_formula_descriptive": " CONTAINS ",
-        "elements": " HAS ALL ",
+        "elements": " HAS ANY ",
         "nelements": "",
         "dimension_types": " HAS ",
         "lattice_vectors": " HAS ANY ",
@@ -522,12 +593,15 @@ class FilterInputs(FilterTabSection):
                 continue
 
             if isinstance(parsed_value, (list, tuple, set)):
-                result.extend(
-                    [
-                        f"{self.FIELD_MAP.get(field, field)}{self.OPERATOR_MAP[field]}{value}"
-                        for value in parsed_value
-                    ]
-                )
+                for value in parsed_value:
+                    inverse = ""
+                    if isinstance(value, tuple) and value[0] == "NOT":
+                        inverse = "NOT "
+                        value = value[1]
+                    result.append(
+                        f"{inverse}{self.FIELD_MAP.get(field, field)}"
+                        f"{self.OPERATOR_MAP[field]}{value}"
+                    )
             elif isinstance(parsed_value, str):
                 result.append(
                     f"{self.FIELD_MAP.get(field, field)}{self.OPERATOR_MAP[field]}{parsed_value}"
