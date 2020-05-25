@@ -472,6 +472,8 @@ class FilterInputs(FilterTabSection):
                         setattr(widget, attr, new_value)
                         LOGGER.debug("Updated widget:\n%r", widget)
 
+            widget.value = (widget.min, widget.max)
+
     def update_provider_section(self):
         """Update the provider input section from the chosen provider"""
         # schema = get_structures_schema(self.base_url)

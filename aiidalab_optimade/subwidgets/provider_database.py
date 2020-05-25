@@ -62,12 +62,14 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if self.debug:
             from aiidalab_optimade.utils import __optimade_version__
 
-            local_provider = {
-                "name": "Local server",
-                "description": "Local server, running aiida-optimade",
-                "base_url": f"http://localhost:5000/optimade/v{__optimade_version__.split('.')[0]}",
-                "homepage": "https://example.org",
-            }
+            local_provider = LinksResourceAttributes(
+                **{
+                    "name": "Local server",
+                    "description": "Local server, running aiida-optimade",
+                    "base_url": f"http://localhost:5000/v{__optimade_version__.split('.')[0]}",
+                    "homepage": "https://example.org",
+                }
+            )
             providers.insert(1, ("Local server", local_provider))
 
         self.providers = ipw.Dropdown(options=providers, layout=dropdown_layout)
@@ -449,12 +451,14 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 page_limit=self.child_db_limit,
                 page_offset=self.offset,
             )
-        msg = handle_errors(response)
+        msg, http_errors = handle_errors(response)
         if msg:
-            self.error_or_status_messages.value = (
-                f"{msg}<br>The provider has been removed."
-            )
-            raise QueryError(msg=msg, remove_target=True)
+            if 404 in http_errors:
+                # If /links not found move on
+                pass
+            else:
+                self.error_or_status_messages.value = msg
+                raise QueryError(msg=msg, remove_target=True)
 
         # Check implementation API version
         msg = validate_api_version(
@@ -496,7 +500,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             new_response = perform_optimade_query(
                 base_url=self.provider.base_url, endpoint="/structures", page_limit=1
             )
-            msg = handle_errors(new_response)
+            msg, _ = handle_errors(new_response)
             if msg:
                 self.error_or_status_messages.value = (
                     f"{msg}<br>The provider has been removed."

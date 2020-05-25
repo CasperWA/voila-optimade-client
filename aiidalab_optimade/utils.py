@@ -11,7 +11,7 @@ from json import JSONDecodeError
 
 import requests
 
-from optimade.models import ProviderResource
+from optimade.models import ProviderResource, OptimadeError
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
@@ -120,7 +120,8 @@ def fetch_providers(providers_url: str = None) -> list:
         providers_url = PROVIDERS_URL
 
     providers = perform_optimade_query(base_url=providers_url, endpoint="/links")
-    if handle_errors(providers):
+    msg, _ = handle_errors(providers)
+    if msg:
         return []
 
     return providers.get("data", [])
@@ -276,12 +277,14 @@ def get_structures_schema(base_url: str) -> dict:
         return result
 
 
-def handle_errors(response: dict) -> str:
+def handle_errors(response: dict) -> Tuple[str, set]:
     """Handle any errors"""
     if "data" not in response and "errors" not in response:
         raise InputError(f"No data and no errors reported in response: {response}")
 
     if "errors" in response:
+        LOGGER.debug("Errored response:\n%s", json.dumps(response, indent=2))
+
         if "data" in response:
             msg = (
                 '<font color="red">Error(s) during querying,</font> but '
@@ -292,10 +295,15 @@ def handle_errors(response: dict) -> str:
                 '<font color="red">Error during querying, '
                 "please try again later.</font>"
             )
-        LOGGER.debug("Errored response:\n%s", json.dumps(response, indent=2))
-        return msg
 
-    return ""
+        http_errors = set()
+        for raw_error in response.get("errors", []):
+            error = OptimadeError(**raw_error)
+            http_errors.add(int(error.status))
+
+        return msg, http_errors
+
+    return "", set()
 
 
 def check_entry_properties(
@@ -338,12 +346,13 @@ def check_entry_properties(
     }
 
     response = perform_optimade_query(**query_params)
-    if handle_errors(response):
+    msg, _ = handle_errors(response)
+    if msg:
         LOGGER.error(
             "Could not retrieve information about entry-endpoint %r.\n  Message: %r\n  Response:"
             "\n%s",
             entry_endpoint,
-            handle_errors(response),
+            msg,
             response,
         )
         if "present" in checks:
@@ -369,4 +378,8 @@ def check_entry_properties(
             sortable = field_property.get("sortable", False)
             if not sortable:
                 res.remove(field)
+
+    LOGGER.debug(
+        "sortable fields found for %s (looking for %r): %r", base_url, properties, res,
+    )
     return res

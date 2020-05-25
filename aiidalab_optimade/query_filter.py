@@ -10,6 +10,7 @@ except (ImportError, ModuleNotFoundError):
 
 from optimade.adapters import Structure
 from optimade.models import LinksResourceAttributes
+from optimade.models.utils import CHEMICAL_SYMBOLS
 
 from aiidalab_optimade.exceptions import BadResource, QueryError
 from aiidalab_optimade.logger import LOGGER
@@ -150,7 +151,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
             # Query database
             response = self._query(offset_or_link)
-            msg = handle_errors(response)
+            msg, _ = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
                 return
@@ -212,7 +213,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
         for response_field in sortable_fields:
             if response_field in self.__cached_ranges[db_base_url]:
-                # Use cached values
+                # Use cached value(s)
                 continue
 
             page_limit = 1
@@ -237,8 +238,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 )
 
                 response = perform_optimade_query(**query_params)
-                if handle_errors(response):
-                    raise QueryError(handle_errors(response))
+                msg, _ = handle_errors(response)
+                if msg:
+                    raise QueryError(msg)
 
                 value = (
                     response.get("data", [{}])[0]
@@ -255,6 +257,15 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 {response_field: new_range},
             )
             self.__cached_ranges[db_base_url].update({response_field: new_range})
+
+        if not self.__cached_ranges[db_base_url]:
+            LOGGER.debug("No values found for %s, storing default values.", db_base_url)
+            self.__cached_ranges[db_base_url].update(
+                {
+                    "nsites": {"min": 0, "max": 10000},
+                    "nelements": {"min": 0, "max": len(CHEMICAL_SYMBOLS)},
+                }
+            )
 
         # Set widget's new extrema
         LOGGER.debug(
@@ -370,7 +381,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
             # Query database
             response = self._query()
-            msg = handle_errors(response)
+            msg, _ = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
                 raise QueryError(msg)
