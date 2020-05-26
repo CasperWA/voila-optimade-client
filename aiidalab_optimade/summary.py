@@ -133,9 +133,7 @@ document.body.removeChild(link);" />
 """
 
     def __init__(self, **kwargs):
-        options = sorted(self._formats)
-        options.insert(0, ("Select a format", {}))
-        self.dropdown = ipw.Dropdown(options=options, width="auto")
+        self.dropdown = ipw.Dropdown(options=("Select a format", {}), width="auto")
         self.download_button = ipw.HTML(
             self._download_button_format.format(
                 disabled="disabled", encoding="", data="", filename=""
@@ -154,7 +152,26 @@ document.body.removeChild(link);" />
         """Update widget when a new structure is chosen"""
         if change["new"] is None:
             self.reset()
-        self.unfreeze()
+        else:
+            self._update_options()
+            self.unfreeze()
+
+    def _update_options(self):
+        """Update options according to chosen structure"""
+        # Disordered structures not usable with ASE
+        if "disorder" in self.structure.structure_features:
+            options = sorted(
+                [
+                    option
+                    for option in self._formats
+                    if option[1].get("adapter_format", "") != "ase"
+                ]
+            )
+            options.insert(0, ("Select a format", {}))
+        else:
+            options = sorted(self._formats)
+            options.insert(0, ("Select a format", {}))
+        self.dropdown.options = options
 
     def _update_download_button(self, change: dict):
         """Update Download button with correct onclick value
