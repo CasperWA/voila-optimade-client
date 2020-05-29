@@ -142,8 +142,9 @@ document.body.removeChild(link);" />
             )
         )
 
-        self.children = (self.dropdown, self.download_button)
-        super().__init__(children=self.children, layout={"width": "auto"})
+        super().__init__(
+            children=(self.dropdown, self.download_button), layout={"width": "auto"}
+        )
         self.reset()
 
         self.dropdown.observe(self._update_download_button, names="value")
@@ -174,6 +175,8 @@ document.body.removeChild(link);" />
             warnings.filterwarnings("error")
 
             try:
+                self.freeze()
+
                 output = getattr(
                     self.structure, f"as_{desired_format['adapter_format']}"
                 )
@@ -216,6 +219,8 @@ document.body.removeChild(link);" />
                 self.download_button.value = self._download_button_format.format(
                     disabled="", encoding=encoding, data=data, filename=filename
                 )
+            finally:
+                self.unfreeze()
 
     @staticmethod
     def _get_via_pymatgen(
@@ -252,18 +257,16 @@ document.body.removeChild(link);" />
 
     def freeze(self):
         """Disable widget"""
-        for widget in self.children:
-            widget.disabled = True
+        self.dropdown.disabled = True
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
-        for widget in self.children:
-            widget.disabled = False
+        self.dropdown.disabled = False
 
     def reset(self):
         """Reset widget"""
         self.dropdown.index = 0
-        self.freeze()
+        self.dropdown.disabled = True
 
 
 class StructureViewer(ipw.VBox):
