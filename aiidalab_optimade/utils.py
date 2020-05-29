@@ -93,17 +93,23 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
         requests.exceptions.ConnectionError,
     ) as exc:
         return {
-            "errors": {
-                "msg": "CLIENT: Connection error or timeout.",
-                "url": complete_url,
-                "Exception": repr(exc),
-            }
+            "errors": [
+                {
+                    "detail": f"CLIENT: Connection error or timeout.\nURL: {complete_url}\nException: {exc!r}",
+                }
+            ]
         }
 
     try:
         response = response.json()
-    except JSONDecodeError:
-        return {"errors": "CLIENT: Cannot decode response to JSON format."}
+    except JSONDecodeError as exc:
+        return {
+            "errors": [
+                {
+                    "detail": f"CLIENT: Cannot decode response to JSON format.\nURL: {complete_url}\nException: {exc!r}",
+                }
+            ]
+        }
 
     return response
 
@@ -250,20 +256,21 @@ def get_structures_schema(base_url: str) -> dict:
         requests.exceptions.ConnectionError,
     ) as exc:
         return {
-            "errors": {
-                "msg": "CLIENT: Connection error or timeout.",
-                "url": url_path,
-                "Exception": repr(exc),
-            }
+            "errors": [
+                {
+                    "detail": f"CLIENT: Connection error or timeout.\nURL: {url_path}\nException: {exc!r}",
+                }
+            ]
         }
     else:
         if response.status_code != 200:
             return {
-                "errors": {
-                    "msg": "CLIENT: Not a successful 200 response.",
-                    "url": url_path,
-                    "status": response.status_code,
-                }
+                "errors": [
+                    {
+                        "detail": f"CLIENT: Not a successful 200 response.\nURL: {url_path}",
+                        "status": response.status_code,
+                    }
+                ]
             }
 
         properties = response.get("data", {}).get("properties", {})
@@ -299,7 +306,11 @@ def handle_errors(response: dict) -> Tuple[str, set]:
         http_errors = set()
         for raw_error in response.get("errors", []):
             error = OptimadeError(**raw_error)
-            http_errors.add(int(error.status))
+            try:
+                status = int(error.status)
+            except TypeError:
+                status = 400
+            http_errors.add(status)
 
         return msg, http_errors
 
