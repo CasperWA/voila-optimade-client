@@ -253,6 +253,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     optimade_filter = traitlets.Unicode("")
     freeze_filters = traitlets.Bool(False)
     unfreeze_filters = traitlets.Bool(False)
+    freeze_selector = traitlets.Bool(False)
+    unfreeze_selector = traitlets.Bool(False)
 
     def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
@@ -302,6 +304,12 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         with self.hold_trait_notifications():
             self.unfreeze_filters = False
 
+    @traitlets.observe("freeze_selector", "unfreeze_selector")
+    def _un_freeze_selector(self, change: dict):
+        """Reset traitlet"""
+        with self.hold_trait_notifications():
+            setattr(self, change["name"], False)
+
     @traitlets.observe("database")
     def _on_database_select(self, _):
         """Load chosen database"""
@@ -333,11 +341,13 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         """Disable widget"""
         self.query_button.disabled = True
         self.filters.freeze()
+        self.freeze_selector = True
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
         self.query_button.disabled = False
         self.filters.unfreeze()
+        self.unfreeze_selector = True
 
     def reset(self):
         """Reset widget"""
