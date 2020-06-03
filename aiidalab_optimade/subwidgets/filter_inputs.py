@@ -461,18 +461,31 @@ class FilterInputs(FilterTabSection):
                             extras=[("attr", attr), ("config[attr]", config[attr])],
                             msg=f"Could not cast config[attr] to int. Exception: {exc!s}",
                         )
-                    else:
-                        LOGGER.debug(
-                            "Setting %s for %s to %d.\nWidget now: %r",
-                            attr,
-                            field,
-                            new_value,
-                            widget,
-                        )
-                        setattr(widget, attr, new_value)
-                        LOGGER.debug("Updated widget:\n%r", widget)
+
+                    LOGGER.debug(
+                        "Setting %s for %s to %d.\nWidget immediately before: %r",
+                        attr,
+                        field,
+                        new_value,
+                        widget,
+                    )
+
+                    # Since "min" is always set first, to be able to set "min" to a valid value,
+                    # "max" is first set to the new "min" value + 1 IF the new "min" value is
+                    # larger than the current "max" value, otherwise there is no reason,
+                    # and it may indeed lead to invalid attribute setting, if this is done.
+                    # For "max", coming last, this should then be fine, as the new "min" and "max"
+                    # values should never be an invalid pair.
+                    if attr == "min" and new_value > cached_value[1]:
+                        widget.max = new_value + 1
+
+                    setattr(widget, attr, new_value)
+
+                    LOGGER.debug("Updated widget %r:\n%r", attr, widget)
 
             widget.value = (widget.min, widget.max)
+
+            LOGGER.debug("Final state, updated widget:\n%r", widget)
 
     def update_provider_section(self):
         """Update the provider input section from the chosen provider"""
