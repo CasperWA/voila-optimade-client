@@ -47,6 +47,7 @@ class OptimadeStructureResultsWidget(  # pylint: disable=too-many-instance-attri
     optimade_filter = traitlets.Unicode("")
     freeze_filters = traitlets.Bool(False)
     unfreeze_filters = traitlets.Bool(False)
+    reset_results = traitlets.Bool(False)
 
     def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
@@ -97,6 +98,14 @@ class OptimadeStructureResultsWidget(  # pylint: disable=too-many-instance-attri
         """Reset traitlet"""
         with self.hold_trait_notifications():
             setattr(self, change["name"], False)
+
+    @traitlets.observe("reset_results")
+    def _on_reset_results(self, change: dict):
+        """Reset widget"""
+        if change["new"]:
+            self.reset()
+        with self.hold_trait_notifications():
+            self.reset_results = False
 
     def freeze(self):
         """Disable widget"""
@@ -255,6 +264,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     unfreeze_filters = traitlets.Bool(False)
     freeze_selector = traitlets.Bool(False)
     unfreeze_selector = traitlets.Bool(False)
+    reset_results = traitlets.Bool(False)
 
     def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
@@ -304,8 +314,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         with self.hold_trait_notifications():
             self.unfreeze_filters = False
 
-    @traitlets.observe("freeze_selector", "unfreeze_selector")
-    def _un_freeze_selector(self, change: dict):
+    @traitlets.observe("freeze_selector", "unfreeze_selector", "reset_results")
+    def _reset_traitlets(self, change: dict):
         """Reset traitlet"""
         with self.hold_trait_notifications():
             setattr(self, change["name"], False)
@@ -318,6 +328,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         try:
             # Wait until we're clear
             self.freeze()
+
+            # Clear results dropdown
+            self.reset_results = True
 
             self.query_button.description = "Updating ... "
             self.query_button.icon = "cog"
