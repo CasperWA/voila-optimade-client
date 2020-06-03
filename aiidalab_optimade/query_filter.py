@@ -305,23 +305,29 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     @traitlets.observe("database")
     def _on_database_select(self, _):
         """Load chosen database"""
-        self.query_button.description = "Updating ... "
-        self.query_button.icon = "cog"
-        self.query_button.tooltip = "Please wait ..."
-        if (
-            self.database[1] is None
-            or getattr(self.database[1], "base_url", None) is None
-        ):
-            self.query_button.disabled = True
-            self.query_button.tooltip = "Search - No database chosen"
-            self.filters.freeze()
-        else:
-            self._set_intslider_ranges()
-            self.query_button.disabled = False
-            self.query_button.tooltip = "Search"
-            self.filters.unfreeze()
-        self.query_button.description = "Search"
-        self.query_button.icon = "search"
+        working_tooltip = "Please wait ..."
+
+        try:
+            # Wait until we're clear
+            self.freeze()
+
+            self.query_button.description = "Updating ... "
+            self.query_button.icon = "cog"
+            self.query_button.tooltip = working_tooltip
+            if (
+                self.database[1] is None
+                or getattr(self.database[1], "base_url", None) is None
+            ):
+                # Everything stays frozen
+                self.query_button.tooltip = "Search - No database chosen"
+            else:
+                self._set_intslider_ranges()
+                self.unfreeze()
+        finally:
+            self.query_button.description = "Search"
+            self.query_button.icon = "search"
+            if self.query_button.tooltip == working_tooltip:
+                self.query_button.tooltip = "Search"
 
     def freeze(self):
         """Disable widget"""
