@@ -164,9 +164,7 @@ class OptimadeClientFAQ(ipw.Accordion):
   <li>The provider has implemented an unsupported version</li>
   <li>The provider has supplied a link that could not be reached</li>
 </ul>
-<p style="line-height:1.5;font-size:14px;">
-Please go to <a href="https://github.com/Materials-Consortia/providers" target="_blank">the Materials-Consortia list of providers repository</a> to update the provider in question's details.
-</p>""",
+<p style="line-height:1.5;font-size:14px;">Please go to <a href="https://github.com/Materials-Consortia/providers" target="_blank">the Materials-Consortia list of providers repository</a> to update the provider in question's details.</p>""",
         },
         {
             "Q": "When I choose a provider, why can I not find any databases?",
@@ -176,28 +174,28 @@ Please go to <a href="https://github.com/Materials-Consortia/providers" target="
   <li>The implementation is of an unsupported version</li>
   <li>The implementation could not be reached</li>
 </ul>
-<p style="line-height:1.5;font-size:14px;">
-An implementation may also be removed upon choosing it. This is do to OPTIMADE API version incompatibility between the implementation and this client.
-</p>""",
+<p style="line-height:1.5;font-size:14px;">An implementation may also be removed upon choosing it. This is do to OPTIMADE API version incompatibility between the implementation and this client.</p>""",
         },
         {
             "Q": "I know a database hosts X number of structures, why can I only find Y?",
-            "A": f"""<p style="line-height:1.5;font-size:14px;">
-All searches (including the raw input search) will be pre-processed prior to sending the query.
+            "A": f"""<p style="line-height:1.5;font-size:14px;">All searches (including the raw input search) will be pre-processed prior to sending the query.
 This is done to ensure the best experience when using the client.
 Specifically, all structures with <code>"assemblies"</code> and <code>"unknown_positions"</code>
-in the <code>"structural_features"</code> property are excluded.
-</p>
-<p style="line-height:1.5;font-size:14px;">
-<code>"assemblies"</code> handling will be implemented at a later time.
-See <a href="{SOURCE_URL}issues/12" target="_blank">this issue</a> for more information.
-</p>
-<p style="line-height:1.5;font-size:14px;">
-<code>"unknown_positions"</code> may be handled later, however, since these structures present difficulties for viewing, it will not be prioritized.
-</p>
-<p style="line-height:1.5;font-size:14px;">
-Finally, a provider may choose to expose only a subset of their database.
-</p>""",
+in the <code>"structural_features"</code> property are excluded.</p>
+<p style="line-height:1.5;font-size:14px;"><code>"assemblies"</code> handling will be implemented at a later time.
+See <a href="{SOURCE_URL}issues/12" target="_blank">this issue</a> for more information.</p>
+<p style="line-height:1.5;font-size:14px;"><code>"unknown_positions"</code> may be handled later, however, since these structures present difficulties for viewing, it will not be prioritized.</p>
+<p style="line-height:1.5;font-size:14px;">Finally, a provider may choose to expose only a subset of their database.</p>""",
+        },
+        {
+            "Q": "Why is the number of downloadable formats changing?",
+            "A": """<p style="line-height:1.5;font-size:14px;">Currently, only two libraries are used to transform the OPTIMADE structure into other known data types:</p>
+<ul style="line-height:1.5;font-size:14px;">
+  <li>The <a href="https://github.com/Materials-Consortia/optimade-python-tools" target="_blank">OPTIMADE Python Tools</a> library</li>
+  <li>The <a href="https://wiki.fysik.dtu.dk/ase/index.html" target="_blank">Atomistic Simulation Environment (ASE)</a> library</li>
+</ul>
+<p style="line-height:1.5;font-size:14px;">ASE does not support transforming structures with partial occupancies, hence the options using ASE will be removed when such structures are chosen in the application.
+There are plans to also integrate <a href="https://pymatgen.org/" target="_blank">pymatgen</a>, however, the exact integration is still under design.</p>""",
         },
     ]
 
