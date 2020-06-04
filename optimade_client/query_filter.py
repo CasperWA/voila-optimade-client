@@ -1,7 +1,7 @@
 from typing import Union
-import requests
 import traitlets
 import ipywidgets as ipw
+import requests
 
 try:
     from simplejson import JSONDecodeError
@@ -15,16 +15,18 @@ from optimade.models.utils import CHEMICAL_SYMBOLS, SemanticVersion
 from optimade_client.exceptions import BadResource, QueryError
 from optimade_client.logger import LOGGER
 from optimade_client.subwidgets import (
-    StructureDropdown,
     FilterTabs,
     ResultsPageChooser,
+    StructureDropdown,
 )
 from optimade_client.utils import (
     ButtonStyle,
-    perform_optimade_query,
-    handle_errors,
-    TIMEOUT_SECONDS,
     check_entry_properties,
+    handle_errors,
+    ordered_query_url,
+    perform_optimade_query,
+    SESSION,
+    TIMEOUT_SECONDS,
 )
 
 
@@ -372,7 +374,11 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         # If a complete link is provided, use it straight up
         if link is not None:
             try:
-                response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
+                link = ordered_query_url(link)
+                response = SESSION.get(link, timeout=TIMEOUT_SECONDS)
+                if response.from_cache:
+                    LOGGER.debug("Request to %s was taken from cache !", link)
+                response = response.json()
             except (
                 requests.exceptions.ConnectTimeout,
                 requests.exceptions.ConnectionError,

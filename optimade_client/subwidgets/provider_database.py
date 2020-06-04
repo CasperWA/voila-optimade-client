@@ -11,20 +11,22 @@ import ipywidgets as ipw
 import requests
 import traitlets
 
-from optimade.models import LinksResourceAttributes, LinksResource
+from optimade.models import LinksResource, LinksResourceAttributes
 from optimade.models.links import LinkType
 
-from optimade_client.exceptions import QueryError, OptimadeClientError
+from optimade_client.exceptions import OptimadeClientError, QueryError
 from optimade_client.logger import LOGGER
 from optimade_client.subwidgets.results import ResultsPageChooser
 from optimade_client.utils import (
     get_list_of_valid_providers,
     get_versioned_base_url,
     handle_errors,
+    ordered_query_url,
     perform_optimade_query,
-    validate_api_version,
+    SESSION,
     TIMEOUT_SECONDS,
     update_old_links_resources,
+    validate_api_version,
 )
 
 
@@ -453,7 +455,11 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                         f"?{parsed_query}"
                     )
 
-                response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
+                link = ordered_query_url(link)
+                response = SESSION.get(link, timeout=TIMEOUT_SECONDS)
+                if response.from_cache:
+                    LOGGER.debug("Request to %s was taken from cache !", link)
+                response = response.json()
             except (
                 requests.exceptions.ConnectTimeout,
                 requests.exceptions.ConnectionError,
@@ -641,13 +647,13 @@ class ProviderImplementationSummary(ipw.GridspecLayout):
     def _update_provider(self):
         """Update provider summary"""
         html_text = f"""<strong style="line-height:1;{self.text_style}">{getattr(self.provider, 'name', 'Provider')}</strong>
-        <p style="line-height:1.2;{self.text_style}">{getattr(self.provider, 'description', '')}</p>"""
+<p style="line-height:1.2;{self.text_style}">{getattr(self.provider, 'description', '')}</p>"""
         self.provider_summary.value = html_text
 
     def _update_database(self):
         """Update database summary"""
         html_text = f"""<strong style="line-height:1;{self.text_style}">{getattr(self.database, 'name', 'Database')}</strong>
-        <p style="line-height:1.2;{self.text_style}">{getattr(self.database, 'description', '')}</p>"""
+<p style="line-height:1.2;{self.text_style}">{getattr(self.database, 'description', '')}</p>"""
         self.database_summary.value = html_text
 
     def freeze(self):

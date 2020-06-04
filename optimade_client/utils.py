@@ -1,8 +1,9 @@
+from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 
 try:
     import simplejson as json
@@ -12,6 +13,9 @@ except (ImportError, ModuleNotFoundError):
 from json import JSONDecodeError
 
 import appdirs
+from cachecontrol import CacheControlAdapter
+from cachecontrol.caches.file_cache import FileCache
+from cachecontrol.heuristics import ExpiresAfter
 from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
@@ -40,6 +44,16 @@ CACHE_DIR = Path(appdirs.user_cache_dir("optimade-client", "CasperWA"))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHED_PROVIDERS = CACHE_DIR / "cached_providers.json"
 
+SESSION = requests.Session()
+SESSION_ADAPTER = CacheControlAdapter(
+    cache=FileCache(CACHE_DIR / ".requests_cache"), heuristic=ExpiresAfter(days=1)
+)
+SESSION_ADAPTER_DEBUG = CacheControlAdapter()
+SESSION.mount("http://", SESSION_ADAPTER)
+SESSION.mount("https://", SESSION_ADAPTER)
+SESSION.mount("http://localhost", SESSION_ADAPTER_DEBUG)
+SESSION.mount("http://127.0.0.1", SESSION_ADAPTER_DEBUG)
+
 
 class ButtonStyle(Enum):
     """Enumeration of button styles"""
@@ -65,7 +79,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     page_number: int = None,
 ) -> dict:
     """Perform query of database"""
-    queries = {}
+    queries = OrderedDict()
 
     if endpoint is None:
         endpoint = "/structures"
@@ -115,7 +129,9 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     complete_url = f"{url_path}?{url_query}"
     LOGGER.debug("Performing OPTIMADE query:\n%s", complete_url)
     try:
-        response = requests.get(complete_url, timeout=TIMEOUT_SECONDS)
+        response = SESSION.get(complete_url, timeout=TIMEOUT_SECONDS)
+        if response.from_cache:
+            LOGGER.debug("Request to %s was taken from cache !", complete_url)
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
@@ -273,7 +289,9 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
         f"{base_url}versions" if base_url.endswith("/") else f"{base_url}/versions"
     )
     try:
-        response = requests.get(versions_endpoint, timeout=TIMEOUT_SECONDS)
+        response = SESSION.get(versions_endpoint, timeout=TIMEOUT_SECONDS)
+        if response.from_cache:
+            LOGGER.debug("Request to %s was taken from cache !", versions_endpoint)
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
@@ -312,9 +330,13 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
             base_url + version[1:] if base_url.endswith("/") else base_url + version
         )
         try:
-            response = requests.get(
+            response = SESSION.get(
                 f"{versioned_base_url}/info", timeout=timeout_seconds
             )
+            if response.from_cache:
+                LOGGER.debug(
+                    "Request to %s/info was taken from cache !", versioned_base_url
+                )
         except (
             requests.exceptions.ConnectTimeout,
             requests.exceptions.ConnectionError,
@@ -416,7 +438,9 @@ def get_structures_schema(base_url: str) -> dict:
     )
 
     try:
-        response = requests.get(url_path, timeout=TIMEOUT_SECONDS)
+        response = SESSION.get(url_path, timeout=TIMEOUT_SECONDS)
+        if response.from_cache:
+            LOGGER.debug("Request to %s was taken from cache !", url_path)
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
@@ -609,3 +633,23 @@ def update_old_links_resources(resource: dict) -> Union[LinksResource, None]:
             return res
     else:
         return res
+
+
+def ordered_query_url(url: str) -> str:
+    """Decode URL, sort queries, re-encode URL"""
+    parsed_url = urlparse(url)
+    queries = parse_qs(parsed_url.query)
+
+    sorted_keys = sorted(queries.keys())
+
+    res = OrderedDict()
+    for key in sorted_keys:
+        # Since the values are all lists, we also sort these
+        res[key] = sorted(queries[key])
+
+    res = urlencode(res)
+    res = (
+        f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path};{parsed_url.params}?{res}"
+        f"#{parsed_url.fragment}"
+    )
+    return urlunparse(urlparse(res))

@@ -1,6 +1,7 @@
 appdirs~=1.4.4
 appmode~=0.8.0
 ase~=3.20
+cachecontrol[filecache]~=0.12.6
 click~=7.1
 ipywidgets~=7.5
 jupyterlab~=2.2
