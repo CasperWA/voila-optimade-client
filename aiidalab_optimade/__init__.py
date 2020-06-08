@@ -5,7 +5,7 @@ AiiDA Lab App that implements an OPTIMADE client
 """
 from .informational import OptimadeClientFAQ, HeaderDescription, OptimadeLog
 from .query_provider import OptimadeQueryProviderWidget
-from .query_filter import OptimadeQueryFilterWidget, OptimadeStructureResultsWidget
+from .query_filter import OptimadeQueryFilterWidget
 from .summary import OptimadeSummaryWidget
 
 
@@ -15,7 +15,6 @@ __all__ = (
     "OptimadeLog",
     "OptimadeQueryProviderWidget",
     "OptimadeQueryFilterWidget",
-    "OptimadeStructureResultsWidget",
     "OptimadeSummaryWidget",
 )
 __version__ = "3.1.2"
