@@ -98,20 +98,33 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     @traitlets.observe("database")
     def _on_database_select(self, _):
         """Load chosen database"""
+        self.structure_drop.reset()
+
         if (
             self.database[1] is None
             or getattr(self.database[1], "base_url", None) is None
         ):
-            self.query_button.disabled = True
             self.query_button.tooltip = "Search - No database chosen"
-            self.filters.freeze()
+            self.freeze()
         else:
             self.offset = 0
-            self.query_button.disabled = False
-            self.query_button.tooltip = "Search"
-            self._set_intslider_ranges()
-            self.filters.unfreeze()
-        self.structure_drop.reset()
+            self.structure_page_chooser.reset()
+            try:
+                self.freeze()
+
+                self.query_button.description = "Updating ..."
+                self.query_button.icon = "cog"
+                self.query_button.tooltip = "Updating filters ..."
+
+                self._set_intslider_ranges()
+            except Exception as exc:
+                LOGGER.debug("Exception raised during setting IntSliderRanges: %r", exc)
+                raise
+            finally:
+                self.query_button.description = "Search"
+                self.query_button.icon = "search"
+                self.query_button.tooltip = "Search"
+                self.unfreeze()
 
     def _on_structure_select(self, change):
         """Update structure trait with chosen structure dropdown value"""
