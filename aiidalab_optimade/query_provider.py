@@ -26,8 +26,6 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         traitlets.Instance(LinksResourceAttributes, allow_none=True),
         default_value=("", None),
     )
-    freeze_selector = traitlets.Bool(False)
-    unfreeze_selector = traitlets.Bool(False)
 
     def __init__(self, embedded: bool = False, database_limit: int = None, **kwargs):
         database_limit = database_limit if database_limit and database_limit > 0 else 10
@@ -56,22 +54,6 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
             )
 
         ipw.dlink((self.chooser, "database"), (self, "database"))
-
-    @traitlets.observe("freeze_selector")
-    def _on_freeze_selector(self, change: dict):
-        """Using traitlet to freeze chooser"""
-        if change["new"]:
-            self.freeze()
-        with self.hold_trait_notifications():
-            self.freeze_selector = False
-
-    @traitlets.observe("unfreeze_selector")
-    def _on_unfreeze_selector(self, change: dict):
-        """Using traitlet to unfreeze chooser"""
-        if change["new"]:
-            self.unfreeze()
-        with self.hold_trait_notifications():
-            self.unfreeze_selector = False
 
     def freeze(self):
         """Disable widget"""
