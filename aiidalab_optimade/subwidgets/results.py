@@ -313,3 +313,9 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         """Update offset from cache"""
         with self.hold_trait_notifications():
             self.page_offset = self._cache["page_offset"]
+
+    def silent_reset(self):
+        """Reset, but avoid updating page_offset or page_link"""
+        self.set_pagination_data(
+            data_returned=0, links_to_page=None, reset_cache=True,
+        )

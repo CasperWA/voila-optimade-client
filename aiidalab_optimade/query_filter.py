@@ -108,7 +108,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.freeze()
         else:
             self.offset = 0
-            self.structure_page_chooser.reset()
+            self.structure_page_chooser.silent_reset()
             try:
                 self.freeze()
 
@@ -117,9 +117,11 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.query_button.tooltip = "Updating filters ..."
 
                 self._set_intslider_ranges()
-            except Exception as exc:
-                LOGGER.debug("Exception raised during setting IntSliderRanges: %r", exc)
-                raise
+            except Exception as exc:  # pylint: disable=broad-except
+                LOGGER.error(
+                    "Exception raised during setting IntSliderRanges: %s",
+                    exc.with_traceback(),
+                )
             finally:
                 self.query_button.description = "Search"
                 self.query_button.icon = "search"
@@ -213,6 +215,11 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         Query database to retrieve ranges.
         Cache ranges in self.__cached_ranges.
         """
+        defaults = {
+            "nsites": {"min": 0, "max": 10000},
+            "nelements": {"min": 0, "max": len(CHEMICAL_SYMBOLS)},
+        }
+
         db_base_url = self.database[1].base_url
         if db_base_url not in self.__cached_ranges:
             self.__cached_ranges[db_base_url] = {}
@@ -255,13 +262,14 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 if msg:
                     raise QueryError(msg)
 
-                value = (
-                    response.get("data", [{}])[0]
-                    .get("attributes", {})
-                    .get(response_field, None)
-                )
-                if value is not None:
-                    new_range[extremum] = value
+                if not response.get("meta", {}).get("data_available", 0):
+                    new_range[extremum] = defaults[response_field][extremum]
+                else:
+                    new_range[extremum] = (
+                        response.get("data", [{}])[0]
+                        .get("attributes", {})
+                        .get(response_field, None)
+                    )
 
             # Cache new values
             LOGGER.debug(
@@ -403,11 +411,16 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self._update_structures(response["data"])
 
             # Update pageing
+            data_returned = response.get("meta", {}).get("data_returned", 0)
             self.structure_page_chooser.set_pagination_data(
-                data_returned=response.get("meta", {}).get("data_returned", 0),
+                data_returned=data_returned,
                 links_to_page=response.get("links", {}),
                 reset_cache=True,
             )
+
+            # Note if no data has been found
+            if not data_returned:
+                self.error_or_status_messages.value = "No structures found!"
 
         except QueryError:
             self.structure_drop.reset()
