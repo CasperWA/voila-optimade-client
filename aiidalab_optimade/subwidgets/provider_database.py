@@ -11,7 +11,7 @@ import ipywidgets as ipw
 import requests
 import traitlets
 
-from optimade.models import LinksResourceAttributes, ChildResource
+from optimade.models import LinksResourceAttributes, LinksResource
 
 from aiidalab_optimade.exceptions import QueryError
 from aiidalab_optimade.logger import LOGGER
@@ -68,6 +68,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     "description": "Local server, running aiida-optimade",
                     "base_url": f"http://localhost:5000/v{__optimade_version__.split('.')[0]}",
                     "homepage": "https://example.org",
+                    "link_type": "external",
                 }
             )
             providers.insert(1, ("Local server", local_provider))
@@ -262,15 +263,23 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.child_dbs.index = 0
 
     @staticmethod
-    def _update_child_dbs(data: List[dict]) -> Tuple[List[str], List[ChildResource]]:
+    def _update_child_dbs(data: List[dict]) -> Tuple[List[str], List[LinksResource]]:
         """Update child DB dropdown from response data"""
         child_dbs = []
         exclude_dbs = []
 
         for entry in data:
-            child_db = ChildResource(**entry)
+            child_db = LinksResource(**entry)
 
             attributes = child_db.attributes
+
+            # Skip if not a 'child' link_type database
+            if attributes.link_type != "child":
+                LOGGER.debug(
+                    "Skip: Links resource not a 'child' link_type, instead: %r",
+                    attributes.link_type,
+                )
+                continue
 
             # Skip if there is no base_url
             if attributes.base_url is None:
@@ -484,11 +493,11 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 ]
             ],
         )
-        # Return all implementations of type "child"
+        # Return all implementations of link_type "child"
         implementations = [
             implementation
             for implementation in response.get("data", [])
-            if implementation.get("type", "") == "child"
+            if implementation.get("attributes", {}).get("link_type", "") == "child"
         ]
 
         # Get links and data_returned
@@ -514,7 +523,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 # Indeed, index meta-database == implementation database
                 implementation = {
                     "id": "main_db",
-                    "type": "child",
+                    "type": "links",
                     "attributes": self.provider.dict(),
                 }
                 implementation["attributes"]["name"] = "Main database"
