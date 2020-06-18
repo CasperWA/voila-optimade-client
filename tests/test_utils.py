@@ -12,13 +12,14 @@ def test_fetch_providers_wrong_url():
 def test_fetch_providers_content():
     """Test known content in dict of database providers"""
     exmpl = {
-        "type": "provider",
+        "type": "links",
         "id": "exmpl",
         "attributes": {
             "name": "Example provider",
             "description": "Provider used for examples, not to be assigned to a real database",
-            "base_url": "https://example.com/optimade",
+            "base_url": "http://providers.optimade.org/index-metadbs/exmpl",
             "homepage": "https://example.com",
+            "link_type": "external",
         },
     }
 
@@ -34,6 +35,7 @@ def test_exmpl_not_in_list():
             "description": "Provider used for examples, not to be assigned to a real database",
             "base_url": "https://example.com/index/optimade",
             "homepage": "https://example.com",
+            "link_type": "external",
         },
     )
 
@@ -45,6 +47,7 @@ def test_exmpl_not_in_list():
             "sharing of resources in computational materials science",
             "base_url": "https://www.materialscloud.org/optimade/v0",
             "homepage": "https://www.materialscloud.org",
+            "link_type": "external",
         },
     )
 
@@ -57,6 +60,7 @@ def test_exmpl_not_in_list():
             "Birmingham https://ajm143.github.io",
             "base_url": "https://optimade.odbx.science/v0",
             "homepage": "https://odbx.science",
+            "link_type": "external",
         },
     )
 
