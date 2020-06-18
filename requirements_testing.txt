@@ -1,4 +1,3 @@
-
 appmode~=0.8.0
 ase~=3.20
 codecov~=2.1
