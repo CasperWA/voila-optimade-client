@@ -1,9 +1,0 @@
-{
-    "title": "OPTiMaDe client",
-    "description": "Query for and import structures from OPTiMaDe providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...). Note, this application handles the structures by converting them to ASE Atoms or AiiDA StructureData objects.",
-    "version": "2.0-a2",
-    "authors": "AiiDA Lab Team",
-    "state": "development",
-    "logo": "img/optimade_logo.png",
-    "external_url": "https://www.optimade.org"
-}

@@ -1,43 +1,67 @@
 import re
-from typing import Match, List
+from typing import Match, List, Dict
 import ipywidgets as ipw
 import traitlets
 
 import pandas as pd
 
-from aiida.orm import StructureData
+from optimade.adapters import Structure
+from optimade.models import Species
+from optimade.models.structures import Vector3D
 
 
-__all__ = ("StructureDataSummary", "StructureDataSites")
+__all__ = ("StructureSummary", "StructureSites")
 
 
-class StructureDataSummary(ipw.VBox):
-    """StructureData Summary Output
+def calc_cell_volume(cell: List[Vector3D]):
+    """
+    Calculates the volume of a cell given the three lattice vectors.
+
+    It is calculated as cell[0] . (cell[1] x cell[2]), where . represents
+    a dot product and x a cross product.
+
+    NOTE: Taken from `aiida-core` at aiida.orm.nodes.data.structure
+
+    :param cell: the cell vectors; the must be a 3x3 list of lists of floats,
+            no other checks are done.
+
+    :returns: the cell volume.
+    """
+    # returns the volume of the primitive cell: |a_1 . (a_2 x a_3)|
+    a_1 = cell[0]
+    a_2 = cell[1]
+    a_3 = cell[2]
+    a_mid_0 = a_2[1] * a_3[2] - a_2[2] * a_3[1]
+    a_mid_1 = a_2[2] * a_3[0] - a_2[0] * a_3[2]
+    a_mid_2 = a_2[0] * a_3[1] - a_2[1] * a_3[0]
+    return abs(a_1[0] * a_mid_0 + a_1[1] * a_mid_1 + a_1[2] * a_mid_2)
+
+
+class StructureSummary(ipw.VBox):
+    """Structure Summary Output
     Show structure data as a set of HTML widgets in a VBox widget.
     """
 
-    structure = traitlets.Instance(StructureData, allow_none=True)
+    structure = traitlets.Instance(Structure, allow_none=True)
 
     _output_format = "<b>{title}</b>: {value}"
     _widget_data = {
-        "Chemical formula (hill)": ipw.HTMLMath(),
+        "Chemical formula": ipw.HTML(),
         "Elements": ipw.HTML(),
         "Number of sites": ipw.HTML(),
-        "Unit cell": ipw.HTMLMath(),
         "Unit cell volume": ipw.HTML(),
+        "Unit cell": ipw.HTML(),
     }
 
-    def __init__(self, structure: StructureData = None, **kwargs):
+    def __init__(self, structure: Structure = None, **kwargs):
         super().__init__(children=tuple(self._widget_data.values()), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
 
-    def _on_change_structure(self, change):
+    def _on_change_structure(self, change: dict):
         """Update output according to change in `data`"""
-        new_structure = change["new"]
-        if new_structure is None:
-            for widget in self._widget_data.values():
-                widget.value = ""
+        if change["new"] is None:
+            self.reset()
             return
         self._update_output()
 
@@ -57,19 +81,31 @@ class StructureDataSummary(ipw.VBox):
 
     def reset(self):
         """Reset widget"""
-        self.structure = None
+        for widget in self._widget_data.values():
+            widget.value = ""
 
     def _extract_data_from_structure(self) -> dict:
-        """Extract and return desired data from StructureData"""
+        """Extract and return desired data from Structure"""
         return {
-            "Chemical formula (hill)": self._chemical_formula(
-                self.structure.get_formula(mode="hill_compact")
+            "Chemical formula": self._add_style(
+                self._chemical_formula(self.structure.chemical_formula_reduced)
             ),
-            "Elements": ", ".join(sorted(self.structure.get_symbols_set())),
-            "Number of sites": str(len(self.structure.sites)),
-            "Unit cell": self._unit_cell(self.structure.cell),
-            "Unit cell volume": f"{self.structure.get_cell_volume():.2f} Å<sup>3</sup>",
+            "Elements": self._add_style(", ".join(sorted(self.structure.elements))),
+            "Number of sites": self._add_style(str(self.structure.nsites)),
+            "Unit cell": self._unit_cell(self.structure.lattice_vectors),
+            "Unit cell volume": (
+                f"{self._add_style('%.2f' % calc_cell_volume(self.structure.lattice_vectors))}"
+                " Å<sup>3</sup>"
+            ),
         }
+
+    @staticmethod
+    def _add_style(html_value: str) -> str:
+        """Wrap 'html_value' with HTML CSS style"""
+        return (
+            f'<span style="font-family:Courier New,Courier,monospace;">'
+            f"{html_value}</span>"
+        )
 
     @staticmethod
     def _chemical_formula(formula: str) -> str:
@@ -81,16 +117,59 @@ class StructureDataSummary(ipw.VBox):
         return re.sub(r"[0-9]+", repl=wrap_number, string=formula)
 
     @staticmethod
-    def _unit_cell(unitcell: list) -> str:
+    def _unit_cell(unitcell: List[Vector3D]) -> str:
+        """Format unit cell to HTML table"""
+        style = """
+<style>
+    .df_uc { border: none; width: auto; display: inline; }
+    .df_uc tbody tr:nth-child(odd) { background-color: #e5e7e9; }
+    .df_uc tbody tr { font-family: "Courier New", Courier, monospace; font-style: normal; font-size: 12px; }
+    .df_uc tbody td {
+        min-width: 50px;
+        text-align: center;
+        border: 0px solid white;
+        padding: 0px;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    .df_uc th { text-align: center; border: none; border-bottom: 1px solid black; }
+</style>
+"""
+        pd.set_option("max_colwidth", 100)
+
+        format_unit_cell = []
+        for number, vector in enumerate(unitcell):
+            format_unit_cell.append(
+                (
+                    f"v<sub>{number + 1}</sub>",
+                    f"{vector[0]:.5f}",
+                    f"{vector[1]:.5f}",
+                    f"{vector[2]:.5f}",
+                )
+            )
+
+        data_frame = pd.DataFrame(
+            format_unit_cell, columns=["v", "x (Å)", "y (Å)", "z (Å)"]
+        )
+        return style + data_frame.to_html(
+            classes="df_uc",
+            index=False,
+            table_id="unit_cell",
+            notebook=False,
+            escape=False,
+        )
+
+    @staticmethod
+    def _unit_cell_mathjax(unitcell: list) -> str:
         """Format unit cell to look pretty with ipywidgets.HTMLMath"""
         out = r"$\Bigl(\begin{smallmatrix} "
         for i in range(len(unitcell[0]) - 1):
-            row = list()
+            row = []
             for vector in unitcell:
                 row.append(vector[i])
-            out += r" & ".join([str(_) for _ in row])
+            out += r" & ".join([f"{_:.5f}" for _ in row])
             out += r" \\ "
-        row = list()
+        row = []
         for vector in unitcell:
             row.append(vector[-1])
         out += r" & ".join([str(_) for _ in row])
@@ -99,41 +178,148 @@ class StructureDataSummary(ipw.VBox):
         return out
 
 
-class StructureDataSites(ipw.HTML):
-    """StructureData Sites Output
-    Reimplements the viewer for AiiDA Dicts
+class StructureSites(ipw.HTML):
+    """Structure Sites Output
+    Reimplements the viewer for AiiDA Dicts (from AiiDA lab)
     """
 
-    structure = traitlets.Instance(StructureData, allow_none=True)
+    structure = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, structure: StructureData = None, **kwargs):
+    def __init__(self, structure: Structure = None, **kwargs):
         # For more information on how to control the table appearance please visit:
         # https://css-tricks.com/complete-guide-table-element/
+        #
+        # Voila doesn't run the scripts, which should set a color upon choosing a row.
+        # Furthermore, if it will ever work, one can remove the hover definition in the css styling.
+        self._script = """
+var row_color;
+
+function index(el) {
+  if (!el) return -1;
+  var i = 0;
+  do {
+    i++;
+  } while (el = el.previousElementSibling);
+  return i;
+}
+
+function updateRowBackground(row) {
+    if (row_color != 'rgb(244, 151, 184)') {
+        row.style.backgroundColor = '#f497b8';
+    } else {
+        if ( index(row) % 2 == 0) {
+            // even
+            row.style.backgroundColor = 'white';
+        } else {
+            // odd
+            row.style.backgroundColor = '#e5e7e9';
+        }
+    }
+    row_color = getComputedStyle(row)['backgroundColor'];
+}
+
+function doYourStuff() {
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('click', function() {
+            updateRowBackground(el);
+        }, false);
+    });
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('mouseover', function() {
+            row_color = getComputedStyle(el)['backgroundColor'];
+            this.style.backgroundColor = '#f5b7b1';
+        }, false);
+    });
+    [].forEach.call( document.querySelectorAll('tbody > tr'), function(el) {
+        el.addEventListener('mouseout', function() {
+            el.style.backgroundColor = row_color;
+        }, false);
+    });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    doYourStuff();
+});
+// doYourStuff()
+"""
+        # self._style = """
+        # <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'>
+        # </script>
+        # <script>
+        #     var row_color;
+
+        #     function updateRowBackground(row) {
+        #         if (row_color != 'rgb(244, 151, 184)') {
+        #             $(row).css('background-color', '#f497b8');
+        #         } else {
+        #             if ($('tr').index(row) % 2 == 0) {
+        #                 // even
+        #                 $(row).css('background-color', 'white');
+        #             } else {
+        #                 // odd
+        #                 $(row).css('background-color', '#e5e7e9');
+        #             }
+        #         }
+        #         row_color = $(row).css('background-color');
+        #     }
+
+        #     $(document).ready(function(){
+        #         $('tbody > tr').click(function(){
+        #             updateRowBackground(this)
+        #         });
+        #         $('tbody > tr').hover(function(){
+        #             row_color = $(this).css('background-color');
+        #             $(this).css('background-color', '#f5b7b1');
+        #         },
+        #         function(){
+        #             $(this).css('background-color', row_color);
+        #         });
+        #     });
+        # </script>
+
+        # .df tbody tr:hover { background-color: #f5b7b1; }
         self._style = """
-        <style>
-            .df { border: none; }
-            .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
-            .df tbody tr:hover { background-color:   #f5b7b1; }
-            .df tbody td { min-width: 100px; text-align: center; border: none; padding: 5px }
-            .df th { text-align: center; border: none;  border-bottom: 1px solid black;}
-        </style>
-        """
+<style>
+    .df { border: none; width: 100%; }
+    .df tbody tr:nth-child(odd) { background-color: #e5e7e9; }
+    .df tbody tr { font-family: "Courier New", Courier, monospace; font-style: normal; font-size: 12px; }
+    .df tbody td {
+        min-width: 50px;
+        text-align: center;
+        border: 0px solid white;
+        padding: 0px;
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+    .df th { text-align: center; border: none;  border-bottom: 1px solid black; }
+</style>
+"""
         pd.set_option("max_colwidth", 100)
 
-        super().__init__(layout=ipw.Layout(width="auto"), **kwargs)
+        super().__init__(layout=ipw.Layout(width="auto", height="auto"), **kwargs)
         self.observe(self._on_change_structure, names="structure")
         self.structure = structure
 
     def _on_change_structure(self, change: dict):
         """When traitlet 'structure' is updated"""
         if change["new"] is None:
-            self.value = ""
+            self.reset()
         else:
             self.value = self._style
             dataf = pd.DataFrame(
-                self._format_sites(), columns=["Elements", "Occupancy", "Position"]
+                self._format_sites(),
+                columns=["Elements", "Occupancy", "x (Å)", "y (Å)", "z (Å)"],
             )
-            self.value += dataf.to_html(classes="df", index=False)
+            self.value += dataf.to_html(
+                classes="df", index=False, table_id="sites", notebook=False
+            )
+            # display(Javascript(self._script))
+
+    #             self.value += f"""<script>
+    # {self._script}
+    # </script>"""
+    # with open("/home/cwa/venv/jupyter/test_js.html", "w") as test_out:
+    #     test_out.write(self.value)
 
     def freeze(self):
         """Disable widget"""
@@ -143,29 +329,41 @@ class StructureDataSites(ipw.HTML):
 
     def reset(self):
         """Reset widget"""
-        self.structure = None
+        self.value = ""
 
     def _format_sites(self) -> List[str]:
-        """Format AiiDA StructureData into list of formatted HTML strings"""
+        """Format OPTIMADE Structure into list of formatted HTML strings
+        Columns:
+        - Elements
+        - Occupancy
+        - Position (x)
+        - Position (y)
+        - Position (z)
+        """
+        species: Dict[str, Species] = {_.name: _ for _ in self.structure.species.copy()}
+
         res = []
-        for site in self.structure.sites:
-            for kind in self.structure.kinds:
-                if kind.name == site.kind_name:
-                    site_kind = kind
+        for site_number in range(self.structure.nsites):
+            symbol_name = self.structure.species_at_sites[site_number]
+
+            for index, symbol in enumerate(species[symbol_name].chemical_symbols):
+                if symbol == "vacancy":
+                    species[symbol_name].chemical_symbols.pop(index)
+                    species[symbol_name].concentration.pop(index)
                     break
-            else:
-                raise Exception(
-                    f"Kind cannot be found for site: {site}. Kinds: {self.structure.kinds}"
-                )
-            occupancies = site_kind.weights
-            if re.match(r".*X[^e]", site.kind_name):
-                occupancies.append(round(1.0 - sum(occupancies), 2))
 
             res.append(
                 (
-                    ", ".join([str(_) for _ in site_kind.symbols]),
-                    ", ".join([str(_) for _ in occupancies]),
-                    str(site.position),
+                    ", ".join(species[symbol_name].chemical_symbols),
+                    ", ".join(
+                        [
+                            f"{occupation:.2f}"
+                            for occupation in species[symbol_name].concentration
+                        ]
+                    ),
+                    f"{self.structure.cartesian_site_positions[site_number][0]:.5f}",
+                    f"{self.structure.cartesian_site_positions[site_number][1]:.5f}",
+                    f"{self.structure.cartesian_site_positions[site_number][2]:.5f}",
                 )
             )
         return res

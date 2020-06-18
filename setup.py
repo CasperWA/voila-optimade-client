@@ -1,24 +1,29 @@
-import json
-from pathlib import Path
-
 from setuptools import setup, find_packages
 
-PATH_TO_METADATA = Path(__file__).parent.joinpath("metadata.json").resolve()
-with open(PATH_TO_METADATA, "r") as fp:
-    METADATA = json.load(fp)
-
+AIIDALAB = ["aiidalab-widgets-base~=1.0.0b2"]
 TESTING = ["pytest", "pytest-cov", "codecov"]
-DEV = ["pylint", "black", "pre-commit"] + TESTING
+DEV = ["pylint", "black", "pre-commit", "invoke"] + TESTING
 
 setup(
     name="aiidalab-optimade",
-    version=METADATA["version"],
+    version="3.1.3",
     packages=find_packages(),
     license="MIT Licence",
     author="The AiiDA Lab team",
     python_requires=">=3.6",
-    install_requires=["optimade~=0.5", "requests", "aiidalab-widgets-base~=1.0.0b2"],
-    extras_require={"dev": DEV, "testing": TESTING},
+    install_requires=[
+        "optimade~=0.9.0",
+        "requests~=2.24",
+        "jupyterlab~=2.1",
+        "ipywidgets~=7.5",
+        "nglview~=2.7",
+        "numpy~=1.18",
+        "pandas~=1.0",
+        "ase~=3.19",
+        "appmode",
+        "voila",
+    ],
+    extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: AiiDA",
@@ -29,6 +34,7 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Database :: Front-Ends",
         "Topic :: Scientific/Engineering",
         "Topic :: Scientific/Engineering :: Chemistry",

@@ -1,6 +1,3 @@
-import pytest
-
-from aiidalab_optimade import exceptions as exc
 from aiidalab_optimade import utils
 
 
@@ -8,20 +5,21 @@ def test_fetch_providers_wrong_url():
     """Test when fetch_providers is provided a wrong URL"""
     wrong_url = "https://this.is.a.wrong.url"
 
-    with pytest.raises(exc.NonExistent):
-        utils.fetch_providers(providers_url=wrong_url)
+    providers = utils.fetch_providers(providers_url=wrong_url)
+    assert providers == []
 
 
 def test_fetch_providers_content():
     """Test known content in dict of database providers"""
     exmpl = {
-        "type": "provider",
+        "type": "links",
         "id": "exmpl",
         "attributes": {
             "name": "Example provider",
             "description": "Provider used for examples, not to be assigned to a real database",
-            "base_url": "https://example.com/optimade",
+            "base_url": "http://providers.optimade.org/index-metadbs/exmpl",
             "homepage": "https://example.com",
+            "link_type": "external",
         },
     }
 
@@ -37,21 +35,36 @@ def test_exmpl_not_in_list():
             "description": "Provider used for examples, not to be assigned to a real database",
             "base_url": "https://example.com/index/optimade",
             "homepage": "https://example.com",
+            "link_type": "external",
         },
     )
 
-    materials_cloud = (
+    mcloud = (
         "Materials Cloud",
         {
             "name": "Materials Cloud",
-            "description": "Materials Cloud: A platform for Open Science built for seamless "
+            "description": "A platform for Open Science built for seamless "
             "sharing of resources in computational materials science",
             "base_url": "https://www.materialscloud.org/optimade/v0",
             "homepage": "https://www.materialscloud.org",
+            "link_type": "external",
+        },
+    )
+
+    odbx = (
+        "open database of xtals",
+        {
+            "name": "open database of xtals",
+            "description": "A public database of crystal structures mostly derived from ab initio "
+            "structure prediction from the group of Dr Andrew Morris at the University of "
+            "Birmingham https://ajm143.github.io",
+            "base_url": "https://optimade.odbx.science/v0",
+            "homepage": "https://odbx.science",
+            "link_type": "external",
         },
     )
 
     list_of_database_providers = utils.get_list_of_valid_providers()
 
     assert exmpl not in list_of_database_providers
-    assert materials_cloud in list_of_database_providers
+    assert mcloud in list_of_database_providers or odbx in list_of_database_providers

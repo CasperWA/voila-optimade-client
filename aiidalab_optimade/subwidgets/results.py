@@ -3,6 +3,9 @@ from urllib.parse import urlparse, parse_qs
 import ipywidgets as ipw
 import traitlets
 
+from aiidalab_optimade.exceptions import InputError
+from aiidalab_optimade.logger import LOGGER
+
 
 __all__ = ("StructureDropdown", "ResultsPageChooser")
 
@@ -45,12 +48,12 @@ class StructureDropdown(ipw.Dropdown):
 
 
 class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attributes
-    """Flip through the OPTiMaDe 'pages'
+    """Flip through the OPTIMADE 'pages'
 
     NOTE: Only supports offset-pagination at the moment.
     """
 
-    page_offset = traitlets.Int(0)
+    page_offset = traitlets.Int(None, allow_none=True)
     page_link = traitlets.Unicode(allow_none=True)
 
     def __init__(self, page_limit: int, **kwargs):
@@ -59,12 +62,12 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self._layout = ipw.Layout(width="auto")
 
         self._page_limit = page_limit
-        self.data_returned = 0
+        self._data_returned = 0
         self.pages_links = {}
 
         self._button_layout = {
             "style": ipw.ButtonStyle(button_color="white"),
-            "layout": ipw.Layout(height="auto", width="auto"),
+            "layout": ipw.Layout(width="auto"),
         }
         self.button_first = self._create_arrow_button(
             "angle-double-left", "First results"
@@ -100,7 +103,7 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         )
 
     @traitlets.validate("page_offset")
-    def _validate_non_negative_ints(self, proposal):  # pylint: disable=no-self-use
+    def _set_minimum_page_offset(self, proposal):  # pylint: disable=no-self-use
         """Must be >=0. Set value to 0 if <0."""
         value = proposal["value"]
         if value < 0:
@@ -132,6 +135,21 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.button_prev.disabled = self._cache["buttons"]["prev"]
         self.button_next.disabled = self._cache["buttons"]["next"]
         self.button_last.disabled = self._cache["buttons"]["last"]
+
+    @property
+    def data_returned(self) -> int:
+        """Total number of entities"""
+        return self._data_returned
+
+    @data_returned.setter
+    def data_returned(self, value: int):
+        """Set total number of entities"""
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise InputError("data_returned must be an integer")
+        else:
+            self._data_returned = value
 
     @property
     def _last_page_offset(self):
@@ -178,38 +196,68 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
 
     def _goto_first(self, _):
         """Go to first page of results"""
-        if self.pages_links.get("first", ""):
+        if self.pages_links.get("first", False):
             self._cache["page_offset"] = self._parse_offset(self.pages_links["first"])
+            LOGGER.debug(
+                "Go to first page of results - using link: %s",
+                self.pages_links["first"],
+            )
             self.page_link = self.pages_links["first"]
         else:
             self._cache["page_offset"] = 0
+            LOGGER.debug(
+                "Go to first page of results - using offset: %d",
+                self._cache["page_offset"],
+            )
             self.page_offset = self._cache["page_offset"]
 
     def _goto_prev(self, _):
         """Go to previous page of results"""
-        if self.pages_links.get("prev", ""):
+        if self.pages_links.get("prev", False):
             self._cache["page_offset"] = self._parse_offset(self.pages_links["prev"])
+            LOGGER.debug(
+                "Go to previous page of results - using link: %s",
+                self.pages_links["prev"],
+            )
             self.page_link = self.pages_links["prev"]
         else:
             self._cache["page_offset"] -= self._page_limit
+            LOGGER.debug(
+                "Go to previous page of results - using offset: %d",
+                self._cache["page_offset"],
+            )
             self.page_offset = self._cache["page_offset"]
 
     def _goto_next(self, _):
         """Go to next page of results"""
-        if self.pages_links.get("next", ""):
+        if self.pages_links.get("next", False):
             self._cache["page_offset"] = self._parse_offset(self.pages_links["next"])
+            LOGGER.debug(
+                "Go to next page of results - using link: %s", self.pages_links["next"]
+            )
             self.page_link = self.pages_links["next"]
         else:
             self._cache["page_offset"] += self._page_limit
+            LOGGER.debug(
+                "Go to next page of results - using offset: %d",
+                self._cache["page_offset"],
+            )
             self.page_offset = self._cache["page_offset"]
 
     def _goto_last(self, _):
         """Go to last page of results"""
-        if self.pages_links.get("last", ""):
+        if self.pages_links.get("last", False):
             self._cache["page_offset"] = self._parse_offset(self.pages_links["last"])
+            LOGGER.debug(
+                "Go to last page of results - using link: %s", self.pages_links["last"]
+            )
             self.page_link = self.pages_links["last"]
         else:
             self._cache["page_offset"] = self._last_page_offset
+            LOGGER.debug(
+                "Go to last page of results - using offset: %d",
+                self._cache["page_offset"],
+            )
             self.page_offset = self._cache["page_offset"]
 
     def _update(self):
@@ -260,3 +308,14 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.__last_page_offset = None
 
         self._update()
+
+    def update_offset(self) -> int:
+        """Update offset from cache"""
+        with self.hold_trait_notifications():
+            self.page_offset = self._cache["page_offset"]
+
+    def silent_reset(self):
+        """Reset, but avoid updating page_offset or page_link"""
+        self.set_pagination_data(
+            data_returned=0, links_to_page=None, reset_cache=True,
+        )
