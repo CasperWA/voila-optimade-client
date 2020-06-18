@@ -7,7 +7,10 @@ from urllib.parse import urlencode
 import ipywidgets as ipw
 
 from aiidalab_optimade.logger import LOGGER, WIDGET_HANDLER, REPORT_HANDLER
-from aiidalab_optimade.utils import __optimade_version__
+
+# from aiidalab_optimade.utils import __optimade_version__
+# Temporarily use another version for the information here
+__optimade_version__ = "1.0.0-rc.2"
 
 
 IMG_DIR = Path(__file__).parent.parent.joinpath("img")

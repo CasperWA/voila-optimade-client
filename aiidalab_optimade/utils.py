@@ -11,7 +11,7 @@ from json import JSONDecodeError
 
 import requests
 
-from optimade.models import ProviderResource, OptimadeError
+from optimade.models import LinksResource, OptimadeError
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
@@ -152,11 +152,10 @@ def get_versioned_base_url(base_url: str) -> str:
             if re.match(fr".+{version}/$", base_url):
                 return base_url[:-1]
             LOGGER.debug(
-                "Found version '%s' in base URL '%s', but not at the end of it.",
+                "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
                 version,
                 base_url,
             )
-            return ""
 
     for version in _VERSION_PARTS:
         timeout_seconds = 5
@@ -188,7 +187,7 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
     res = []
 
     for entry in providers:
-        provider = ProviderResource(**entry)
+        provider = LinksResource(**entry)
 
         # Skip if "exmpl"
         if provider.id == "exmpl":
@@ -196,6 +195,14 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
             continue
 
         attributes = provider.attributes
+
+        # Skip if not an 'external' link_type database
+        if attributes.link_type != "external":
+            LOGGER.debug(
+                "Skip: Links resource not an 'external' link_type, instead: %r",
+                attributes.link_type,
+            )
+            continue
 
         # Skip if there is no base URL
         if attributes.base_url is None:
