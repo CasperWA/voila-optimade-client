@@ -152,11 +152,10 @@ def get_versioned_base_url(base_url: str) -> str:
             if re.match(fr".+{version}/$", base_url):
                 return base_url[:-1]
             LOGGER.debug(
-                "Found version '%s' in base URL '%s', but not at the end of it.",
+                "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
                 version,
                 base_url,
             )
-            return ""
 
     for version in _VERSION_PARTS:
         timeout_seconds = 5

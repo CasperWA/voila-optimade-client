@@ -449,9 +449,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     }
                 }
         else:
-            filter_ = None
+            filter_ = "link_type=child"
             if exclude_ids:
-                filter_ = " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+                filter_ += (
+                    " AND ( "
+                    + " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+                    + " )"
+                )
 
             response = perform_optimade_query(
                 filter=filter_,
@@ -480,10 +484,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             raise QueryError(msg=msg, remove_target=True)
 
         LOGGER.debug(
-            "First attempt for %r (in /links): Found implementations (names+base_url only):\n%s",
+            "Attempt for %r (in /links): Found implementations (names+base_url only):\n%s",
             self.provider.name,
             [
-                f"id: {name}; base_url: {base_url}"
+                f"(id: {name}; base_url: {base_url}) "
                 for name, base_url in [
                     (
                         impl.get("id", "N/A"),
@@ -499,42 +503,58 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             for implementation in response.get("data", [])
             if implementation.get("attributes", {}).get("link_type", "") == "child"
         ]
+        LOGGER.debug(
+            "After curating for implementations which are of 'link_type' = 'child':\n%s",
+            [
+                f"(id: {name}; base_url: {base_url}) "
+                for name, base_url in [
+                    (
+                        impl.get("id", "N/A"),
+                        impl.get("attributes", {}).get("base_url", "N/A"),
+                    )
+                    for impl in implementations
+                ]
+            ],
+        )
 
         # Get links and data_returned
         links = response.get("links", {})
         data_returned = response.get("meta", {}).get("data_returned", 0)
+        if data_returned > 0 and not implementations:
+            # Most probably dealing with pre-v1.0.0-rc.2 implementations
+            data_returned = 0
 
-        # If there are no implementations, try if index meta-database == implementation database
-        if not implementations:
-            new_response = perform_optimade_query(
-                base_url=self.provider.base_url, endpoint="/structures", page_limit=1
-            )
-            msg, _ = handle_errors(new_response)
-            if msg:
-                self.error_or_status_messages.value = (
-                    f"{msg}<br>The provider has been removed."
-                )
-                raise QueryError(msg=msg, remove_target=True)
+        # # If there are no implementations, try if index meta-database == implementation database
+        # if not implementations:
+        #     new_response = perform_optimade_query(
+        #         base_url=self.provider.base_url, endpoint="/structures", page_limit=1
+        #     )
+        #     msg, _ = handle_errors(new_response)
+        #     if msg:
+        #         self.error_or_status_messages.value = (
+        #             f"{msg}<br>The provider has been removed."
+        #         )
+        #         raise QueryError(msg=msg, remove_target=True)
 
-            if new_response:
-                LOGGER.debug(
-                    "Second attempt, checking if index db and implementation are the same: Success"
-                )
-                # Indeed, index meta-database == implementation database
-                implementation = {
-                    "id": "main_db",
-                    "type": "links",
-                    "attributes": self.provider.dict(),
-                }
-                implementation["attributes"]["name"] = "Main database"
-                implementations = [implementation]
-                data_returned = 1
-            else:
-                LOGGER.debug(
-                    "Second attempt, checking if index db and implementation are the same: "
-                    "Failure. Response meta:\n%s",
-                    new_response.get("meta", {}),
-                )
+        #     if new_response:
+        #         LOGGER.debug(
+        #             "Second attempt, checking if index db and implementation are the same: Success"
+        #         )
+        #         # Indeed, index meta-database == implementation database
+        #         implementation = {
+        #             "id": "main_db",
+        #             "type": "links",
+        #             "attributes": self.provider.dict(),
+        #         }
+        #         implementation["attributes"]["name"] = "Main database"
+        #         implementations = [implementation]
+        #         data_returned = 1
+        #     else:
+        #         LOGGER.debug(
+        #             "Second attempt, checking if index db and implementation are the same: "
+        #             "Failure. Response meta:\n%s",
+        #             new_response.get("meta", {}),
+        #         )
 
         return implementations, links, data_returned
 
