@@ -4,7 +4,7 @@ TESTING = [
     "pytest",
     "pytest-cov",
     "codecov",
-    "requests~=2.23",
+    "requests~=2.24",
     "jupyterlab~=2.1",
     "ipywidgets~=7.5",
     "nglview~=2.7",
