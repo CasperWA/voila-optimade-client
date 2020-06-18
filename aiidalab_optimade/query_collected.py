@@ -1,7 +1,10 @@
 import traitlets
 import ipywidgets as ipw
 
-from aiida.orm import StructureData
+try:
+    from aiida.orm import StructureData
+except ImportError:
+    StructureData = object
 
 from aiidalab_optimade.query_filter import OptimadeQueryFilterWidget
 from aiidalab_optimade.query_provider import OptimadeQueryProviderWidget
