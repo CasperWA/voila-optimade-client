@@ -12,6 +12,7 @@ import requests
 import traitlets
 
 from optimade.models import LinksResourceAttributes, LinksResource
+from optimade.models.links import LinkType
 
 from aiidalab_optimade.exceptions import QueryError
 from aiidalab_optimade.logger import LOGGER
@@ -274,9 +275,11 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             attributes = child_db.attributes
 
             # Skip if not a 'child' link_type database
-            if attributes.link_type != "child":
+            if attributes.link_type != LinkType.CHILD:
                 LOGGER.debug(
-                    "Skip: Links resource not a 'child' link_type, instead: %r",
+                    "Skip %s: Links resource not a %r link_type, instead: %r",
+                    attributes.name,
+                    LinkType.CHILD,
                     attributes.link_type,
                 )
                 continue
@@ -284,7 +287,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             # Skip if there is no base_url
             if attributes.base_url is None:
                 LOGGER.debug(
-                    "Skip: Base URL found to be None for child DB: %r", child_db
+                    "Skip %s: Base URL found to be None for child DB: %r",
+                    attributes.name,
+                    child_db,
                 )
                 exclude_dbs.append(child_db.id)
                 continue
@@ -295,7 +300,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             else:
                 # Not a valid/supported child DB: skip
                 LOGGER.debug(
-                    "Skip: Could not determine versioned base URL for child DB: %r",
+                    "Skip %s: Could not determine versioned base URL for child DB: %r",
+                    attributes.name,
                     child_db,
                 )
                 exclude_dbs.append(child_db.id)

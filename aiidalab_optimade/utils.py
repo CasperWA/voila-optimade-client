@@ -12,6 +12,7 @@ from json import JSONDecodeError
 import requests
 
 from optimade.models import LinksResource, OptimadeError
+from optimade.models.links import LinkType
 
 from aiidalab_optimade.exceptions import (
     ApiVersionError,
@@ -197,9 +198,11 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
         attributes = provider.attributes
 
         # Skip if not an 'external' link_type database
-        if attributes.link_type != "external":
+        if attributes.link_type != LinkType.EXTERNAL:
             LOGGER.debug(
-                "Skip: Links resource not an 'external' link_type, instead: %r",
+                "Skip %s: Links resource not an %r link_type, instead: %r",
+                attributes.name,
+                LinkType.EXTERNAL,
                 attributes.link_type,
             )
             continue
