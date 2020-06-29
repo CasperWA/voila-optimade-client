@@ -9,9 +9,10 @@ except (ImportError, ModuleNotFoundError):
 
 from json import JSONDecodeError
 
+from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
-from optimade.models import LinksResource, OptimadeError
+from optimade.models import LinksResource, OptimadeError, Link
 from optimade.models.links import LinkType
 
 from aiidalab_optimade.exceptions import (
@@ -21,8 +22,8 @@ from aiidalab_optimade.exceptions import (
 from aiidalab_optimade.logger import LOGGER
 
 
-# Supported OPTIMADE spec version
-__optimade_version__ = "0.10.1"
+# Supported OPTIMADE spec versions
+__optimade_version__ = ["1.0.0-rc.2", "1.0.0-rc.1", "0.10.1"]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
@@ -134,47 +135,60 @@ def fetch_providers(providers_url: str = None) -> list:
     return providers.get("data", [])
 
 
-_VERSION_PARTS = [
-    f"/v{__optimade_version__.split('.')[0]}",  # major
-    f"/v{'.'.join(__optimade_version__.split('.')[:2])}",  # major.minor
-    f"/v{__optimade_version__}",  # major.minor.patch
-]
+VERSION_PARTS = tuple(
+    [
+        f"/v{ver.split('-')[0].split('+')[0].split('.')[0]}",  # major
+        f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:2])}",  # major.minor
+        f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:3])}",  # major.minor.patch
+    ]
+    for ver in __optimade_version__
+)
+LOGGER.debug("All known version editions: %s", VERSION_PARTS)
 
 
-def get_versioned_base_url(base_url: str) -> str:
+def get_versioned_base_url(base_url: Union[str, dict, Link, AnyUrl]) -> str:
     """Retrieve the versioned base URL
     First, check if the given base URL is already a versioned base URL.
     Then try to going through valid version extensions to the URL.
     """
-    for version in _VERSION_PARTS:
-        if version in base_url:
-            if re.match(fr".+{version}$", base_url):
-                return base_url
-            if re.match(fr".+{version}/$", base_url):
-                return base_url[:-1]
-            LOGGER.debug(
-                "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
-                version,
-                base_url,
-            )
+    if isinstance(base_url, dict):
+        base_url = base_url.get("href", "")
+    elif isinstance(base_url, Link):
+        base_url = base_url.href
 
-    for version in _VERSION_PARTS:
-        timeout_seconds = 5
-        versioned_base_url = (
-            base_url + version[1:] if base_url.endswith("/") else base_url + version
-        )
-        try:
-            response = requests.get(
-                f"{versioned_base_url}/info", timeout=timeout_seconds
+    LOGGER.debug("Retrieving versioned base URL for %r", base_url)
+
+    for version_list in VERSION_PARTS:
+        for version in version_list:
+            if version in base_url:
+                if re.match(fr".+{version}$", base_url):
+                    return base_url
+                if re.match(fr".+{version}/$", base_url):
+                    return base_url[:-1]
+                LOGGER.debug(
+                    "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
+                    version,
+                    base_url,
+                )
+
+    for version_list in VERSION_PARTS:
+        for version in version_list:
+            timeout_seconds = 5
+            versioned_base_url = (
+                base_url + version[1:] if base_url.endswith("/") else base_url + version
             )
-        except (
-            requests.exceptions.ConnectTimeout,
-            requests.exceptions.ConnectionError,
-        ):
-            continue
-        else:
-            if response.status_code == 200:
-                return versioned_base_url
+            try:
+                response = requests.get(
+                    f"{versioned_base_url}/info", timeout=timeout_seconds
+                )
+            except (
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError,
+            ):
+                continue
+            else:
+                if response.status_code == 200:
+                    return versioned_base_url
 
     return ""
 
@@ -230,7 +244,10 @@ def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
 def validate_api_version(version: str, raise_on_fail: bool = True) -> str:
     """Given an OPTIMADE API version, validate it against current supported API version"""
     if not version:
-        msg = f"No version found in response. Should have been v{__optimade_version__}"
+        msg = (
+            "No version found in response. "
+            f"Should have been one of {', '.join(['v' + _ for _ in __optimade_version__])}"
+        )
         if raise_on_fail:
             raise ApiVersionError(msg)
         return msg
@@ -238,9 +255,9 @@ def validate_api_version(version: str, raise_on_fail: bool = True) -> str:
     if version.startswith("v"):
         version = version[1:]
 
-    if version != __optimade_version__:
+    if version not in __optimade_version__:
         msg = (
-            f"Only OPTIMADE v{__optimade_version__} is supported. "
+            f"Only OPTIMADE {', '.join(['v' + _ for _ in __optimade_version__])} are supported. "
             f"Chosen implementation has v{version}"
         )
         if raise_on_fail:
@@ -404,3 +421,35 @@ def check_entry_properties(
         "sortable fields found for %s (looking for %r): %r", base_url, properties, res,
     )
     return res
+
+
+def update_old_links_resources(resource: dict) -> Union[LinksResource, None]:
+    """Try to update to resource to newest LinksResource schema"""
+    try:
+        res = LinksResource(**resource)
+    except ValidationError:
+        LOGGER.debug(
+            "Links resource could not be cast to newest LinksResource model. Resource: %s",
+            resource,
+        )
+
+        resource["attributes"]["link_type"] = resource["type"]
+        resource["type"] = "links"
+
+        LOGGER.debug(
+            "Trying casting to LinksResource again with the updated resource: %s",
+            resource,
+        )
+        try:
+            res = LinksResource(**resource)
+        except ValidationError:
+            LOGGER.debug(
+                "After updating 'type' and 'attributes.link_type' in resource, "
+                "it still fails to cast to LinksResource model. Resource: %s",
+                resource,
+            )
+            return None
+        else:
+            return res
+    else:
+        return res

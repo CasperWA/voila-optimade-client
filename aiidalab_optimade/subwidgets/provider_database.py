@@ -24,6 +24,7 @@ from aiidalab_optimade.utils import (
     perform_optimade_query,
     validate_api_version,
     TIMEOUT_SECONDS,
+    update_old_links_resources,
 )
 
 
@@ -61,13 +62,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
         if self.debug:
-            from aiidalab_optimade.utils import __optimade_version__
+            from aiidalab_optimade.utils import VERSION_PARTS
 
             local_provider = LinksResourceAttributes(
                 **{
                     "name": "Local server",
                     "description": "Local server, running aiida-optimade",
-                    "base_url": f"http://localhost:5000/v{__optimade_version__.split('.')[0]}",
+                    "base_url": f"http://localhost:5000{VERSION_PARTS[0][0]}",
                     "homepage": "https://example.org",
                     "link_type": "external",
                 }
@@ -270,7 +271,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         exclude_dbs = []
 
         for entry in data:
-            child_db = LinksResource(**entry)
+            child_db = update_old_links_resources(entry)
+            if child_db is None:
+                continue
 
             attributes = child_db.attributes
 
@@ -455,7 +458,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     }
                 }
         else:
-            filter_ = "link_type=child"
+            filter_ = "link_type=child OR type=child"
             if exclude_ids:
                 filter_ += (
                     " AND ( "
@@ -507,10 +510,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         implementations = [
             implementation
             for implementation in response.get("data", [])
-            if implementation.get("attributes", {}).get("link_type", "") == "child"
+            if (
+                implementation.get("attributes", {}).get("link_type", "") == "child"
+                or implementation.get("type", "") == "child"
+            )
         ]
         LOGGER.debug(
-            "After curating for implementations which are of 'link_type' = 'child':\n%s",
+            "After curating for implementations which are of 'link_type' = 'child' or 'type' == 'child' (old style):\n%s",
             [
                 f"(id: {name}; base_url: {base_url}) "
                 for name, base_url in [
