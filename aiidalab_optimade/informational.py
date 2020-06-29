@@ -8,9 +8,7 @@ import ipywidgets as ipw
 
 from aiidalab_optimade.logger import LOGGER, WIDGET_HANDLER, REPORT_HANDLER
 
-# from aiidalab_optimade.utils import __optimade_version__
-# Temporarily use another version for the information here
-__optimade_version__ = "1.0.0-rc.2"
+from aiidalab_optimade.utils import __optimade_version__
 
 
 IMG_DIR = Path(__file__).parent.parent.joinpath("img")
@@ -35,7 +33,7 @@ class HeaderDescription(ipw.VBox):
     """
 
     HEADER = f"""<p style="font-size:14px;">
-<b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__}</code>
+<b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__[0]}</code>
 </p>
 <p style="font-size:14px;">
 <b>Source code</b>: <a href="{SOURCE_URL}" target="_blank">GitHub</a>

@@ -3,22 +3,26 @@
 [![Materials Cloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/aiidalab/aiidalab-optimade/v3/docs/resources/mcloud_badge.json)](https://dev-tools.materialscloud.org/optimadeclient/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE_general.ipynb)
 
-Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, OQMD, and more ...)  
-Note, this application handles the structures by converting them to ASE `Atoms` or AiiDA `StructureData` objects.
+Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, ODBX, OQMD, and more ...).
 
-Current OPTIMADE API version: `0.10.1`
+Current supported OPTIMADE API versions: `1.0.0-rc.2`, `1.0.0-rc.1`, `0.10.1`
 
 ## Installation
 
-This Jupyter-based app is intended to run in [AiiDA Lab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine.
+This Jupyter-based app is intended to run either:
 
-Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
+- In [AiiDA lab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine;
+- As a [Materials Cloud tool](https://dev-tools.materialscloud.org/optimadeclient/);
+- As a standalone [MyBinder application](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE_general.ipynb); or
+- As a standalone local application (see more information about this below).
+
+For AiiDA lab, Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
 
 ## Usage
 
 ### Default
 
-To use the OPTIMADE structure importer in your own AiiDA Lab app write the following:
+To use the OPTIMADE structure importer in your own AiiDA lab application write the following:
 
 ```python
 from aiidalab_optimade import OptimadeQueryWidget
@@ -37,12 +41,10 @@ display(structure_viewer)
 This will immediately display a query widget with a dropdown of current structure databases that implements the OPTIMADE API.
 
 Then you can filter to find a family of structures according to elements, number of elements, chemical formula, and more.
-See the [OPTIMADE API specification document](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list and their description.
+See the [OPTIMADE API specification](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list of filter options and their description.
 
-In order to get tabs delving deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.
-The link for this should then look like: `_ = dlink((structure_query, 'structure'), (structure_output, 'entity'))`, given that you initiate `OptimadeResultsWidget` in the variable `structure_output`.
-
-See the notebook [`OPTIMADE general.ipynb`](OPTIMADE_general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
+In order to delve deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.  
+See the notebook [`OPTIMADE_general.ipynb`](OPTIMADE_general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
 
 ### Embedded
 
@@ -53,9 +55,9 @@ Everything else works the same - so you would still have to link up the query wi
 
 ### Run general application
 
-Note, you will need to install the package (see above) before being able to run the application.
+Note, you will need to `pip install` the package before being able to run the application.
 
-To run the notebook [`OPTIMADE general.ipynb`](OPTIMADE_general.ipynb) you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
+To run the notebook [`OPTIMADE_general.ipynb`](OPTIMADE_general.ipynb) you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
 
 The notebook will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
@@ -98,5 +100,5 @@ MIT. The terms of the license can be found in the LICENSE file.
 
 ## Contact
 
-aiidalab@materialscloud.org
+aiidalab@materialscloud.org  
 casper.andersen@epfl.ch
