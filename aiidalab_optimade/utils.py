@@ -12,7 +12,7 @@ from json import JSONDecodeError
 from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
-from optimade.models import LinksResource, OptimadeError, Link
+from optimade.models import LinksResource, OptimadeError, Link, LinksResourceAttributes
 from optimade.models.links import LinkType
 
 from aiidalab_optimade.exceptions import (
@@ -193,7 +193,7 @@ def get_versioned_base_url(base_url: Union[str, dict, Link, AnyUrl]) -> str:
     return ""
 
 
-def get_list_of_valid_providers() -> List[Tuple[str, dict]]:
+def get_list_of_valid_providers() -> List[Tuple[str, LinksResourceAttributes]]:
     """ Get curated list of database providers
 
     Return formatted list of tuples to use with a dropdown-widget.
