@@ -23,7 +23,7 @@ from aiidalab_optimade.logger import LOGGER
 
 
 # Supported OPTIMADE spec versions
-__optimade_version__ = ["1.0.0-rc.2", "1.0.0-rc.1", "0.10.1"]
+__optimade_version__ = ["1.0.0", "1.0.0-rc.2", "1.0.0-rc.1", "0.10.1"]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
