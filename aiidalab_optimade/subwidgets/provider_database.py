@@ -14,7 +14,7 @@ import traitlets
 from optimade.models import LinksResourceAttributes, LinksResource
 from optimade.models.links import LinkType
 
-from aiidalab_optimade.exceptions import QueryError
+from aiidalab_optimade.exceptions import QueryError, OptimadeClientError
 from aiidalab_optimade.logger import LOGGER
 from aiidalab_optimade.subwidgets.results import ResultsPageChooser
 from aiidalab_optimade.utils import (
@@ -201,6 +201,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                         child_dbs
                     )
 
+                    LOGGER.debug("Exclude child DBs: %r", exclude_child_dbs)
                     data_returned -= len(exclude_child_dbs)
                     if exclude_child_dbs and data_returned:
                         child_dbs, links, data_returned = self._query(
@@ -435,7 +436,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
                     parsed_query = urllib.parse.urlencode(queries)
 
-                    link = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}?{parsed_query}"
+                    link = (
+                        f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+                        f"?{parsed_query}"
+                    )
 
                 response = requests.get(link, timeout=TIMEOUT_SECONDS).json()
             except (
@@ -492,6 +496,29 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
             raise QueryError(msg=msg, remove_target=True)
 
+        LOGGER.debug("Manually remove `exclude_ids` if filters are not supported")
+        child_db_data = {
+            impl.get("id", "N/A"): impl for impl in response.get("data", [])
+        }
+        if exclude_ids:
+            for links_id in exclude_ids:
+                if links_id in list(child_db_data.keys()):
+                    child_db_data.pop(links_id)
+            LOGGER.debug("child_db_data after popping: %r", child_db_data)
+            response["data"] = list(child_db_data.values())
+            if "meta" in response:
+                if "data_available" in response["meta"]:
+                    old_data_available = response["meta"].get("data_available", 0)
+                    if len(response["data"]) > old_data_available:
+                        LOGGER.debug("raising OptimadeClientError")
+                        raise OptimadeClientError(
+                            f"Reported data_available ({old_data_available}) is smaller than "
+                            f"curated list of responses ({len(response['data'])}).",
+                        )
+                response["meta"]["data_available"] = len(response["data"])
+            else:
+                raise OptimadeClientError("'meta' not found in response. Bad response")
+
         LOGGER.debug(
             "Attempt for %r (in /links): Found implementations (names+base_url only):\n%s",
             self.provider.name,
@@ -516,7 +543,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
         ]
         LOGGER.debug(
-            "After curating for implementations which are of 'link_type' = 'child' or 'type' == 'child' (old style):\n%s",
+            "After curating for implementations which are of 'link_type' = 'child' or 'type' == "
+            "'child' (old style):\n%s",
             [
                 f"(id: {name}; base_url: {base_url}) "
                 for name, base_url in [
@@ -535,38 +563,6 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if data_returned > 0 and not implementations:
             # Most probably dealing with pre-v1.0.0-rc.2 implementations
             data_returned = 0
-
-        # # If there are no implementations, try if index meta-database == implementation database
-        # if not implementations:
-        #     new_response = perform_optimade_query(
-        #         base_url=self.provider.base_url, endpoint="/structures", page_limit=1
-        #     )
-        #     msg, _ = handle_errors(new_response)
-        #     if msg:
-        #         self.error_or_status_messages.value = (
-        #             f"{msg}<br>The provider has been removed."
-        #         )
-        #         raise QueryError(msg=msg, remove_target=True)
-
-        #     if new_response:
-        #         LOGGER.debug(
-        #             "Second attempt, checking if index db and implementation are the same: Success"
-        #         )
-        #         # Indeed, index meta-database == implementation database
-        #         implementation = {
-        #             "id": "main_db",
-        #             "type": "links",
-        #             "attributes": self.provider.dict(),
-        #         }
-        #         implementation["attributes"]["name"] = "Main database"
-        #         implementations = [implementation]
-        #         data_returned = 1
-        #     else:
-        #         LOGGER.debug(
-        #             "Second attempt, checking if index db and implementation are the same: "
-        #             "Failure. Response meta:\n%s",
-        #             new_response.get("meta", {}),
-        #         )
 
         return implementations, links, data_returned
 
