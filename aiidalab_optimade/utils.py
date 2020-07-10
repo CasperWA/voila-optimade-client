@@ -23,14 +23,14 @@ from aiidalab_optimade.logger import LOGGER
 
 
 # Supported OPTIMADE spec versions
-__optimade_version__ = ["1.0.0", "1.0.0-rc.2", "1.0.0-rc.1", "0.10.1"]
+__optimade_version__ = ["1.0.0", "1.0.0-rc.2", "1.0.0-rc.1", "0.10.1", "0.10.0"]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
 PROVIDERS_URL = "https://providers.optimade.org/v1"
 
 
-def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
+def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     base_url: str,
     endpoint: str = None,
     filter: Union[dict, str] = None,  # pylint: disable=redefined-builtin
@@ -40,6 +40,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     email_address: str = None,
     page_limit: int = None,
     page_offset: int = None,
+    page_number: int = None,
 ) -> dict:
     """Perform query of database"""
     queries = {}
@@ -83,6 +84,9 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
 
     if page_offset is not None:
         queries["page_offset"] = page_offset
+
+    if page_number is not None:
+        queries["page_number"] = page_number
 
     # Make query - get data
     url_query = urlencode(queries)

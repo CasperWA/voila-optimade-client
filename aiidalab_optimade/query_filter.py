@@ -38,7 +38,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 ):
     """Structure search and import widget for OPTIMADE
 
-    NOTE: Only supports offset-pagination at the moment.
+    NOTE: Only supports offset- and number-pagination at the moment.
     """
 
     structure = traitlets.Instance(Structure, allow_none=True)
@@ -50,6 +50,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
+        self.number = 1
+        self._data_available = None
         self.__perform_query = True
         self.__cached_ranges = {}
 
@@ -78,7 +80,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
         self.structure_page_chooser = ResultsPageChooser(self.page_limit)
         self.structure_page_chooser.observe(
-            self._get_more_results, names=["page_offset", "page_link"]
+            self._get_more_results, names=["page_link", "page_offset", "page_number"]
         )
 
         super().__init__(
@@ -108,6 +110,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.freeze()
         else:
             self.offset = 0
+            self.number = 1
             self.structure_page_chooser.silent_reset()
             try:
                 self.freeze()
@@ -139,11 +142,14 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.structure = chosen_structure["structure"]
 
     def _get_more_results(self, change):
-        """Query for more results according to page_offset"""
-        offset_or_link: Union[int, str] = change["new"]
-        if isinstance(offset_or_link, int):
-            self.offset = offset_or_link
-            offset_or_link = None
+        """Query for more results according to pageing"""
+        pageing: Union[int, str] = change["new"]
+        if change["name"] == "page_offset":
+            self.offset = pageing
+            pageing = None
+        elif change["name"] == "page_number":
+            self.number = pageing
+            pageing = None
         else:
             # It is needed to update page_offset, but we do not wish to query again
             with self.hold_trait_notifications():
@@ -165,7 +171,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.query_button.tooltip = "Please wait ..."
 
             # Query database
-            response = self._query(offset_or_link)
+            response = self._query(pageing)
             msg, _ = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
@@ -202,6 +208,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def reset(self):
         """Reset widget"""
         self.offset = 0
+        self.number = 1
         with self.hold_trait_notifications():
             self.query_button.disabled = False
             self.query_button.tooltip = "Search - No database chosen"
@@ -342,6 +349,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             "filter": optimade_filter,
             "page_limit": self.page_limit,
             "page_offset": self.offset,
+            "page_number": self.number,
         }
         LOGGER.debug(
             "Parameters (excluding filter) sent to query util func: %s",
@@ -386,6 +394,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
         self.offset = 0
+        self.number = 1
         try:
             # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
@@ -411,9 +420,14 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self._update_structures(response["data"])
 
             # Update pageing
+            if self._data_available is None:
+                self._data_available = response.get("meta", {}).get(
+                    "data_available", None
+                )
             data_returned = response.get("meta", {}).get("data_returned", 0)
             self.structure_page_chooser.set_pagination_data(
                 data_returned=data_returned,
+                data_available=self._data_available,
                 links_to_page=response.get("links", {}),
                 reset_cache=True,
             )

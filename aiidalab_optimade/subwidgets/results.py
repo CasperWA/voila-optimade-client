@@ -1,3 +1,4 @@
+import typing
 from urllib.parse import urlparse, parse_qs
 
 import ipywidgets as ipw
@@ -54,15 +55,22 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
     """
 
     page_offset = traitlets.Int(None, allow_none=True)
+    page_number = traitlets.Int(None, allow_none=True)
     page_link = traitlets.Unicode(allow_none=True)
+
+    # {name: default value}
+    SUPPORTED_PAGEING = {"page_offset": 0, "page_number": 1}
 
     def __init__(self, page_limit: int, **kwargs):
         self._cache = {}
-        self.__last_page_offset = None
+        self.__last_page_offset: typing.Union[None, int] = None
+        self.__last_page_number: typing.Union[None, int] = None
+        self._pageing_type: typing.Union[None, str] = None
         self._layout = ipw.Layout(width="auto")
 
         self._page_limit = page_limit
         self._data_returned = 0
+        self._data_available = 0
         self.pages_links = {}
 
         self._button_layout = {
@@ -110,6 +118,14 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             value = 0
         return value
 
+    @traitlets.validate("page_number")
+    def _set_minimum_page_number(self, proposal):  # pylint: disable=no-self-use
+        """Must be >=1. Set value to 1 if <1."""
+        value = proposal["value"]
+        if value < 1:
+            value = 1
+        return value
+
     def reset(self):
         """Reset widget"""
         self.button_first.disabled = True
@@ -118,7 +134,8 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.button_next.disabled = True
         self.button_last.disabled = True
         with self.hold_trait_notifications():
-            self.page_offset = 0
+            self.page_offset = self.SUPPORTED_PAGEING["page_offset"]
+            self.page_number = self.SUPPORTED_PAGEING["page_number"]
             self.page_link = None
         self._update_cache()
 
@@ -137,6 +154,39 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.button_last.disabled = self._cache["buttons"]["last"]
 
     @property
+    def pageing_type(self) -> typing.Union[str, None]:
+        """Get pageing type"""
+        return self._pageing_type
+
+    @pageing_type.setter
+    def pageing_type(self, value: str):
+        """Set pageing type
+
+        Must be one of SUPPORTED_PAGEING.
+        Can only be set once.
+        """
+        try:
+            value = str(value)
+        except (TypeError, ValueError):
+            raise InputError("pageing_type must be a string")
+
+        if self._pageing_type is not None:
+            raise InputError(
+                f"pageing_type can only be set once. It is set to {self._pageing_type!r}."
+            )
+
+        if value not in self.SUPPORTED_PAGEING:
+            raise InputError(
+                f"pageing_type must be one of: {list(self.SUPPORTED_PAGEING.keys())}"
+            )
+
+        self._pageing_type = value
+
+    def pageing_set(self) -> bool:
+        """Return whether pageing_type is set"""
+        return self.pageing_type is not None
+
+    @property
     def data_returned(self) -> int:
         """Total number of entities"""
         return self._data_returned
@@ -152,7 +202,22 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self._data_returned = value
 
     @property
-    def _last_page_offset(self):
+    def data_available(self) -> int:
+        """Total number of entities available"""
+        return self._data_available
+
+    @data_available.setter
+    def data_available(self, value: int):
+        """Set total number of entities available"""
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            raise InputError("data_available must be an integer")
+        else:
+            self._data_available = value
+
+    @property
+    def _last_page_offset(self) -> int:
         """Get the page_offset for the last page"""
         if self.__last_page_offset is not None:
             return self.__last_page_offset
@@ -167,9 +232,21 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.__last_page_offset = res
         return self.__last_page_offset
 
-    def _update_cache(self, page_offset: int = None):
+    @property
+    def _last_page_number(self) -> int:
+        """Get the page_number for the last page"""
+        if self.__last_page_number is not None:
+            return self.__last_page_number
+
+        self.__last_page_number = int(self.data_available / self._page_limit)
+        self.__last_page_number += 1 if self.data_available % self._page_limit else 0
+
+        return self.__last_page_number
+
+    def _update_cache(self, page_offset: int = None, page_number: int = None):
         """Update cache"""
         offset = page_offset if page_offset is not None else self.page_offset
+        number = page_number if page_number is not None else self.page_number
         self._cache = {
             "buttons": {
                 "first": self.button_first.disabled,
@@ -178,6 +255,7 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
                 "last": self.button_last.disabled,
             },
             "page_offset": offset,
+            "page_number": number,
         }
 
     def _create_arrow_button(self, icon: str, hover_text: str = None) -> ipw.Button:
@@ -187,17 +265,20 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             disabled=True, icon=icon, tooltip=tooltip, **self._button_layout
         )
 
-    @staticmethod
-    def _parse_offset(url: str) -> int:
-        """Retrieve and parse 'page_offset' value from request URL"""
+    def _parse_pageing(self, url: str, pageing: str = "page_offset") -> int:
+        """Retrieve and parse `pageing` value from request URL"""
         parsed_url = urlparse(url)
         query = parse_qs(parsed_url.query)
-        return int(query.get("page_offset", ["0"])[0])
+        return int(query.get(pageing, [str(self.SUPPORTED_PAGEING[pageing])])[0])
 
     def _goto_first(self, _):
         """Go to first page of results"""
         if self.pages_links.get("first", False):
-            self._cache["page_offset"] = self._parse_offset(self.pages_links["first"])
+            for pageing in self.SUPPORTED_PAGEING:
+                self._cache[pageing] = self._parse_pageing(
+                    self.pages_links["first"], pageing
+                )
+
             LOGGER.debug(
                 "Go to first page of results - using link: %s",
                 self.pages_links["first"],
@@ -205,16 +286,24 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.page_link = self.pages_links["first"]
         else:
             self._cache["page_offset"] = 0
+            self._cache["page_number"] = 1
+
             LOGGER.debug(
-                "Go to first page of results - using offset: %d",
+                "Go to first page of results - using pageing:\n  page_offset=%d\n  page_number=%d",
                 self._cache["page_offset"],
+                self._cache["page_number"],
             )
             self.page_offset = self._cache["page_offset"]
+            self.page_number = self._cache["page_number"]
 
     def _goto_prev(self, _):
         """Go to previous page of results"""
         if self.pages_links.get("prev", False):
-            self._cache["page_offset"] = self._parse_offset(self.pages_links["prev"])
+            for pageing in self.SUPPORTED_PAGEING:
+                self._cache[pageing] = self._parse_pageing(
+                    self.pages_links["prev"], pageing
+                )
+
             LOGGER.debug(
                 "Go to previous page of results - using link: %s",
                 self.pages_links["prev"],
@@ -222,38 +311,57 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.page_link = self.pages_links["prev"]
         else:
             self._cache["page_offset"] -= self._page_limit
+            self._cache["page_number"] -= 1
+
             LOGGER.debug(
-                "Go to previous page of results - using offset: %d",
+                "Go to previous page of results - using pageing:\n  page_offset=%d\n  "
+                "page_number=%d",
                 self._cache["page_offset"],
+                self._cache["page_number"],
             )
             self.page_offset = self._cache["page_offset"]
+            self.page_number = self._cache["page_number"]
 
     def _goto_next(self, _):
         """Go to next page of results"""
         if self.pages_links.get("next", False):
-            self._cache["page_offset"] = self._parse_offset(self.pages_links["next"])
+            for pageing in self.SUPPORTED_PAGEING:
+                self._cache[pageing] = self._parse_pageing(
+                    self.pages_links["next"], pageing
+                )
+
             LOGGER.debug(
                 "Go to next page of results - using link: %s", self.pages_links["next"]
             )
             self.page_link = self.pages_links["next"]
         else:
             self._cache["page_offset"] += self._page_limit
+            self._cache["page_number"] += 1
+
             LOGGER.debug(
-                "Go to next page of results - using offset: %d",
+                "Go to next page of results - using pageing:\n  page_offset=%d\n  page_number=%d",
                 self._cache["page_offset"],
+                self._cache["page_number"],
             )
             self.page_offset = self._cache["page_offset"]
+            self.page_number = self._cache["page_number"]
 
     def _goto_last(self, _):
         """Go to last page of results"""
         if self.pages_links.get("last", False):
-            self._cache["page_offset"] = self._parse_offset(self.pages_links["last"])
+            for pageing in self.SUPPORTED_PAGEING:
+                self._cache[pageing] = self._parse_pageing(
+                    self.pages_links["last"], pageing
+                )
+
             LOGGER.debug(
                 "Go to last page of results - using link: %s", self.pages_links["last"]
             )
             self.page_link = self.pages_links["last"]
         else:
             self._cache["page_offset"] = self._last_page_offset
+            self._cache["page_number"] = self._last_page_number
+
             LOGGER.debug(
                 "Go to last page of results - using offset: %d",
                 self._cache["page_offset"],
@@ -261,9 +369,11 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.page_offset = self._cache["page_offset"]
 
     def _update(self):
-        """Update widget according to chosen results"""
+        """Update widget according to chosen results using pageing"""
         offset = self._cache["page_offset"]
-        if offset >= self._page_limit:
+        number = self._cache["page_number"]
+
+        if offset >= self._page_limit or number > self.SUPPORTED_PAGEING["page_number"]:
             self.button_first.disabled = False
             self.button_prev.disabled = False
         else:
@@ -271,7 +381,7 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.button_prev.disabled = True
 
         if self.data_returned > self._page_limit:
-            if offset == self._last_page_offset:
+            if offset == self._last_page_offset or number == self._last_page_number:
                 result_range = f"{offset + 1}-{self.data_returned}"
             else:
                 result_range = f"{offset + 1}-{offset + self._page_limit}"
@@ -283,28 +393,45 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             result_range = f"{offset + 1}-{self.data_returned}"
         self.text.value = f"Showing {result_range} of {self.data_returned} results"
 
-        if offset == self._last_page_offset:
+        if offset == self._last_page_offset or number == self._last_page_number:
             self.button_next.disabled = True
             self.button_last.disabled = True
         else:
             self.button_next.disabled = False
             self.button_last.disabled = False
 
-        self._update_cache(page_offset=offset)
+        self._update_cache(page_offset=offset, page_number=number)
+
+    def _determine_pageing(self):
+        """Determine and set the type of pageing"""
+        for url in self.pages_links.values():
+            parsed_url = urlparse(url)
+            query = parse_qs(parsed_url.query)
+            for pageing in self.SUPPORTED_PAGEING:
+                if pageing in query:
+                    self.pageing_type = pageing
+                    break
+            if self.pageing_type is not None:
+                break
 
     def set_pagination_data(
         self,
         data_returned: int = None,
+        data_available: int = None,
         links_to_page: dict = None,
         reset_cache: bool = False,
     ):
         """Set data needed to 'activate' this pagination widget"""
         if data_returned is not None:
             self.data_returned = data_returned
+        if data_available is not None:
+            self.data_available = data_available
         if links_to_page is not None:
             self.pages_links = links_to_page
+            if not self.pageing_set:
+                self._determine_pageing()
         if reset_cache:
-            self._update_cache(page_offset=0)
+            self._update_cache(**self.SUPPORTED_PAGEING)
             self.__last_page_offset = None
 
         self._update()

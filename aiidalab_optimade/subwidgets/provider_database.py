@@ -51,6 +51,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             child_db_limit if child_db_limit and child_db_limit > 0 else 10
         )
         self.offset = 0
+        self.number = 1
         self.__perform_query = True
         self.__cached_child_dbs = {}
 
@@ -84,7 +85,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         self.providers.observe(self._observe_providers, names="index")
         self.child_dbs.observe(self._observe_child_dbs, names="index")
         self.page_chooser.observe(
-            self._get_more_child_dbs, names=["page_offset", "page_link"]
+            self._get_more_child_dbs, names=["page_link", "page_offset", "page_number"]
         )
         self.error_or_status_messages = ipw.HTML("")
 
@@ -115,6 +116,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         """Reset widget"""
         self.page_chooser.reset()
         self.offset = 0
+        self.number = 1
 
         self.providers.index = 0
         self.providers.disabled = False
@@ -168,6 +170,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
     def _initialize_child_dbs(self):
         """New provider chosen; initialize child DB dropdown"""
         self.offset = 0
+        self.number = 1
         try:
             # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
@@ -188,12 +191,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
                 self._set_child_dbs(cache["child_dbs"])
                 data_returned = cache["data_returned"]
+                data_available = cache["data_available"]
                 links = cache["links"]
             else:
                 LOGGER.debug("Initializing child DBs for %s.", self.provider.name)
 
                 # Query database and get child_dbs
-                child_dbs, links, data_returned = self._query()
+                child_dbs, links, data_returned, data_available = self._query()
 
                 while True:
                     # Update list of structures in dropdown widget
@@ -204,7 +208,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     LOGGER.debug("Exclude child DBs: %r", exclude_child_dbs)
                     data_returned -= len(exclude_child_dbs)
                     if exclude_child_dbs and data_returned:
-                        child_dbs, links, data_returned = self._query(
+                        child_dbs, links, data_returned, _ = self._query(
                             exclude_ids=exclude_child_dbs
                         )
                     else:
@@ -215,6 +219,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 self.__cached_child_dbs[self.provider.base_url] = {
                     "child_dbs": final_child_dbs,
                     "data_returned": data_returned,
+                    "data_available": data_available,
                     "links": links,
                 }
 
@@ -225,7 +230,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
             # Update pageing
             self.page_chooser.set_pagination_data(
-                data_returned=data_returned, links_to_page=links, reset_cache=True
+                data_returned=data_returned,
+                data_available=data_available,
+                links_to_page=links,
+                reset_cache=True,
             )
 
         except QueryError as exc:
@@ -321,23 +329,31 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             # This may be called if a provider is suddenly removed (bad provider)
             return
 
-        offset_or_link: Union[int, str] = change["new"]
+        pageing: Union[int, str] = change["new"]
         LOGGER.debug(
-            "Detected change in page_chooser's .page_offset or .page_link: %r",
-            offset_or_link,
+            "Detected change in page_chooser's .page_offset, .page_number, or .page_link: %r",
+            pageing,
         )
-        if isinstance(offset_or_link, int):
+        if change["name"] == "page_offset":
             LOGGER.debug(
                 "Got offset %d to retrieve more child DBs from %r",
-                offset_or_link,
+                pageing,
                 self.providers.value,
             )
-            self.offset = offset_or_link
-            offset_or_link = None
+            self.offset = pageing
+            pageing = None
+        elif change["name"] == "page_number":
+            LOGGER.debug(
+                "Got number %d to retrieve more child DBs from %r",
+                pageing,
+                self.providers.value,
+            )
+            self.number = pageing
+            pageing = None
         else:
             LOGGER.debug(
                 "Got link %r to retrieve more child DBs from %r",
-                offset_or_link,
+                pageing,
                 self.providers.value,
             )
             # It is needed to update page_offset, but we do not wish to query again
@@ -347,9 +363,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
         if not self.__perform_query:
             self.__perform_query = True
-            LOGGER.debug(
-                "Will not perform query with offset_or_link: %r", offset_or_link
-            )
+            LOGGER.debug("Will not perform query with pageing: %r", pageing)
             return
 
         try:
@@ -358,10 +372,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.freeze()
 
             # Query index meta-database
-            LOGGER.debug(
-                "Querying for more child DBs using offset_or_link: %r", offset_or_link
-            )
-            child_dbs, links, _ = self._query(offset_or_link)
+            LOGGER.debug("Querying for more child DBs using pageing: %r", pageing)
+            child_dbs, links, _, _ = self._query(pageing)
 
             data_returned = self.page_chooser.data_returned
             while True:
@@ -370,8 +382,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
                 data_returned -= len(exclude_child_dbs)
                 if exclude_child_dbs and data_returned:
-                    child_dbs, links, data_returned = self._query(
-                        link=offset_or_link, exclude_ids=exclude_child_dbs
+                    child_dbs, links, data_returned, _ = self._query(
+                        link=pageing, exclude_ids=exclude_child_dbs
                     )
                 else:
                     break
@@ -413,7 +425,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
     def _query(  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         self, link: str = None, exclude_ids: List[str] = None
-    ) -> Tuple[List[dict], dict, int]:
+    ) -> Tuple[List[dict], dict, int, int]:
         """Query helper function"""
         # If a complete link is provided, use it straight up
         if link is not None:
@@ -476,6 +488,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 endpoint="/links",
                 page_limit=self.child_db_limit,
                 page_offset=self.offset,
+                page_number=self.number,
             )
         msg, http_errors = handle_errors(response)
         if msg:
@@ -557,14 +570,15 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             ],
         )
 
-        # Get links and data_returned
+        # Get links, data_returned, and data_available
         links = response.get("links", {})
         data_returned = response.get("meta", {}).get("data_returned", 0)
         if data_returned > 0 and not implementations:
             # Most probably dealing with pre-v1.0.0-rc.2 implementations
             data_returned = 0
+        data_available = response.get("meta", {}).get("data_available", 0)
 
-        return implementations, links, data_returned
+        return implementations, links, data_returned, data_available
 
 
 class ProviderImplementationSummary(ipw.GridspecLayout):
