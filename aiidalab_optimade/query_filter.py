@@ -480,7 +480,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self._data_available = response.get("meta", {}).get(
                     "data_available", None
                 )
-            data_returned = response.get("meta", {}).get("data_returned", 0)
+            data_returned = response.get("meta", {}).get(
+                "data_returned", len(response.get("data", []))
+            )
             self.structure_page_chooser.set_pagination_data(
                 data_returned=data_returned,
                 data_available=self._data_available,
