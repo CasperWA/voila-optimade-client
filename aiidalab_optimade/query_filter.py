@@ -10,7 +10,7 @@ except (ImportError, ModuleNotFoundError):
 
 from optimade.adapters import Structure
 from optimade.models import LinksResourceAttributes
-from optimade.models.utils import CHEMICAL_SYMBOLS
+from optimade.models.utils import CHEMICAL_SYMBOLS, SemanticVersion
 
 from aiidalab_optimade.exceptions import BadResource, QueryError
 from aiidalab_optimade.logger import LOGGER
@@ -54,6 +54,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self._data_available = None
         self.__perform_query = True
         self.__cached_ranges = {}
+        self.__cached_versions = {}
+        self.database_version = ""
 
         self.filter_header = ipw.HTML(
             '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
@@ -120,6 +122,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.query_button.tooltip = "Updating filters ..."
 
                 self._set_intslider_ranges()
+                self._set_version()
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.error(
                     "Exception raised during setting IntSliderRanges: %s",
@@ -215,6 +218,59 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.filters.reset()
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+
+    def _uses_new_structure_features(self) -> bool:
+        """Check whether self.database_version is >= v1.0.0-rc.2"""
+        critical_version = SemanticVersion("1.0.0-rc.2")
+        version = SemanticVersion(self.database_version)
+
+        LOGGER.debug("Semantic version: %r", version)
+
+        if version.base_version > critical_version.base_version:
+            return True
+
+        if version.base_version == critical_version.base_version:
+            if version.prerelease:
+                return version.prerelease >= critical_version.prerelease
+
+            # Version is bigger than critical version and is not a pre-release
+            return True
+
+        # Major.Minor.Patch is lower than critical version
+        return False
+
+    def _set_version(self):
+        """Set self.database_version from an /info query"""
+        base_url = self.database[1].base_url
+        if base_url not in self.__cached_versions:
+            # Retrieve and cache version
+            response = perform_optimade_query(
+                base_url=self.database[1].base_url, endpoint="/info"
+            )
+            msg, _ = handle_errors(response)
+            if msg:
+                raise QueryError(msg)
+
+            if "meta" not in response:
+                raise QueryError(
+                    f"'meta' field not found in /info endpoint for base URL: {base_url}"
+                )
+            if "api_version" not in response["meta"]:
+                raise QueryError(
+                    f"'api_version' field not found in 'meta' for base URL: {base_url}"
+                )
+
+            version = response["meta"]["api_version"]
+            if version.startswith("v"):
+                version = version[1:]
+            self.__cached_versions[base_url] = version
+            LOGGER.debug(
+                "Cached version %r for base URL: %r",
+                self.__cached_versions[base_url],
+                base_url,
+            )
+
+        self.database_version = self.__cached_versions[base_url]
 
     def _set_intslider_ranges(self):
         """Update IntRangeSlider ranges according to chosen database
@@ -331,9 +387,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             return response
 
         # Avoid structures with null positions and with assemblies.
-        add_to_filter = (
-            'NOT structure_features HAS ANY "unknown_positions","assemblies"'
-        )
+        add_to_filter = 'NOT structure_features HAS ANY "assemblies"'
+        if not self._uses_new_structure_features():
+            add_to_filter += ',"unknown_positions"'
 
         optimade_filter = self.filters.collect_value()
         optimade_filter = (

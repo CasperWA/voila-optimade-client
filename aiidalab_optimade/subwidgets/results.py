@@ -65,7 +65,6 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self._cache = {}
         self.__last_page_offset: typing.Union[None, int] = None
         self.__last_page_number: typing.Union[None, int] = None
-        self._pageing_type: typing.Union[None, str] = None
         self._layout = ipw.Layout(width="auto")
 
         self._page_limit = page_limit
@@ -152,39 +151,6 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self.button_prev.disabled = self._cache["buttons"]["prev"]
         self.button_next.disabled = self._cache["buttons"]["next"]
         self.button_last.disabled = self._cache["buttons"]["last"]
-
-    @property
-    def pageing_type(self) -> typing.Union[str, None]:
-        """Get pageing type"""
-        return self._pageing_type
-
-    @pageing_type.setter
-    def pageing_type(self, value: str):
-        """Set pageing type
-
-        Must be one of SUPPORTED_PAGEING.
-        Can only be set once.
-        """
-        try:
-            value = str(value)
-        except (TypeError, ValueError):
-            raise InputError("pageing_type must be a string")
-
-        if self._pageing_type is not None:
-            raise InputError(
-                f"pageing_type can only be set once. It is set to {self._pageing_type!r}."
-            )
-
-        if value not in self.SUPPORTED_PAGEING:
-            raise InputError(
-                f"pageing_type must be one of: {list(self.SUPPORTED_PAGEING.keys())}"
-            )
-
-        self._pageing_type = value
-
-    def pageing_set(self) -> bool:
-        """Return whether pageing_type is set"""
-        return self.pageing_type is not None
 
     @property
     def data_returned(self) -> int:
@@ -402,18 +368,6 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
 
         self._update_cache(page_offset=offset, page_number=number)
 
-    def _determine_pageing(self):
-        """Determine and set the type of pageing"""
-        for url in self.pages_links.values():
-            parsed_url = urlparse(url)
-            query = parse_qs(parsed_url.query)
-            for pageing in self.SUPPORTED_PAGEING:
-                if pageing in query:
-                    self.pageing_type = pageing
-                    break
-            if self.pageing_type is not None:
-                break
-
     def set_pagination_data(
         self,
         data_returned: int = None,
@@ -428,8 +382,6 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
             self.data_available = data_available
         if links_to_page is not None:
             self.pages_links = links_to_page
-            if not self.pageing_set:
-                self._determine_pageing()
         if reset_cache:
             self._update_cache(**self.SUPPORTED_PAGEING)
             self.__last_page_offset = None

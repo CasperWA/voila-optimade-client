@@ -371,12 +371,25 @@ def handle_errors(response: dict) -> Tuple[str, set]:
         raise InputError(f"No data and no errors reported in response: {response}")
 
     if "errors" in response:
-        LOGGER.debug("Errored response:\n%s", json.dumps(response, indent=2))
+        LOGGER.error("Errored response:\n%s", json.dumps(response, indent=2))
 
         if "data" in response:
             msg = (
                 '<font color="red">Error(s) during querying,</font> but '
                 f"<strong>{len(response['data'])}</strong> structures found."
+            )
+        elif isinstance(response["errors"], dict) and "detail" in response["errors"]:
+            msg = (
+                '<font color="red">Error(s) during querying. '
+                f"Message from server:<br>{response['errors']['detail']!r}.</font>"
+            )
+        elif isinstance(response["errors"], list) and any(
+            ["detail" in _ for _ in response["errors"]]
+        ):
+            details = [_["detail"] for _ in response["errors"] if "detail" in _]
+            msg = (
+                '<font color="red">Error(s) during querying. Message(s) from server:<br> - '
+                f"{'<br> - '.join(details)!r}</font>"
             )
         else:
             msg = (
@@ -386,10 +399,10 @@ def handle_errors(response: dict) -> Tuple[str, set]:
 
         http_errors = set()
         for raw_error in response.get("errors", []):
-            error = OptimadeError(**raw_error)
             try:
+                error = OptimadeError(**raw_error)
                 status = int(error.status)
-            except TypeError:
+            except (ValidationError, TypeError, ValueError):
                 status = 400
             http_errors.add(status)
 
