@@ -572,7 +572,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
         # Get links, data_returned, and data_available
         links = response.get("links", {})
-        data_returned = response.get("meta", {}).get("data_returned", 0)
+        data_returned = response.get("meta", {}).get(
+            "data_returned", len(implementations)
+        )
         if data_returned > 0 and not implementations:
             # Most probably dealing with pre-v1.0.0-rc.2 implementations
             data_returned = 0
