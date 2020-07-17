@@ -12,4 +12,4 @@ else
 fi
 
 # Start the tornado voila server (no browser)
-voila --no-browser OPTIMADE_general.ipynb
+voila --no-browser "OPTIMADE Client.ipynb"
