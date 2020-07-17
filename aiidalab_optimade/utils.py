@@ -23,14 +23,14 @@ from aiidalab_optimade.logger import LOGGER
 
 
 # Supported OPTIMADE spec versions
-__optimade_version__ = ["1.0.0-rc.2", "1.0.0-rc.1", "0.10.1"]
+__optimade_version__ = ["1.0.0", "1.0.0-rc.2", "1.0.0-rc.1", "0.10.1", "0.10.0"]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
 PROVIDERS_URL = "https://providers.optimade.org/v1"
 
 
-def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches
+def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
     base_url: str,
     endpoint: str = None,
     filter: Union[dict, str] = None,  # pylint: disable=redefined-builtin
@@ -40,6 +40,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     email_address: str = None,
     page_limit: int = None,
     page_offset: int = None,
+    page_number: int = None,
 ) -> dict:
     """Perform query of database"""
     queries = {}
@@ -83,6 +84,9 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
 
     if page_offset is not None:
         queries["page_offset"] = page_offset
+
+    if page_number is not None:
+        queries["page_number"] = page_number
 
     # Make query - get data
     url_query = urlencode(queries)
@@ -135,21 +139,32 @@ def fetch_providers(providers_url: str = None) -> list:
     return providers.get("data", [])
 
 
-VERSION_PARTS = tuple(
-    [
-        f"/v{ver.split('-')[0].split('+')[0].split('.')[0]}",  # major
-        f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:2])}",  # major.minor
-        f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:3])}",  # major.minor.patch
-    ]
-    for ver in __optimade_version__
-)
+VERSION_PARTS = []
+for ver in __optimade_version__:
+    VERSION_PARTS.extend(
+        [
+            f"/v{ver.split('-')[0].split('+')[0].split('.')[0]}",  # major
+            f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:2])}",  # major.minor
+            f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:3])}",  # major.minor.patch
+        ]
+    )
+VERSION_PARTS = sorted(set(VERSION_PARTS), reverse=True)
 LOGGER.debug("All known version editions: %s", VERSION_PARTS)
 
 
-def get_versioned_base_url(base_url: Union[str, dict, Link, AnyUrl]) -> str:
+def get_versioned_base_url(  # pylint: disable=too-many-branches
+    base_url: Union[str, dict, Link, AnyUrl]
+) -> str:
     """Retrieve the versioned base URL
+
     First, check if the given base URL is already a versioned base URL.
-    Then try to going through valid version extensions to the URL.
+
+    Then, use `Version Negotiation` as outlined in the specification:
+    https://github.com/Materials-Consortia/OPTIMADE/blob/v1.0.0/optimade.rst#version-negotiation
+
+    1. Try unversioned base URL's `/versions` endpoint.
+    2. Go through valid versioned base URLs.
+
     """
     if isinstance(base_url, dict):
         base_url = base_url.get("href", "")
@@ -158,37 +173,76 @@ def get_versioned_base_url(base_url: Union[str, dict, Link, AnyUrl]) -> str:
 
     LOGGER.debug("Retrieving versioned base URL for %r", base_url)
 
-    for version_list in VERSION_PARTS:
-        for version in version_list:
-            if version in base_url:
-                if re.match(fr".+{version}$", base_url):
-                    return base_url
-                if re.match(fr".+{version}/$", base_url):
-                    return base_url[:-1]
-                LOGGER.debug(
-                    "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
-                    version,
-                    base_url,
-                )
-
-    for version_list in VERSION_PARTS:
-        for version in version_list:
-            timeout_seconds = 5
-            versioned_base_url = (
-                base_url + version[1:] if base_url.endswith("/") else base_url + version
+    for version in VERSION_PARTS:
+        if version in base_url:
+            if re.match(fr".+{version}$", base_url):
+                return base_url
+            if re.match(fr".+{version}/$", base_url):
+                return base_url[:-1]
+            LOGGER.debug(
+                "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
+                version,
+                base_url,
             )
-            try:
-                response = requests.get(
-                    f"{versioned_base_url}/info", timeout=timeout_seconds
+
+    # 1. Try unversioned base URL's `/versions` endpoint.
+    versions_endpoint = (
+        f"{base_url}versions" if base_url.endswith("/") else f"{base_url}/versions"
+    )
+    try:
+        response = requests.get(versions_endpoint, timeout=TIMEOUT_SECONDS)
+    except (
+        requests.exceptions.ConnectTimeout,
+        requests.exceptions.ConnectionError,
+    ):
+        pass
+    else:
+        if response.status_code == 200:
+            # This endpoint should be of type "text/csv"
+            csv_data = response.text.splitlines()
+            keys = csv_data.pop(0).split(",")
+            versions = {}.fromkeys(keys, [])
+            for line in csv_data:
+                values = line.split(",")
+                for key, value in zip(keys, values):
+                    versions[key].append(value)
+
+            if versions.get("version", []):
+                for version in versions:
+                    version_path = f"/v{version}"
+                    if version_path in VERSION_PARTS:
+                        LOGGER.debug(
+                            "Found versioned base URL through /versions endpoint."
+                        )
+                        return (
+                            base_url + version_path[1:]
+                            if base_url.endswith("/")
+                            else base_url + version_path
+                        )
+
+    timeout_seconds = 5  # Use custom timeout seconds due to potentially many requests
+
+    # 2. Go through valid versioned base URLs.
+    for version in VERSION_PARTS:
+        versioned_base_url = (
+            base_url + version[1:] if base_url.endswith("/") else base_url + version
+        )
+        try:
+            response = requests.get(
+                f"{versioned_base_url}/info", timeout=timeout_seconds
+            )
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ConnectionError,
+        ):
+            continue
+        else:
+            if response.status_code == 200:
+                LOGGER.debug(
+                    "Found versioned base URL through adding valid versions to path and requesting "
+                    "the /info endpoint."
                 )
-            except (
-                requests.exceptions.ConnectTimeout,
-                requests.exceptions.ConnectionError,
-            ):
-                continue
-            else:
-                if response.status_code == 200:
-                    return versioned_base_url
+                return versioned_base_url
 
     return ""
 
@@ -317,12 +371,25 @@ def handle_errors(response: dict) -> Tuple[str, set]:
         raise InputError(f"No data and no errors reported in response: {response}")
 
     if "errors" in response:
-        LOGGER.debug("Errored response:\n%s", json.dumps(response, indent=2))
+        LOGGER.error("Errored response:\n%s", json.dumps(response, indent=2))
 
         if "data" in response:
             msg = (
                 '<font color="red">Error(s) during querying,</font> but '
                 f"<strong>{len(response['data'])}</strong> structures found."
+            )
+        elif isinstance(response["errors"], dict) and "detail" in response["errors"]:
+            msg = (
+                '<font color="red">Error(s) during querying. '
+                f"Message from server:<br>{response['errors']['detail']!r}.</font>"
+            )
+        elif isinstance(response["errors"], list) and any(
+            ["detail" in _ for _ in response["errors"]]
+        ):
+            details = [_["detail"] for _ in response["errors"] if "detail" in _]
+            msg = (
+                '<font color="red">Error(s) during querying. Message(s) from server:<br> - '
+                f"{'<br> - '.join(details)!r}</font>"
             )
         else:
             msg = (
@@ -332,10 +399,10 @@ def handle_errors(response: dict) -> Tuple[str, set]:
 
         http_errors = set()
         for raw_error in response.get("errors", []):
-            error = OptimadeError(**raw_error)
             try:
+                error = OptimadeError(**raw_error)
                 status = int(error.status)
-            except TypeError:
+            except (ValidationError, TypeError, ValueError):
                 status = 400
             http_errors.add(status)
 

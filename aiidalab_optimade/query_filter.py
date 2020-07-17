@@ -10,7 +10,7 @@ except (ImportError, ModuleNotFoundError):
 
 from optimade.adapters import Structure
 from optimade.models import LinksResourceAttributes
-from optimade.models.utils import CHEMICAL_SYMBOLS
+from optimade.models.utils import CHEMICAL_SYMBOLS, SemanticVersion
 
 from aiidalab_optimade.exceptions import BadResource, QueryError
 from aiidalab_optimade.logger import LOGGER
@@ -38,7 +38,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 ):
     """Structure search and import widget for OPTIMADE
 
-    NOTE: Only supports offset-pagination at the moment.
+    NOTE: Only supports offset- and number-pagination at the moment.
     """
 
     structure = traitlets.Instance(Structure, allow_none=True)
@@ -50,8 +50,12 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def __init__(self, result_limit: int = None, **kwargs):
         self.page_limit = result_limit if result_limit else 10
         self.offset = 0
+        self.number = 1
+        self._data_available = None
         self.__perform_query = True
         self.__cached_ranges = {}
+        self.__cached_versions = {}
+        self.database_version = ""
 
         self.filter_header = ipw.HTML(
             '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
@@ -78,7 +82,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
         self.structure_page_chooser = ResultsPageChooser(self.page_limit)
         self.structure_page_chooser.observe(
-            self._get_more_results, names=["page_offset", "page_link"]
+            self._get_more_results, names=["page_link", "page_offset", "page_number"]
         )
 
         super().__init__(
@@ -108,6 +112,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.freeze()
         else:
             self.offset = 0
+            self.number = 1
             self.structure_page_chooser.silent_reset()
             try:
                 self.freeze()
@@ -117,6 +122,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.query_button.tooltip = "Updating filters ..."
 
                 self._set_intslider_ranges()
+                self._set_version()
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.error(
                     "Exception raised during setting IntSliderRanges: %s",
@@ -139,11 +145,14 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.structure = chosen_structure["structure"]
 
     def _get_more_results(self, change):
-        """Query for more results according to page_offset"""
-        offset_or_link: Union[int, str] = change["new"]
-        if isinstance(offset_or_link, int):
-            self.offset = offset_or_link
-            offset_or_link = None
+        """Query for more results according to pageing"""
+        pageing: Union[int, str] = change["new"]
+        if change["name"] == "page_offset":
+            self.offset = pageing
+            pageing = None
+        elif change["name"] == "page_number":
+            self.number = pageing
+            pageing = None
         else:
             # It is needed to update page_offset, but we do not wish to query again
             with self.hold_trait_notifications():
@@ -165,7 +174,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.query_button.tooltip = "Please wait ..."
 
             # Query database
-            response = self._query(offset_or_link)
+            response = self._query(pageing)
             msg, _ = handle_errors(response)
             if msg:
                 self.error_or_status_messages.value = msg
@@ -202,12 +211,66 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def reset(self):
         """Reset widget"""
         self.offset = 0
+        self.number = 1
         with self.hold_trait_notifications():
             self.query_button.disabled = False
             self.query_button.tooltip = "Search - No database chosen"
             self.filters.reset()
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+
+    def _uses_new_structure_features(self) -> bool:
+        """Check whether self.database_version is >= v1.0.0-rc.2"""
+        critical_version = SemanticVersion("1.0.0-rc.2")
+        version = SemanticVersion(self.database_version)
+
+        LOGGER.debug("Semantic version: %r", version)
+
+        if version.base_version > critical_version.base_version:
+            return True
+
+        if version.base_version == critical_version.base_version:
+            if version.prerelease:
+                return version.prerelease >= critical_version.prerelease
+
+            # Version is bigger than critical version and is not a pre-release
+            return True
+
+        # Major.Minor.Patch is lower than critical version
+        return False
+
+    def _set_version(self):
+        """Set self.database_version from an /info query"""
+        base_url = self.database[1].base_url
+        if base_url not in self.__cached_versions:
+            # Retrieve and cache version
+            response = perform_optimade_query(
+                base_url=self.database[1].base_url, endpoint="/info"
+            )
+            msg, _ = handle_errors(response)
+            if msg:
+                raise QueryError(msg)
+
+            if "meta" not in response:
+                raise QueryError(
+                    f"'meta' field not found in /info endpoint for base URL: {base_url}"
+                )
+            if "api_version" not in response["meta"]:
+                raise QueryError(
+                    f"'api_version' field not found in 'meta' for base URL: {base_url}"
+                )
+
+            version = response["meta"]["api_version"]
+            if version.startswith("v"):
+                version = version[1:]
+            self.__cached_versions[base_url] = version
+            LOGGER.debug(
+                "Cached version %r for base URL: %r",
+                self.__cached_versions[base_url],
+                base_url,
+            )
+
+        self.database_version = self.__cached_versions[base_url]
 
     def _set_intslider_ranges(self):
         """Update IntRangeSlider ranges according to chosen database
@@ -324,9 +387,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             return response
 
         # Avoid structures with null positions and with assemblies.
-        add_to_filter = (
-            'NOT structure_features HAS ANY "unknown_positions","assemblies"'
-        )
+        add_to_filter = 'NOT structure_features HAS ANY "assemblies"'
+        if not self._uses_new_structure_features():
+            add_to_filter += ',"unknown_positions"'
 
         optimade_filter = self.filters.collect_value()
         optimade_filter = (
@@ -342,6 +405,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             "filter": optimade_filter,
             "page_limit": self.page_limit,
             "page_offset": self.offset,
+            "page_number": self.number,
         }
         LOGGER.debug(
             "Parameters (excluding filter) sent to query util func: %s",
@@ -386,6 +450,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
         self.offset = 0
+        self.number = 1
         try:
             # Freeze and disable list of structures in dropdown widget
             # We don't want changes leading to weird things happening prior to the query ending
@@ -411,9 +476,16 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self._update_structures(response["data"])
 
             # Update pageing
-            data_returned = response.get("meta", {}).get("data_returned", 0)
+            if self._data_available is None:
+                self._data_available = response.get("meta", {}).get(
+                    "data_available", None
+                )
+            data_returned = response.get("meta", {}).get(
+                "data_returned", len(response.get("data", []))
+            )
             self.structure_page_chooser.set_pagination_data(
                 data_returned=data_returned,
+                data_available=self._data_available,
                 links_to_page=response.get("links", {}),
                 reset_cache=True,
             )
