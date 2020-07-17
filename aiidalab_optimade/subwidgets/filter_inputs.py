@@ -316,7 +316,7 @@ class FilterInputParser:
     def elements(value: str) -> str:
         """Check against optimade-python-tools list of elememnts"""
         results = []
-        symbols = re.findall(r",?\s*[\"']?\w*[\"']?,?\s*", value)
+        symbols = re.findall(r",?\s*[\"']?([A-Za-z]+)[\"']?,?\s*", value)
         for symbol in symbols:
             if symbol == "":
                 continue
