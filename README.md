@@ -44,7 +44,7 @@ Then you can filter to find a family of structures according to elements, number
 See the [OPTIMADE API specification](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list of filter options and their description.
 
 In order to delve deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.  
-See the notebook [`OPTIMADE Client.ipynb`]("OPTIMADE Client.ipynb") for an example of how to set up a general purpose OPTIMADE importer.
+See the notebook [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
 
 ### Embedded
 
@@ -57,7 +57,7 @@ Everything else works the same - so you would still have to link up the query wi
 
 Note, you will need to `pip install` the package before being able to run the application.
 
-To run the notebook [`OPTIMADE Client.ipynb`]("OPTIMADE Client.ipynb") you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
+To run the notebook [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
 
 The notebook will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
