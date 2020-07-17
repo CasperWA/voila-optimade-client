@@ -1,11 +1,11 @@
 # OPTIMADE client (in Jupyter)
 
 [![Materials Cloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/aiidalab/aiidalab-optimade/v3/docs/resources/mcloud_badge.json)](https://dev-tools.materialscloud.org/optimadeclient/)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE_general.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE%20Client.ipynb)
 
 Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, ODBX, OQMD, and more ...).
 
-Current supported OPTIMADE API versions: `1.0.0-rc.2`, `1.0.0-rc.1`, `0.10.1`
+Current supported OPTIMADE API versions: `1.0.0`, `1.0.0-rc.2`, `1.0.0-rc.1`, `0.10.1`
 
 ## Installation
 
@@ -13,7 +13,7 @@ This Jupyter-based app is intended to run either:
 
 - In [AiiDA lab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine;
 - As a [Materials Cloud tool](https://dev-tools.materialscloud.org/optimadeclient/);
-- As a standalone [MyBinder application](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE_general.ipynb); or
+- As a standalone [MyBinder application](https://mybinder.org/v2/gh/aiidalab/aiidalab-optimade/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE%20Client.ipynb); or
 - As a standalone local application (see more information about this below).
 
 For AiiDA lab, Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
@@ -44,7 +44,7 @@ Then you can filter to find a family of structures according to elements, number
 See the [OPTIMADE API specification](https://github.com/Materials-Consortia/OPTiMaDe/blob/master/optimade.rst) for the full list of filter options and their description.
 
 In order to delve deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.  
-See the notebook [`OPTIMADE_general.ipynb`](OPTIMADE_general.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
+See the notebook [`OPTIMADE Client.ipynb`]("OPTIMADE Client.ipynb") for an example of how to set up a general purpose OPTIMADE importer.
 
 ### Embedded
 
@@ -57,7 +57,7 @@ Everything else works the same - so you would still have to link up the query wi
 
 Note, you will need to `pip install` the package before being able to run the application.
 
-To run the notebook [`OPTIMADE_general.ipynb`](OPTIMADE_general.ipynb) you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
+To run the notebook [`OPTIMADE Client.ipynb`]("OPTIMADE Client.ipynb") you can simply run [`run.sh`](run.sh) in a terminal and go to the printed URL (usually <http://localhost:8866>).
 
 The notebook will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
@@ -85,7 +85,7 @@ $ jupyter --config-dir
 Example of passing configurations when you start the Voilà server using the CLI:
 
 ```shell
-$ voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 OPTIMADE_general.ipynb
+$ voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 "OPTIMADE Client.ipynb"
 ...
 [Voila] Voila is running at:
 http://localhost:8866/
