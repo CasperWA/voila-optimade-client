@@ -12,7 +12,7 @@ setup(
     author="The AiiDA Lab team",
     python_requires=">=3.6",
     install_requires=[
-        "optimade~=0.9.8",
+        "optimade~=0.10.0",
         "requests~=2.24",
         "jupyterlab~=2.2",
         "ipywidgets~=7.5",
