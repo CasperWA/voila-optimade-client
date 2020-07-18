@@ -4,9 +4,9 @@ from typing import Dict, List, Union, Tuple, Callable, Any
 import ipywidgets as ipw
 import traitlets
 
-from widget_periodictable import PTableWidget
-
 from optimade.models.utils import CHEMICAL_SYMBOLS
+
+from widget_periodictable import PTableWidget
 
 from aiidalab_optimade.exceptions import ParserError
 from aiidalab_optimade.logger import LOGGER
@@ -165,13 +165,15 @@ class FilterInput(ipw.HBox):
         except AttributeError:
             try:
                 # Periodic Table
-                res = [
-                    (element, state)
-                    for element, state in zip(
-                        self.input_widget.selected_elements,
-                        self.input_widget.selected_states,
-                    )
-                ]
+                LOGGER.debug(
+                    "Trying if periodic table. input_widget.selected_elements = %r",
+                    getattr(
+                        self.input_widget,
+                        "selected_elements",
+                        "Attribute does not exist",
+                    ),
+                )
+                res = self.input_widget.selected_elements
             except AttributeError:
                 raise ParserError(
                     msg="Correct attribute can not be found to retrieve widget value",
@@ -332,11 +334,11 @@ class FilterInputParser:
         return self.ranged_int("nelements", value)
 
     @staticmethod
-    def elements(value: List[Tuple[str, int]]) -> Union[List[str], List[Tuple[str]]]:
+    def elements(value: Dict[str, int]) -> Union[List[str], List[Tuple[str]]]:
         """Extract included and excluded elements"""
         include = []
         exclude = []
-        for element, state in value:
+        for element, state in value.items():
             if state == 0:
                 # Include
                 include.append(element)
