@@ -1,4 +1,3 @@
-import re
 from typing import Dict, List, Union, Tuple, Callable, Any
 
 import ipywidgets as ipw
@@ -6,10 +5,9 @@ import traitlets
 
 from optimade.models.utils import CHEMICAL_SYMBOLS
 
-from widget_periodictable import PTableWidget
-
 from aiidalab_optimade.exceptions import ParserError
 from aiidalab_optimade.logger import LOGGER
+from aiidalab_optimade.subwidgets.periodic_table import PeriodicTable
 
 
 __all__ = ("FilterTabs",)
@@ -160,25 +158,12 @@ class FilterInput(ipw.HBox):
     def get_user_input(self):
         """The Widget.value"""
         try:
-            # IPyWidget
             res = self.input_widget.value
         except AttributeError:
-            try:
-                # Periodic Table
-                LOGGER.debug(
-                    "Trying if periodic table. input_widget.selected_elements = %r",
-                    getattr(
-                        self.input_widget,
-                        "selected_elements",
-                        "Attribute does not exist",
-                    ),
-                )
-                res = self.input_widget.selected_elements
-            except AttributeError:
-                raise ParserError(
-                    msg="Correct attribute can not be found to retrieve widget value",
-                    extras=[("Widget", self.input_widget)],
-                )
+            raise ParserError(
+                msg="Correct attribute can not be found to retrieve widget value",
+                extras=[("Widget", self.input_widget)],
+            )
         return res
 
     def reset(self):
@@ -208,13 +193,14 @@ class FilterInputParser:
 
     def __default__(self, value: Any) -> Any:  # pylint: disable=no-self-use
         """Default parsing fallback function"""
-        return value
+        return value, None
 
     def parse(self, key: str, value: Any) -> Any:
         """Reroute to self.<key>(value)"""
         if isinstance(value, str):
             # Remove any superfluous whitespace at the beginning and end of string values
             value = value.strip()
+
         func = getattr(self, key, None)
         if func is None:
             return self.__default__(value)
@@ -224,7 +210,8 @@ class FilterInputParser:
     def chemical_formula_descriptive(value: str) -> str:
         """Chemical formula descriptive is a free form input"""
         value = value.replace('"', "")
-        return f'"{value}"' if value else ""
+        res = f'"{value}"' if value else ""
+        return res, None
 
     @staticmethod
     def dimension_types(value: str) -> str:
@@ -235,7 +222,7 @@ class FilterInputParser:
             "2": "ALL 0,1",  # [1,0,1] not working at the moment
             "3": "0",  # [1,1,1]
         }
-        return mapping.get(value, value)
+        return mapping.get(value, value), None
 
     @staticmethod
     def lattice_vectors(value: str) -> str:
@@ -256,57 +243,57 @@ class FilterInputParser:
         # for vector in re.finditer(f"{wrappers[0]}.*{wrappers[1]}", value):
         #     vector.
 
-    @staticmethod
-    def operator_and_integer(field: str, value: str) -> str:
-        """Handle operator for values with integers and a possible operator prefixed"""
-        LOGGER.debug(
-            "Parsing input with operator_and_integer. <field: %r>, <value: %r>",
-            field,
-            value,
-        )
+    # @staticmethod
+    # def operator_and_integer(field: str, value: str) -> str:
+    #     """Handle operator for values with integers and a possible operator prefixed"""
+    #     LOGGER.debug(
+    #         "Parsing input with operator_and_integer. <field: %r>, <value: %r>",
+    #         field,
+    #         value,
+    #     )
 
-        match_operator = re.findall(r"[<>]?=?", value)
-        match_no_operator = re.findall(r"^\s*[0-9]+", value)
+    #     match_operator = re.findall(r"[<>]?=?", value)
+    #     match_no_operator = re.findall(r"^\s*[0-9]+", value)
 
-        LOGGER.debug(
-            "Finding all operators (or none):\nmatch_operator: %r\nmatch_no_operator: %r",
-            match_operator,
-            match_no_operator,
-        )
+    #     LOGGER.debug(
+    #         "Finding all operators (or none):\nmatch_operator: %r\nmatch_no_operator: %r",
+    #         match_operator,
+    #         match_no_operator,
+    #     )
 
-        if match_operator and any(match_operator):
-            match_operator = [_ for _ in match_operator if _]
-            if len(match_operator) != 1:
-                raise ParserError(
-                    "Multiple values given with operators.",
-                    field,
-                    value,
-                    extras=("match_operator", match_operator),
-                )
-            number = re.findall(r"[0-9]+", value)[0]
-            operator = match_operator[0].replace(r"\s*", "")
-            return f"{operator}{number}"
-        if match_no_operator and any(match_no_operator):
-            match_no_operator = [_ for _ in match_no_operator if _]
-            if len(match_no_operator) != 1:
-                raise ParserError(
-                    "Multiple values given, must be an integer, "
-                    "either with or without an operator prefixed.",
-                    field,
-                    value,
-                    extras=("match_no_operator", match_no_operator),
-                )
-            result = match_no_operator[0].replace(r"\s*", "")
-            return f"={result}"
-        raise ParserError(
-            "Not proper input. Should be, e.g., '>=3' or '5'",
-            field,
-            value,
-            extras=[
-                ("match_operator", match_operator),
-                ("match_no_operator", match_no_operator),
-            ],
-        )
+    #     if match_operator and any(match_operator):
+    #         match_operator = [_ for _ in match_operator if _]
+    #         if len(match_operator) != 1:
+    #             raise ParserError(
+    #                 "Multiple values given with operators.",
+    #                 field,
+    #                 value,
+    #                 extras=("match_operator", match_operator),
+    #             )
+    #         number = re.findall(r"[0-9]+", value)[0]
+    #         operator = match_operator[0].replace(r"\s*", "")
+    #         return f"{operator}{number}"
+    #     if match_no_operator and any(match_no_operator):
+    #         match_no_operator = [_ for _ in match_no_operator if _]
+    #         if len(match_no_operator) != 1:
+    #             raise ParserError(
+    #                 "Multiple values given, must be an integer, "
+    #                 "either with or without an operator prefixed.",
+    #                 field,
+    #                 value,
+    #                 extras=("match_no_operator", match_no_operator),
+    #             )
+    #         result = match_no_operator[0].replace(r"\s*", "")
+    #         return f"={result}"
+    #     raise ParserError(
+    #         "Not proper input. Should be, e.g., '>=3' or '5'",
+    #         field,
+    #         value,
+    #         extras=[
+    #             ("match_operator", match_operator),
+    #             ("match_no_operator", match_no_operator),
+    #         ],
+    #     )
 
     @staticmethod
     def ranged_int(field: str, value: Tuple[int, int]) -> str:
@@ -327,18 +314,23 @@ class FilterInputParser:
 
     def nsites(self, value: Tuple[int, int]) -> Union[List[str], str]:
         """Operator with integer values"""
-        return self.ranged_int("nsites", value)
+        return self.ranged_int("nsites", value), None
 
     def nelements(self, value: Tuple[int, int]) -> Union[List[str], str]:
         """Operator with integer values"""
-        return self.ranged_int("nelements", value)
+        return self.ranged_int("nelements", value), None
 
     @staticmethod
-    def elements(value: Dict[str, int]) -> Union[List[str], List[Tuple[str]]]:
+    def elements(
+        value: Tuple[bool, Dict[str, int]]
+    ) -> Tuple[Union[List[str], List[Tuple[str]]], bool]:
         """Extract included and excluded elements"""
+        use_all = value[0]
+        ptable_value = value[1]
+
         include = []
         exclude = []
-        for element, state in value.items():
+        for element, state in ptable_value.items():
             if state == 0:
                 # Include
                 include.append(element)
@@ -361,26 +353,13 @@ class FilterInputParser:
             include_elements = ",".join([f'"{element}"' for element in include])
             res.append(include_elements)
 
-        LOGGER.debug("elements: Resulting parsed value: %r", res)
+        operator = " HAS ALL " if use_all else " HAS ANY "
 
-        return res
+        LOGGER.debug(
+            "elements: Resulting parsed operator: %r and value: %r", operator, res
+        )
 
-    # @staticmethod
-    # def elements(value: str) -> str:
-    #     """Check against optimade-python-tools list of elememnts"""
-    #     results = []
-    #     symbols = re.findall(r",?\s*[\"']?([A-Za-z]+)[\"']?,?\s*", value)
-    #     for symbol in symbols:
-    #         if symbol == "":
-    #             continue
-    #         escaped_symbol = symbol.strip().replace(r"\W", "")
-    #         escaped_symbol = escaped_symbol.capitalize()
-    #         if escaped_symbol not in CHEMICAL_SYMBOLS:
-    #             raise ParserError(
-    #                 f"{escaped_symbol} is not a valid element.", "elements", value
-    #             )
-    #         results.append(escaped_symbol)
-    #     return ",".join([f'"{symbol}"' for symbol in results])
+        return res, operator
 
 
 class FilterInputs(FilterTabSection):
@@ -404,7 +383,7 @@ class FilterInputs(FilterTabSection):
                     "elements",
                     {
                         "description": "Elements",
-                        "input_widget": PTableWidget,
+                        "input_widget": PeriodicTable,
                         "states": 2,  # Included/Excluded
                         "unselected_color": "#5096f1",  # Blue
                         "selected_colors": ["#66BB6A", "#EF5350"],  # Green, red
@@ -466,11 +445,8 @@ class FilterInputs(FilterTabSection):
 
     OPERATOR_MAP = {
         "chemical_formula_descriptive": " CONTAINS ",
-        "elements": " HAS ANY ",
-        "nelements": "",
         "dimension_types": " HAS ",
         "lattice_vectors": " HAS ANY ",
-        "nsites": "",
         "id": "=",
     }
 
@@ -583,16 +559,21 @@ class FilterInputs(FilterTabSection):
         user_inputs.insert(0, header)
         return ipw.VBox(children=user_inputs, layout=self._layout)
 
-    def collect_value(self) -> str:
+    def _collect_value(self) -> str:
         """Collect inputs to a single OPTIMADE filter query string"""
         parser = FilterInputParser()
 
         result = []
         for field, user_input in self.query_fields.items():
-            parsed_value = parser.parse(field, user_input.get_user_input)
+            parsed_value, parsed_operator = parser.parse(
+                field, user_input.get_user_input
+            )
             if not parsed_value:
                 # If the parsed value results in an empty value, skip field
                 continue
+            if not parsed_operator:
+                # Use default operator if none is parsed
+                parsed_operator = self.OPERATOR_MAP.get(field, "")
 
             if isinstance(parsed_value, (list, tuple, set)):
                 for value in parsed_value:
@@ -602,11 +583,11 @@ class FilterInputs(FilterTabSection):
                         value = value[1]
                     result.append(
                         f"{inverse}{self.FIELD_MAP.get(field, field)}"
-                        f"{self.OPERATOR_MAP[field]}{value}"
+                        f"{parsed_operator}{value}"
                     )
             elif isinstance(parsed_value, str):
                 result.append(
-                    f"{self.FIELD_MAP.get(field, field)}{self.OPERATOR_MAP[field]}{parsed_value}"
+                    f"{self.FIELD_MAP.get(field, field)}{parsed_operator}{parsed_value}"
                 )
             else:
                 raise ParserError(
@@ -619,6 +600,22 @@ class FilterInputs(FilterTabSection):
 
         result = " AND ".join(result)
         return result.replace("'", '"')  # OPTIMADE Filter grammar only supports " not '
+
+    def collect_value(self) -> str:
+        """Collect inputs, while reporting if an error occurs"""
+        try:
+            res = self._collect_value()
+        except ParserError:
+            raise
+        except Exception as exc:
+            import traceback
+
+            raise ParserError(
+                msg=f"An exception occurred during collection of filter inputs: {exc!r}",
+                extras=("traceback", traceback.print_tb(exc.__traceback__)),
+            )
+        else:
+            return res
 
     def on_submit(self, callback, remove=False):
         """(Un)Register a callback to handle user input submission"""
