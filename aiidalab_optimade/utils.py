@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
 from urllib.parse import urlencode
@@ -27,7 +28,13 @@ __optimade_version__ = ["1.0.0", "1.0.0-rc.2", "1.0.0-rc.1", "0.10.1", "0.10.0"]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
 
-PROVIDERS_URL = "https://providers.optimade.org/v1"
+PROVIDERS_URLS = [
+    "https://providers.optimade.org/v1/links",
+    "https://raw.githubusercontent.com/Materials-Consortia/providers/master/src"
+    "/links/v1/providers.json",
+]
+
+CACHED_PROVIDERS = Path(__file__).parent.resolve().joinpath("cached_providers.json")
 
 
 def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -47,7 +54,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
 
     if endpoint is None:
         endpoint = "/structures"
-    else:
+    elif endpoint:
         # Make sure we supply the correct slashed format no matter the input
         endpoint = f"/{endpoint.strip('/')}"
 
@@ -101,7 +108,10 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
         return {
             "errors": [
                 {
-                    "detail": f"CLIENT: Connection error or timeout.\nURL: {complete_url}\nException: {exc!r}",
+                    "detail": (
+                        f"CLIENT: Connection error or timeout.\nURL: {complete_url}\n"
+                        f"Exception: {exc!r}"
+                    )
                 }
             ]
         }
@@ -112,7 +122,10 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
         return {
             "errors": [
                 {
-                    "detail": f"CLIENT: Cannot decode response to JSON format.\nURL: {complete_url}\nException: {exc!r}",
+                    "detail": (
+                        f"CLIENT: Cannot decode response to JSON format.\nURL: {complete_url}\n"
+                        f"Exception: {exc!r}"
+                    )
                 }
             ]
         }
@@ -120,22 +133,76 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     return response
 
 
-def fetch_providers(providers_url: str = None) -> list:
+def update_local_providers_json(response: dict) -> None:
+    """Update local `providers.json` if necessary"""
+    # Remove dynamic fields
+    _response = response.copy()
+    for dynamic_field in (
+        "time_stamp",
+        "query",
+        "last_id",
+        "response_message",
+        "warnings",
+    ):
+        _response.get("meta", {}).pop(dynamic_field, None)
+
+    if CACHED_PROVIDERS.exists():
+        try:
+            with open(CACHED_PROVIDERS, "r") as handle:
+                _file_response = json.load(handle)
+        except JSONDecodeError:
+            pass
+        else:
+            if _file_response == _response:
+                LOGGER.debug("Local %r is up-to-date", CACHED_PROVIDERS.name)
+                return
+
+    LOGGER.debug(
+        "Creating/updating local file of cached providers (%r).", CACHED_PROVIDERS.name
+    )
+    with open(CACHED_PROVIDERS, "w") as handle:
+        json.dump(_response, handle)
+
+
+def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
     """ Fetch OPTIMADE database providers (from Materials-Consortia)
 
-    :param providers_url: String with versioned base URL to Materials-Consortia providers database
+    :param providers_urls: String pr list of strings with versioned base URL(s)
+        to Materials-Consortia providers database
     """
-    if providers_url and not isinstance(providers_url, str):
-        raise TypeError("providers_url must be a string")
+    if providers_urls and not isinstance(providers_urls, (list, str)):
+        raise TypeError("providers_urls must be a string or list of strings")
 
-    if not providers_url:
-        providers_url = PROVIDERS_URL
+    if not providers_urls:
+        providers_urls = PROVIDERS_URLS
+    elif not isinstance(providers_urls, list):
+        providers_urls = [providers_urls]
 
-    providers = perform_optimade_query(base_url=providers_url, endpoint="/links")
-    msg, _ = handle_errors(providers)
-    if msg:
-        return []
+    for providers_url in providers_urls:
+        providers = perform_optimade_query(base_url=providers_url, endpoint="")
+        msg, _ = handle_errors(providers)
+        if msg:
+            LOGGER.warning("%r returned error(s).", providers_url)
+        else:
+            break
+    else:
+        if CACHED_PROVIDERS.exists():
+            # Load local cached providers file
+            LOGGER.warning(
+                "Loading local, possibly outdated, list of providers (%r).",
+                CACHED_PROVIDERS.name,
+            )
+            with open(CACHED_PROVIDERS, "r") as handle:
+                providers = json.load(handle)
+        else:
+            LOGGER.error(
+                "Neither any of the provider URLs: %r returned a valid response, "
+                "and the local cached file of the latest valid response does not exist.",
+                providers_urls,
+            )
+            providers = {}
 
+    update_local_providers_json(providers)
     return providers.get("data", [])
 
 
@@ -339,7 +406,10 @@ def get_structures_schema(base_url: str) -> dict:
         return {
             "errors": [
                 {
-                    "detail": f"CLIENT: Connection error or timeout.\nURL: {url_path}\nException: {exc!r}",
+                    "detail": (
+                        f"CLIENT: Connection error or timeout.\nURL: {url_path}\n"
+                        f"Exception: {exc!r}"
+                    )
                 }
             ]
         }
