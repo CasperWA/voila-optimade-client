@@ -8,6 +8,7 @@ from optimade.models.utils import CHEMICAL_SYMBOLS
 
 from aiidalab_optimade.exceptions import ParserError
 from aiidalab_optimade.logger import LOGGER
+from aiidalab_optimade.subwidgets.multi_checkbox import MultiCheckboxes
 
 
 __all__ = ("FilterTabs",)
@@ -206,15 +207,13 @@ class FilterInputParser:
         return f'"{value}"' if value else ""
 
     @staticmethod
-    def dimension_types(value: str) -> str:
-        """Map to correct dimension_types value"""
-        mapping = {
-            "0": "1",  # [0,0,0]
-            "1": "ALL 0,1",  # [0,0,1] not working at the moment
-            "2": "ALL 0,1",  # [1,0,1] not working at the moment
-            "3": "0",  # [1,1,1]
-        }
-        return mapping.get(value, value)
+    def nperiodic_dimensions(value: List[bool]) -> List[int]:
+        """Return list of nperiodic_dimensions values according to checkbox choices"""
+        res = []
+        for include, periodicity in zip(value, range(4)):
+            if include:
+                res.append(periodicity)
+        return res
 
     @staticmethod
     def lattice_vectors(value: str) -> str:
@@ -360,10 +359,11 @@ class FilterInputs(FilterTabSection):
             "Cell",
             [
                 (
-                    "dimension_types",
+                    "nperiodic_dimensions",
                     {
-                        "description": "Dimensions",
-                        "hint": "0: Molecule, 3: Bulk, (Not supported: 1: Wire, 2: Planar)",
+                        "description": "Dimensionality",
+                        "input_widget": MultiCheckboxes,
+                        "descriptions": ["Molecule", "Wire", "Planar", "Bulk"],
                     },
                 ),
                 (
@@ -389,13 +389,11 @@ class FilterInputs(FilterTabSection):
         ),
     ]
 
-    FIELD_MAP = {"dimension_types": "NOT dimension_types"}
-
     OPERATOR_MAP = {
         "chemical_formula_descriptive": " CONTAINS ",
         "elements": " HAS ALL ",
         "nelements": "",
-        "dimension_types": " HAS ",
+        "nperiodic_dimensions": "=",
         "lattice_vectors": " HAS ANY ",
         "nsites": "",
         "id": "=",
@@ -524,14 +522,12 @@ class FilterInputs(FilterTabSection):
             if isinstance(parsed_value, (list, tuple, set)):
                 result.extend(
                     [
-                        f"{self.FIELD_MAP.get(field, field)}{self.OPERATOR_MAP[field]}{value}"
+                        f"{field}{self.OPERATOR_MAP[field]}{value}"
                         for value in parsed_value
                     ]
                 )
             elif isinstance(parsed_value, str):
-                result.append(
-                    f"{self.FIELD_MAP.get(field, field)}{self.OPERATOR_MAP[field]}{parsed_value}"
-                )
+                result.append(f"{field}{self.OPERATOR_MAP[field]}{parsed_value}")
             else:
                 raise ParserError(
                     field=field,
