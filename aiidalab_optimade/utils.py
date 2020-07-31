@@ -186,13 +186,21 @@ def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
         else:
             break
     else:
-        # Load local cached providers file
-        LOGGER.warning(
-            "Loading local, possibly outdated, list of providers (%r).",
-            CACHED_PROVIDERS.name,
-        )
-        with open(CACHED_PROVIDERS, "r") as handle:
-            providers = json.load(handle)
+        if CACHED_PROVIDERS.exists():
+            # Load local cached providers file
+            LOGGER.warning(
+                "Loading local, possibly outdated, list of providers (%r).",
+                CACHED_PROVIDERS.name,
+            )
+            with open(CACHED_PROVIDERS, "r") as handle:
+                providers = json.load(handle)
+        else:
+            LOGGER.error(
+                "Neither any of the provider URLs: %r returned a valid response, "
+                "and the local cached file of the latest valid response does not exist.",
+                providers_urls,
+            )
+            providers = {}
 
     update_local_providers_json(providers)
     return providers.get("data", [])
