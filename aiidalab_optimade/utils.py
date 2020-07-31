@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
 from urllib.parse import urlencode
@@ -32,6 +33,8 @@ PROVIDERS_URLS = [
     "https://raw.githubusercontent.com/Materials-Consortia/providers/master/src"
     "/links/v1/providers.json",
 ]
+
+CACHED_PROVIDERS = Path(__file__).parent.resolve().joinpath("cached_providers.json")
 
 
 def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -130,6 +133,37 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     return response
 
 
+def update_local_providers_json(response: dict) -> None:
+    """Update local `providers.json` if necessary"""
+    # Remove dynamic fields
+    _response = response.copy()
+    for dynamic_field in (
+        "time_stamp",
+        "query",
+        "last_id",
+        "response_message",
+        "warnings",
+    ):
+        _response.get("meta", {}).pop(dynamic_field, None)
+
+    if CACHED_PROVIDERS.exists():
+        try:
+            with open(CACHED_PROVIDERS, "r") as handle:
+                _file_response = json.load(handle)
+        except JSONDecodeError:
+            pass
+        else:
+            if _file_response == _response:
+                LOGGER.debug("Local %r is up-to-date", CACHED_PROVIDERS.name)
+                return
+
+    LOGGER.debug(
+        "Creating/updating local file of cached providers (%r).", CACHED_PROVIDERS.name
+    )
+    with open(CACHED_PROVIDERS, "w") as handle:
+        json.dump(_response, handle)
+
+
 def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
     """ Fetch OPTIMADE database providers (from Materials-Consortia)
 
@@ -152,10 +186,15 @@ def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
         else:
             break
     else:
-        # Load local `provider.json` file
-        LOGGER.warning("Loading local, possibly outdated, list of providers.")
-        return []
+        # Load local cached providers file
+        LOGGER.warning(
+            "Loading local, possibly outdated, list of providers (%r).",
+            CACHED_PROVIDERS.name,
+        )
+        with open(CACHED_PROVIDERS, "r") as handle:
+            providers = json.load(handle)
 
+    update_local_providers_json(providers)
     return providers.get("data", [])
 
 
@@ -359,7 +398,10 @@ def get_structures_schema(base_url: str) -> dict:
         return {
             "errors": [
                 {
-                    "detail": f"CLIENT: Connection error or timeout.\nURL: {url_path}\nException: {exc!r}",
+                    "detail": (
+                        f"CLIENT: Connection error or timeout.\nURL: {url_path}\n"
+                        f"Exception: {exc!r}"
+                    )
                 }
             ]
         }
