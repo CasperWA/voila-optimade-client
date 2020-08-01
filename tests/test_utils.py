@@ -2,11 +2,21 @@ from aiidalab_optimade import utils
 
 
 def test_fetch_providers_wrong_url():
-    """Test when fetch_providers is provided a wrong URL"""
+    """Test when fetch_providers is provided a wrong URL
+
+    It should now return at the very least the cached list of providers
+    """
+    import json
+
     wrong_url = "https://this.is.a.wrong.url"
 
-    providers = utils.fetch_providers(providers_url=wrong_url)
-    assert providers == []
+    providers = utils.fetch_providers(providers_urls=wrong_url)
+    if utils.CACHED_PROVIDERS.exists():
+        with open(utils.CACHED_PROVIDERS, "r") as handle:
+            providers_file = json.load(handle)
+        assert providers == providers_file.get("data", [])
+    else:
+        assert providers == []
 
 
 def test_fetch_providers_content():

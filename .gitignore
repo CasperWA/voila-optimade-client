@@ -12,3 +12,6 @@
 
 # logging
 optimade_client.log*
+
+# cache
+cached_providers.json
