@@ -23,7 +23,7 @@ setup(
     license="MIT License",
     author="Casper Welzel Andersen",
     python_requires=">=3.6",
-    install_requires=["optimade~=0.10.0"],
+    install_requires=["optimade>=0.10,<0.12"],
     extras_require={"dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",

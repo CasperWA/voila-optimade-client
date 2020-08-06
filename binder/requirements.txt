@@ -1,4 +1,4 @@
-optimade~=0.10.0
+optimade~=0.11.0
 requests~=2.24
 jupyterlab~=2.2
 ipywidgets~=7.5
