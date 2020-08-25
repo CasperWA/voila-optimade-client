@@ -1,8 +1,19 @@
+from pathlib import Path
 from setuptools import setup, find_packages
 
-AIIDALAB = ["aiidalab-widgets-base~=1.0.0b2"]
-TESTING = ["pytest", "pytest-cov", "codecov"]
-DEV = ["pylint", "black", "pre-commit", "invoke"] + TESTING
+MODULE_DIR = Path(__file__).resolve().parent
+
+with open(MODULE_DIR.joinpath("requirements.txt")) as handle:
+    REQUIREMENTS = [f"{_.strip()}" for _ in handle.readlines()]
+
+with open(MODULE_DIR.joinpath("requirements_aiidalab.txt")) as handle:
+    AIIDALAB = [f"{_.strip()}" for _ in handle.readlines()]
+
+with open(MODULE_DIR.joinpath("requirements_testing.txt")) as handle:
+    TESTING = [f"{_.strip()}" for _ in handle.readlines()]
+
+with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
+    DEV = [f"{_.strip()}" for _ in handle.readlines()] + TESTING
 
 setup(
     name="aiidalab-optimade",
@@ -11,18 +22,7 @@ setup(
     license="MIT Licence",
     author="The AiiDA Lab team",
     python_requires=">=3.6",
-    install_requires=[
-        "optimade~=0.11.0",
-        "requests~=2.24",
-        "jupyterlab~=2.2",
-        "ipywidgets~=7.5",
-        "nglview~=2.7",
-        "numpy~=1.19",
-        "pandas~=1.1",
-        "ase~=3.20",
-        "appmode",
-        "voila",
-    ],
+    install_requires=REQUIREMENTS,
     extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},
     classifiers=[
         "Development Status :: 4 - Beta",
