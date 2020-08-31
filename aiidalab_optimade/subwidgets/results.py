@@ -395,6 +395,4 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
 
     def silent_reset(self):
         """Reset, but avoid updating page_offset or page_link"""
-        self.set_pagination_data(
-            data_returned=0, links_to_page=None, reset_cache=True,
-        )
+        self.set_pagination_data(data_returned=0, links_to_page=None, reset_cache=True)
