@@ -152,7 +152,7 @@ class FilterInput(ipw.HBox):
             self.input_widget.placeholder = hint
 
         super().__init__(
-            children=[description, self.input_widget], layout=ipw.Layout(width="auto"),
+            children=[description, self.input_widget], layout=ipw.Layout(width="auto")
         )
 
     @property
@@ -260,7 +260,7 @@ class FilterInputParser:
                     "Multiple values given with operators.",
                     field,
                     value,
-                    extras=("match_operator", match_operator,),
+                    extras=("match_operator", match_operator),
                 )
             number = re.findall(r"[0-9]+", value)[0]
             operator = match_operator[0].replace(r"\s*", "")
@@ -273,7 +273,7 @@ class FilterInputParser:
                     "either with or without an operator prefixed.",
                     field,
                     value,
-                    extras=("match_no_operator", match_no_operator,),
+                    extras=("match_no_operator", match_no_operator),
                 )
             result = match_no_operator[0].replace(r"\s*", "")
             return f"={result}"

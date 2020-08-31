@@ -194,7 +194,10 @@ class ReportLogger(ipw.HTML):
                 truncation_length = (
                     len(message_truncation) + len(note_truncation) + len(new_line)
                 )
-                message = f"{message[:self.MAX_BYTES - truncation_length]}{note_truncation}{new_line}"
+                message = (
+                    f"{message[:self.MAX_BYTES - truncation_length]}{note_truncation}"
+                    f"{new_line}"
+                )
                 break
 
             if not self._truncated:
@@ -296,7 +299,7 @@ WIDGET_FORMATTER = ColoredFormatter(
 WIDGET_HANDLER.setFormatter(WIDGET_FORMATTER)
 
 REPORT_FORMATTER = logging.Formatter(  # Minimize and mimic FILE_FORMATTER
-    "[%(levelname)s %(asctime)s %(filename)s:%(lineno)d] %(message)s", "%H:%M:%S",
+    "[%(levelname)s %(asctime)s %(filename)s:%(lineno)d] %(message)s", "%H:%M:%S"
 )
 REPORT_HANDLER.setFormatter(REPORT_FORMATTER)
 

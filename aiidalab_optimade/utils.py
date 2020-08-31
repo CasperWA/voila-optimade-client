@@ -165,7 +165,7 @@ def update_local_providers_json(response: dict) -> None:
 
 
 def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
-    """ Fetch OPTIMADE database providers (from Materials-Consortia)
+    """Fetch OPTIMADE database providers (from Materials-Consortia)
 
     :param providers_urls: String pr list of strings with versioned base URL(s)
         to Materials-Consortia providers database
@@ -315,7 +315,7 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
 
 
 def get_list_of_valid_providers() -> List[Tuple[str, LinksResourceAttributes]]:
-    """ Get curated list of database providers
+    """Get curated list of database providers
 
     Return formatted list of tuples to use with a dropdown-widget.
     """
@@ -555,7 +555,7 @@ def check_entry_properties(
                 res.remove(field)
 
     LOGGER.debug(
-        "sortable fields found for %s (looking for %r): %r", base_url, properties, res,
+        "sortable fields found for %s (looking for %r): %r", base_url, properties, res
     )
     return res
 
