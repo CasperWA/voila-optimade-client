@@ -10,6 +10,7 @@ except (ImportError, ModuleNotFoundError):
 
 from json import JSONDecodeError
 
+import appdirs
 from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
@@ -34,7 +35,11 @@ PROVIDERS_URLS = [
     "/links/v1/providers.json",
 ]
 
-CACHED_PROVIDERS = Path(__file__).parent.resolve().joinpath("cached_providers.json")
+AUTHOR = "AiiDAlab Team"
+
+CACHED_PROVIDERS = Path(appdirs.user_cache_dir("OPTIMADE", AUTHOR)).joinpath(
+    "cached_providers.json"
+)
 
 
 def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
@@ -160,6 +165,7 @@ def update_local_providers_json(response: dict) -> None:
     LOGGER.debug(
         "Creating/updating local file of cached providers (%r).", CACHED_PROVIDERS.name
     )
+    CACHED_PROVIDERS.parent.mkdir(parents=True, exist_ok=True)
     with open(CACHED_PROVIDERS, "w") as handle:
         json.dump(_response, handle)
 
