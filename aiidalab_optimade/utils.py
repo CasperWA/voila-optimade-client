@@ -10,6 +10,7 @@ except (ImportError, ModuleNotFoundError):
 
 from json import JSONDecodeError
 
+import appdirs
 from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
@@ -34,7 +35,12 @@ PROVIDERS_URLS = [
     "/links/v1/providers.json",
 ]
 
-CACHED_PROVIDERS = Path(__file__).parent.resolve().joinpath("cached_providers.json")
+APP_NAME = "OPTIMADE"
+APP_AUTHOR = "AiiDAlab Team"
+
+CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+CACHED_PROVIDERS = CACHE_DIR / "cached_providers.json"
 
 
 def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
