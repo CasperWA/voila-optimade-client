@@ -7,6 +7,7 @@ from .informational import OptimadeClientFAQ, HeaderDescription, OptimadeLog
 from .query_provider import OptimadeQueryProviderWidget
 from .query_filter import OptimadeQueryFilterWidget
 from .summary import OptimadeSummaryWidget
+from .version import __version__
 
 
 __all__ = (
@@ -17,4 +18,3 @@ __all__ = (
     "OptimadeQueryFilterWidget",
     "OptimadeSummaryWidget",
 )
-__version__ = "1.0.0"

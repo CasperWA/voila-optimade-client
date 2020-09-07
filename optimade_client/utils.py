@@ -22,6 +22,7 @@ from optimade_client.exceptions import (
     InputError,
 )
 from optimade_client.logger import LOGGER
+from optimade_client.version import APP_NAME, APP_AUTHOR
 
 
 # Supported OPTIMADE spec versions
@@ -34,9 +35,6 @@ PROVIDERS_URLS = [
     "https://raw.githubusercontent.com/Materials-Consortia/providers/master/src"
     "/links/v1/providers.json",
 ]
-
-APP_NAME = "OPTIMADE"
-APP_AUTHOR = "CasperWA"
 
 CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)

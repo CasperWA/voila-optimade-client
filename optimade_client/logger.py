@@ -1,11 +1,22 @@
 """Logging to both file and widget"""
 import logging
 import os
+from pathlib import Path
 from typing import List
 import urllib.parse
 import warnings
 
+import appdirs
 import ipywidgets as ipw
+
+from optimade_client.version import APP_NAME, APP_AUTHOR
+
+
+LOG_DIR = Path(appdirs.user_log_dir(APP_NAME, APP_AUTHOR))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+LOG_FILE = LOG_DIR / "optimade_client.log"
+
 
 # This coloring formatter is inspired heavily from:
 # https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
@@ -269,7 +280,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 # Save a file with all messages (DEBUG level)
 FILE_HANDLER = logging.handlers.RotatingFileHandler(
-    "optimade_client.log", maxBytes=1000000, backupCount=5
+    LOG_FILE, maxBytes=1000000, backupCount=5
 )
 FILE_HANDLER.setLevel(logging.DEBUG)
 
