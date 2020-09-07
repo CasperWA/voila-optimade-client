@@ -9,4 +9,4 @@ pytest~=6.0
 pytest-cov~=2.10
 requests~=2.24
 pandas~=1.1
-voila~=0.1.22
+voila~=0.1.23
