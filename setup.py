@@ -14,7 +14,7 @@ with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
 
 setup(
     name="aiidalab-optimade",
-    version="3.3.1",
+    version="3.3.2",
     packages=find_packages(),
     license="MIT License",
     author="Casper Welzel Andersen",
