@@ -36,7 +36,7 @@ def update_version(_, patch=False, ver=""):
         new_ver = ".".join(map(str, ver))
 
     update_file(
-        TOP_DIR.joinpath("aiidalab_optimade/__init__.py"),
+        TOP_DIR.joinpath("aiidalab_optimade/version.py"),
         ("__version__ = .+", f'__version__ = "{new_ver}"'),
     )
     update_file(
