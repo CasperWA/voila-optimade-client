@@ -17,12 +17,14 @@ class PeriodicTable(ipw.VBox):
             layout = ipw.Layout(width="auto")
 
         self.select_any_all = ipw.Checkbox(
-            value=False, description="Exclude all unselected elements",
+            value=False,
+            description="Exclude all unselected elements",
         )
         self.ptable = PTableWidget(**kwargs)
 
         super().__init__(
-            children=(self.select_any_all, self.ptable), layout=layout,
+            children=(self.select_any_all, self.ptable),
+            layout=layout,
         )
 
     @property
