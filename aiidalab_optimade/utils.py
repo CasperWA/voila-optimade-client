@@ -22,6 +22,7 @@ from aiidalab_optimade.exceptions import (
     InputError,
 )
 from aiidalab_optimade.logger import LOGGER
+from aiidalab_optimade.version import APP_NAME, APP_AUTHOR
 
 
 # Supported OPTIMADE spec versions
@@ -35,8 +36,6 @@ PROVIDERS_URLS = [
     "/links/v1/providers.json",
 ]
 
-APP_NAME = "OPTIMADE"
-APP_AUTHOR = "AiiDAlab Team"
 
 CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)

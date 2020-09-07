@@ -8,6 +8,7 @@ from .query_provider import OptimadeQueryProviderWidget
 from .query_filter import OptimadeQueryFilterWidget
 from .query_collected import OptimadeQueryWidget
 from .summary import OptimadeSummaryWidget
+from .version import __version__
 
 
 __all__ = (
@@ -19,4 +20,3 @@ __all__ = (
     "OptimadeQueryFilterWidget",
     "OptimadeSummaryWidget",
 )
-__version__ = "3.3.1"
