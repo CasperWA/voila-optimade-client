@@ -387,6 +387,7 @@ class FilterInputs(FilterTabSection):
                         "states": 2,  # Included/Excluded
                         "unselected_color": "#5096f1",  # Blue
                         "selected_colors": ["#66BB6A", "#EF5350"],  # Green, red
+                        "border_color": "#000000",  # Black
                     },
                 ),
                 (
