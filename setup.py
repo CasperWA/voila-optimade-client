@@ -17,7 +17,7 @@ with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
 
 setup(
     name="optimade-client",
-    version="1.0.0",
+    version="2020.9.14",
     packages=find_packages(),
     license="MIT Licence",
     author="Casper Welzel Andersen",
