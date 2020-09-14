@@ -48,4 +48,9 @@ setup(
         "Topic :: Scientific/Engineering :: Physics",
         "Topic :: Software Development :: Widget Sets",
     ],
+    entry_points={
+        "console_scripts": [
+            "optimade-client = optimade_client.cli.run:cli",
+        ],
+    },
 )

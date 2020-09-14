@@ -1,4 +1,3 @@
 include requirements*.txt
 include LICENSE
-include jupyter_config.json
-include run.sh
+include optimade_client/cli/static/*.json
