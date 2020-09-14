@@ -1,1 +1,0 @@
-aiidalab-widgets-base~=1.0.0b10
