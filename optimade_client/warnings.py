@@ -1,6 +1,6 @@
 from typing import Tuple, Any
 
-from aiidalab_optimade.logger import LOGGER
+from optimade_client.logger import LOGGER
 
 
 class OptimadeClientWarning(Warning):

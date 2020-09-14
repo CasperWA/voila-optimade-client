@@ -12,14 +12,14 @@ from optimade.adapters import Structure
 from optimade.models import LinksResourceAttributes
 from optimade.models.utils import CHEMICAL_SYMBOLS, SemanticVersion
 
-from aiidalab_optimade.exceptions import BadResource, QueryError
-from aiidalab_optimade.logger import LOGGER
-from aiidalab_optimade.subwidgets import (
+from optimade_client.exceptions import BadResource, QueryError
+from optimade_client.logger import LOGGER
+from optimade_client.subwidgets import (
     StructureDropdown,
     FilterTabs,
     ResultsPageChooser,
 )
-from aiidalab_optimade.utils import (
+from optimade_client.utils import (
     perform_optimade_query,
     handle_errors,
     TIMEOUT_SECONDS,

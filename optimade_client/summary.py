@@ -18,12 +18,12 @@ except ImportError:
 
 from optimade.adapters import Structure
 
-from aiidalab_optimade import exceptions
-from aiidalab_optimade.subwidgets import (
+from optimade_client import exceptions
+from optimade_client.subwidgets import (
     StructureSummary,
     StructureSites,
 )
-from aiidalab_optimade.warnings import OptimadeClientWarning
+from optimade_client.warnings import OptimadeClientWarning
 
 
 class OptimadeSummaryWidget(ipw.VBox):

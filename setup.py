@@ -16,11 +16,11 @@ with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
     DEV = [f"{_.strip()}" for _ in handle.readlines()] + TESTING
 
 setup(
-    name="aiidalab-optimade",
-    version="3.3.1",
+    name="optimade-client",
+    version="1.0.0",
     packages=find_packages(),
     license="MIT Licence",
-    author="The AiiDA Lab team",
+    author="Casper Welzel Andersen",
     python_requires=">=3.6",
     install_requires=REQUIREMENTS,
     extras_require={"aiidalab": AIIDALAB, "dev": DEV, "testing": TESTING},

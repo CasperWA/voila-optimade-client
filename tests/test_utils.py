@@ -1,4 +1,4 @@
-from aiidalab_optimade import utils
+from optimade_client import utils
 
 
 def test_fetch_providers_wrong_url():
