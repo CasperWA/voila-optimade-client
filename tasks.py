@@ -1,11 +1,9 @@
+from datetime import date
 from pathlib import Path
 import re
-import sys
 from typing import Tuple
 
 from invoke import task
-
-from optimade_client import __version__
 
 
 TOP_DIR = Path(__file__).parent.resolve()
@@ -22,25 +20,19 @@ def update_file(filename: str, sub_line: Tuple[str, str], strip: str = None):
 
 
 @task
-def update_version(_, patch=False, ver=""):
-    """Update package version"""
-    new_ver = ver
-
-    if (not patch and not new_ver) or (patch and new_ver):
-        sys.exit(
-            "Error: Either use --patch or specify e.g. --new-ver='Major.Minor.Patch'"
-        )
-    if patch:
-        ver = [int(x) for x in __version__.split(".")]
-        ver[2] += 1
-        new_ver = ".".join(map(str, ver))
+def update_version(_, version=""):
+    """Update package version to today's date using CalVer"""
+    if not version:
+        # Use today's date
+        today = date.today()
+        version = f"{today.year}.{today.month}.{today.day}"
 
     update_file(
         TOP_DIR.joinpath("optimade_client/version.py"),
-        ("__version__ = .+", f'__version__ = "{new_ver}"'),
+        ("__version__ = .+", f'__version__ = "{version}"'),
     )
     update_file(
-        TOP_DIR.joinpath("setup.py"), ("version=([^,]+),", f'version="{new_ver}",')
+        TOP_DIR.joinpath("setup.py"), ("version=([^,]+),", f'version="{version}",')
     )
 
-    print("Bumped version to {}".format(new_ver))
+    print(f"Bumped version to {version} !")
