@@ -17,11 +17,11 @@ import requests
 from optimade.models import LinksResource, OptimadeError, Link, LinksResourceAttributes
 from optimade.models.links import LinkType
 
-from aiidalab_optimade.exceptions import (
+from optimade_client.exceptions import (
     ApiVersionError,
     InputError,
 )
-from aiidalab_optimade.logger import LOGGER
+from optimade_client.logger import LOGGER
 
 
 # Supported OPTIMADE spec versions
@@ -36,7 +36,7 @@ PROVIDERS_URLS = [
 ]
 
 APP_NAME = "OPTIMADE"
-APP_AUTHOR = "AiiDAlab Team"
+APP_AUTHOR = "CasperWA"
 
 CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)

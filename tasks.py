@@ -5,7 +5,7 @@ from typing import Tuple
 
 from invoke import task
 
-from aiidalab_optimade import __version__
+from optimade_client import __version__
 
 
 TOP_DIR = Path(__file__).parent.resolve()
@@ -36,7 +36,7 @@ def update_version(_, patch=False, ver=""):
         new_ver = ".".join(map(str, ver))
 
     update_file(
-        TOP_DIR.joinpath("aiidalab_optimade/__init__.py"),
+        TOP_DIR.joinpath("optimade_client/__init__.py"),
         ("__version__ = .+", f'__version__ = "{new_ver}"'),
     )
     update_file(

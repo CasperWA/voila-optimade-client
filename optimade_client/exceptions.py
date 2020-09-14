@@ -2,7 +2,7 @@ from typing import Any, List, Union, Tuple, Sequence
 
 from optimade.models import Resource
 
-from aiidalab_optimade.logger import LOGGER
+from optimade_client.logger import LOGGER
 
 
 class OptimadeClientError(Exception):

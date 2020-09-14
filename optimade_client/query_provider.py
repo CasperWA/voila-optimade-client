@@ -3,7 +3,7 @@ import traitlets
 
 from optimade.models import LinksResourceAttributes
 
-from aiidalab_optimade.subwidgets import (
+from optimade_client.subwidgets import (
     ProviderImplementationChooser,
     ProviderImplementationSummary,
 )

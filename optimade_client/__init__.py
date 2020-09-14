@@ -1,7 +1,7 @@
 """
-OPTIMADE
+OPTIMADE Client
 
-AiiDA Lab App that implements an OPTIMADE client
+Voilà/Jupyter client for searching through OPTIMADE databases.
 """
 from .informational import OptimadeClientFAQ, HeaderDescription, OptimadeLog
 from .query_provider import OptimadeQueryProviderWidget
@@ -17,4 +17,4 @@ __all__ = (
     "OptimadeQueryFilterWidget",
     "OptimadeSummaryWidget",
 )
-__version__ = "3.3.1"
+__version__ = "1.0.0"

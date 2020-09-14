@@ -6,8 +6,8 @@ import traitlets
 
 from optimade.models.utils import CHEMICAL_SYMBOLS
 
-from aiidalab_optimade.exceptions import ParserError
-from aiidalab_optimade.logger import LOGGER
+from optimade_client.exceptions import ParserError
+from optimade_client.logger import LOGGER
 
 
 __all__ = ("FilterTabs",)

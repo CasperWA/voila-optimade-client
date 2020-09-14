@@ -14,10 +14,10 @@ import traitlets
 from optimade.models import LinksResourceAttributes, LinksResource
 from optimade.models.links import LinkType
 
-from aiidalab_optimade.exceptions import QueryError, OptimadeClientError
-from aiidalab_optimade.logger import LOGGER
-from aiidalab_optimade.subwidgets.results import ResultsPageChooser
-from aiidalab_optimade.utils import (
+from optimade_client.exceptions import QueryError, OptimadeClientError
+from optimade_client.logger import LOGGER
+from optimade_client.subwidgets.results import ResultsPageChooser
+from optimade_client.utils import (
     get_list_of_valid_providers,
     get_versioned_base_url,
     handle_errors,
@@ -63,7 +63,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
         if self.debug:
-            from aiidalab_optimade.utils import VERSION_PARTS
+            from optimade_client.utils import VERSION_PARTS
 
             local_provider = LinksResourceAttributes(
                 **{

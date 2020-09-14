@@ -77,4 +77,4 @@ jobs:
         pip install -e .[testing]
 
     - name: PyTest
-      run: pytest --cov=./aiidalab_optimade/
+      run: pytest --cov=./optimade_client/
