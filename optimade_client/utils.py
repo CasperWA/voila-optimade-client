@@ -36,7 +36,7 @@ PROVIDERS_URLS = [
 ]
 
 APP_NAME = "OPTIMADE"
-APP_AUTHOR = "AiiDAlab Team"
+APP_AUTHOR = "CasperWA"
 
 CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)

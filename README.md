@@ -11,18 +11,18 @@ Current supported OPTIMADE API versions: `1.0.0`, `1.0.0-rc.2`, `1.0.0-rc.1`, `0
 
 This Jupyter-based app is intended to run either:
 
-- In [AiiDA lab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine;
+- In [AiiDAlab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine;
 - As a [Materials Cloud tool](https://dev-tools.materialscloud.org/optimadeclient/);
 - As a standalone [MyBinder application](https://mybinder.org/v2/gh/CasperWA/voila-optimade-client/v3?urlpath=%2Fvoila%2Frender%2FOPTIMADE%20Client.ipynb); or
 - As a standalone local application (see more information about this below).
 
-For AiiDA lab, Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
+For AiiDAlab, Use the App Store in the [Home App](https://github.com/aiidalab/aiidalab-home) to install it.
 
 ## Usage
 
 ### Default
 
-To use the OPTIMADE structure importer in your own AiiDA lab application write the following:
+To use the OPTIMADE structure importer in your own AiiDAlab application write the following:
 
 ```python
 from optimade_client import OptimadeQueryWidget
@@ -63,7 +63,7 @@ The notebook will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
 
 ```shell
-/path/to/aiidalab-optimade$ ./run.sh
+/path/to/voila-optimade-client$ ./run.sh
 ...
 [Voila] Voila is running at:
 http://localhost:8866/

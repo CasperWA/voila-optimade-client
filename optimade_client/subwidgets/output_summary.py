@@ -180,7 +180,7 @@ class StructureSummary(ipw.VBox):
 
 class StructureSites(ipw.HTML):
     """Structure Sites Output
-    Reimplements the viewer for AiiDA Dicts (from AiiDA lab)
+    Reimplements the viewer for AiiDA Dicts (from AiiDAlab)
     """
 
     structure = traitlets.Instance(Structure, allow_none=True)
