@@ -1,1 +1,2 @@
-../requirements.txt
+appdirs~=1.4.4
+optimade~=0.12.0
