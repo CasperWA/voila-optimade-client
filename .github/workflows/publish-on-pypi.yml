@@ -30,6 +30,7 @@ jobs:
         invoke update-version --version="${GITHUB_REF#refs/tags/}"
         if [ -n "$(git status --porcelain --untracked-files=no --ignored=no)" ]; then
           echo "It seems updating the version to ${GITHUB_REF#refs/tags/} results in modified files in the repository."
+          git status
           exit 1
         fi
 
