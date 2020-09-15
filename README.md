@@ -61,17 +61,7 @@ First, you will need to install the package either from [PyPI](https://pypi.org/
 #### PyPI
 
 ```shell
-$ pip install -U numpy
-$ pip install --no-binary :all: scipy
 $ pip install optimade-client
-```
-
-or
-
-```shell
-$ pip install optimade-client
-$ pip uninstall -y scipy
-$ pip install --no-binary :all: scipy
 ```
 
 #### GitHub
@@ -79,11 +69,10 @@ $ pip install --no-binary :all: scipy
 ```shell
 $ git clone https://github.com/CasperWA/voila-optimade-client.git
 $ cd voila-optimade-client
-voila-optimade-client$ pip install -r requirements.txt
 voila-optimade-client$ pip install .
 ```
 
-Note, both of these methods install scipy by rebuilding the binaries based on the local numpy installation. This can take a considerable time, but will result in a more stable application, especially concerning converting structures to other data formats for download.
+If you wish to contribute to the application, you can install it in "editable" mode by using the `-e` flag: `pip install -e .`
 
 To now run the application (notebook) [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) you can simply run the command `optimade-client` in a terminal and go to the printed URL (usually <http://localhost:8866>) or pass the `--open-browser` option to let the program try to automatically open your default browser at the URL.
 

@@ -194,28 +194,22 @@ document.body.removeChild(link);" />
                 output = getattr(
                     self.structure, f"as_{desired_format['adapter_format']}"
                 )
-
-                if desired_format["adapter_format"] in (
-                    "ase",
-                    "pymatgen",
-                    "aiida_structuredata",
-                ):
-                    # output is not a file, but a proxy Python class
-                    func = getattr(self, f"_get_via_{desired_format['adapter_format']}")
-                    output = func(output, desired_format=desired_format["final_format"])
-                encoding = "utf-8"
-
-                # Specifically for CIF: v1.x CIF needs to be in "latin-1" formatting
-                if desired_format["ext"] == ".cif":
-                    encoding = "latin-1"
-
-                filename = (
-                    f"optimade_structure_{self.structure.id}{desired_format['ext']}"
-                )
-
-                if isinstance(output, str):
-                    output = output.encode(encoding)
-                data = base64.b64encode(output).decode()
+            except RuntimeWarning as warn:
+                if "numpy.ufunc size changed" in str(warn):
+                    # This is an issue that may occur if using pre-built binaries for numpy and
+                    # scipy. It can be resolved by uninstalling scipy and reinstalling it with
+                    # `--no-binary :all:` when using pip. This will recompile all related binaries
+                    # using the currently installed numpy version.
+                    # However, it shouldn't be critical, hence here the warning will be ignored.
+                    warnings.filterwarnings("default")
+                    output = getattr(
+                        self.structure, f"as_{desired_format['adapter_format']}"
+                    )
+                else:
+                    self.download_button.value = self._download_button_format.format(
+                        disabled="disabled", encoding="", data="", filename=""
+                    )
+                    warnings.warn(OptimadeClientWarning(warn))
             except Warning as warn:
                 self.download_button.value = self._download_button_format.format(
                     disabled="disabled", encoding="", data="", filename=""
@@ -229,10 +223,30 @@ document.body.removeChild(link);" />
                     raise exc
                 # Else wrap the exception to make sure to log it.
                 raise exceptions.OptimadeClientError(exc)
-            else:
-                self.download_button.value = self._download_button_format.format(
-                    disabled="", encoding=encoding, data=data, filename=filename
-                )
+
+        if desired_format["adapter_format"] in (
+            "ase",
+            "pymatgen",
+            "aiida_structuredata",
+        ):
+            # output is not a file, but a proxy Python class
+            func = getattr(self, f"_get_via_{desired_format['adapter_format']}")
+            output = func(output, desired_format=desired_format["final_format"])
+        encoding = "utf-8"
+
+        # Specifically for CIF: v1.x CIF needs to be in "latin-1" formatting
+        if desired_format["ext"] == ".cif":
+            encoding = "latin-1"
+
+        filename = f"optimade_structure_{self.structure.id}{desired_format['ext']}"
+
+        if isinstance(output, str):
+            output = output.encode(encoding)
+        data = base64.b64encode(output).decode()
+
+        self.download_button.value = self._download_button_format.format(
+            disabled="", encoding=encoding, data=data, filename=filename
+        )
 
     @staticmethod
     def _get_via_pymatgen(
