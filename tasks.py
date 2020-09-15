@@ -24,7 +24,7 @@ def update_file(filename: str, sub_line: Tuple[str, str], strip: str = None):
 def update_version(_, version=""):
     """Update package version to today's date using CalVer"""
     if version:
-        if re.match(r"v?20[2-9][0-9]\.1?[0-9]\.[1-3]?[0-9]", version) is None:
+        if re.match(r"v?20[2-9][0-9]\.1?[0-9]\.[1-3]?[0-9].*", version) is None:
             print(
                 f"Error: Passed version ({version}) does to match a date in the format "
                 "YYYY.(M)M.(D)D."
