@@ -238,9 +238,7 @@ document.body.removeChild(link);" />
         if desired_format["ext"] == ".cif":
             encoding = "latin-1"
 
-        filename = (
-            f"optimade_structure_{self.structure.id}{desired_format['ext']}"
-        )
+        filename = f"optimade_structure_{self.structure.id}{desired_format['ext']}"
 
         if isinstance(output, str):
             output = output.encode(encoding)
