@@ -242,42 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 // doYourStuff()
 """
-        # self._style = """
-        # <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'>
-        # </script>
-        # <script>
-        #     var row_color;
-
-        #     function updateRowBackground(row) {
-        #         if (row_color != 'rgb(244, 151, 184)') {
-        #             $(row).css('background-color', '#f497b8');
-        #         } else {
-        #             if ($('tr').index(row) % 2 == 0) {
-        #                 // even
-        #                 $(row).css('background-color', 'white');
-        #             } else {
-        #                 // odd
-        #                 $(row).css('background-color', '#e5e7e9');
-        #             }
-        #         }
-        #         row_color = $(row).css('background-color');
-        #     }
-
-        #     $(document).ready(function(){
-        #         $('tbody > tr').click(function(){
-        #             updateRowBackground(this)
-        #         });
-        #         $('tbody > tr').hover(function(){
-        #             row_color = $(this).css('background-color');
-        #             $(this).css('background-color', '#f5b7b1');
-        #         },
-        #         function(){
-        #             $(this).css('background-color', row_color);
-        #         });
-        #     });
-        # </script>
-
-        # .df tbody tr:hover { background-color: #f5b7b1; }
         self._style = """
 <style>
     .df { border: none; width: 100%; }
@@ -313,13 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
             self.value += dataf.to_html(
                 classes="df", index=False, table_id="sites", notebook=False
             )
-            # display(Javascript(self._script))
-
-    #             self.value += f"""<script>
-    # {self._script}
-    # </script>"""
-    # with open("/home/cwa/venv/jupyter/test_js.html", "w") as test_out:
-    #     test_out.write(self.value)
 
     def freeze(self):
         """Disable widget"""
