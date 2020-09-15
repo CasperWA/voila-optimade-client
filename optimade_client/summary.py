@@ -216,6 +216,19 @@ document.body.removeChild(link);" />
                 if isinstance(output, str):
                     output = output.encode(encoding)
                 data = base64.b64encode(output).decode()
+            except RuntimeWarning as warn:
+                if "numpy.ufunc size changed" in str(warn):
+                    # This is an issue that may occur if using pre-built binaries for numpy and scipy.
+                    # It can be resolved by uninstalling scipy and reinstalling it with `--no-binary :all:`
+                    # when using pip. This will recompile all related binaries using the currently
+                    # installed numpy version.
+                    # However, it shouldn't be critical, hence here the warning will be ignored.
+                    pass
+                else:
+                    self.download_button.value = self._download_button_format.format(
+                        disabled="disabled", encoding="", data="", filename=""
+                    )
+                    warnings.warn(OptimadeClientWarning(warn))
             except Warning as warn:
                 self.download_button.value = self._download_button_format.format(
                     disabled="disabled", encoding="", data="", filename=""
