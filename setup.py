@@ -17,7 +17,7 @@ with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
 
 setup(
     name="optimade-client",
-    version="2020.9.15",
+    version="2020.9.15.dev2",
     license="MIT License",
     author="Casper Welzel Andersen",
     description="Voilà/Jupyter client for searching through OPTIMADE databases.",
