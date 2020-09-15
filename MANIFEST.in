@@ -1,0 +1,3 @@
+include requirements*.txt
+include LICENSE
+include optimade_client/cli/static/*.json

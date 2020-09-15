@@ -1,6 +1,7 @@
 from datetime import date
 from pathlib import Path
 import re
+import sys
 from typing import Tuple
 
 from invoke import task
@@ -22,7 +23,16 @@ def update_file(filename: str, sub_line: Tuple[str, str], strip: str = None):
 @task
 def update_version(_, version=""):
     """Update package version to today's date using CalVer"""
-    if not version:
+    if version:
+        if re.match(r"v?20[2-9][0-9]\.1?[0-9]\.[1-3]?[0-9].*", version) is None:
+            print(
+                f"Error: Passed version ({version}) does to match a date in the format "
+                "YYYY.(M)M.(D)D."
+            )
+            sys.exit(1)
+        if version.startswith("v"):
+            version = version[1:]
+    else:
         # Use today's date
         today = date.today()
         version = f"{today.year}.{today.month}.{today.day}"

@@ -6,6 +6,8 @@
 *.egg*
 .DS_Store
 
+dist
+
 # jupyter
 .ipynb_checkpoints
 .*.ipynb
