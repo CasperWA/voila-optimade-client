@@ -28,6 +28,7 @@ setup(
     python_requires=">=3.6",
     packages=find_packages(),
     include_package_data=True,
+    package_data={"optimade_client": ["img/*.png", "cli/static/*.json"]},
     install_requires=REQUIREMENTS,
     extras_require={"dev": DEV, "testing": TESTING},
     classifiers=[

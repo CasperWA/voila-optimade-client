@@ -11,7 +11,7 @@ from optimade_client.logger import LOGGER, WIDGET_HANDLER, REPORT_HANDLER
 from optimade_client.utils import __optimade_version__
 
 
-IMG_DIR = Path(__file__).parent.parent.joinpath("img")
+IMG_DIR = Path(__file__).parent.joinpath("img")
 SOURCE_URL = "https://github.com/CasperWA/voila-optimade-client/"
 
 
