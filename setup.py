@@ -20,6 +20,7 @@ setup(
     version="2020.9.16.dev0",
     license="MIT License",
     author="Casper Welzel Andersen",
+    author_email="casper.andersen@epfl.ch",
     description="Voilà/Jupyter client for searching through OPTIMADE databases.",
     long_description=README,
     long_description_content_type="text/markdown",

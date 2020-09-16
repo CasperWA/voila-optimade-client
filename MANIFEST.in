@@ -1,3 +1,4 @@
 include requirements*.txt
 include LICENSE
 include optimade_client/cli/static/*.json
+include img/optimade-text-right-transparent-bg.png
