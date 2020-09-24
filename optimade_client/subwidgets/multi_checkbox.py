@@ -58,15 +58,18 @@ class MultiCheckboxes(ipw.Box):
 
         super().__init__(
             children=self.checkboxes,
-            layout=kwargs.get("layout", {
-                "display": "flex",
-                "flex-flow": "row wrap",
-                "justify-content": "center",
-                "align-items": "center",
-                "align-content": "flex-start",
-                "width": "auto",
-                "height": "auto",
-            }),
+            layout=kwargs.get(
+                "layout",
+                {
+                    "display": "flex",
+                    "flex-flow": "row wrap",
+                    "justify-content": "center",
+                    "align-items": "center",
+                    "align-content": "flex-start",
+                    "width": "auto",
+                    "height": "auto",
+                },
+            ),
         )
 
     @property
