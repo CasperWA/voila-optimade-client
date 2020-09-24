@@ -1,4 +1,0 @@
-APP_NAME = "OPTIMADE-Client"
-APP_AUTHOR = "CasperWA"
-
-__version__ = "2020.9.16.dev2"

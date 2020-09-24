@@ -36,7 +36,7 @@ def update_version(_, version=""):
         version = f"{today.year}.{today.month}.{today.day}"
 
     update_file(
-        TOP_DIR.joinpath("optimade_client/version.py"),
+        TOP_DIR.joinpath("optimade_client/__init__.py"),
         ("__version__ = .+", f'__version__ = "{version}"'),
     )
     update_file(

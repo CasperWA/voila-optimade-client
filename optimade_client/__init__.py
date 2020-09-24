@@ -7,9 +7,9 @@ from .informational import OptimadeClientFAQ, HeaderDescription, OptimadeLog
 from .query_provider import OptimadeQueryProviderWidget
 from .query_filter import OptimadeQueryFilterWidget
 from .summary import OptimadeSummaryWidget
-from .version import __version__
 
 
+__version__ = "2020.9.16.dev2"
 __all__ = (
     "HeaderDescription",
     "OptimadeClientFAQ",

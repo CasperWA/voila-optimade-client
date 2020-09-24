@@ -11,6 +11,7 @@ except (ImportError, ModuleNotFoundError):
 from json import JSONDecodeError
 
 import appdirs
+from pkginfo import Installed
 from pydantic import ValidationError, AnyUrl  # pylint: disable=no-name-in-module
 import requests
 
@@ -22,7 +23,6 @@ from optimade_client.exceptions import (
     InputError,
 )
 from optimade_client.logger import LOGGER
-from optimade_client.version import APP_NAME, APP_AUTHOR
 
 
 # Supported OPTIMADE spec versions
@@ -36,7 +36,8 @@ PROVIDERS_URLS = [
     "/links/v1/providers.json",
 ]
 
-CACHE_DIR = Path(appdirs.user_cache_dir(APP_NAME, APP_AUTHOR))
+PKG_INFO = Installed("optimade_client")
+CACHE_DIR = Path(appdirs.user_cache_dir(PKG_INFO.name, PKG_INFO.author))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHED_PROVIDERS = CACHE_DIR / "cached_providers.json"
 
