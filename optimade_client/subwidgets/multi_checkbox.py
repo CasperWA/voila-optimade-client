@@ -6,7 +6,7 @@ import ipywidgets as ipw
 __all__ = ("MultiCheckboxes",)
 
 
-class MultiCheckboxes(ipw.VBox):
+class MultiCheckboxes(ipw.Box):
     """Multiple checkboxes widget"""
 
     def __init__(
@@ -48,13 +48,25 @@ class MultiCheckboxes(ipw.VBox):
                     description=description,
                     indent=False,
                     disabled=self._disabled,
-                    layout={"width": "auto"},
+                    layout={
+                        "flex": "0 1 auto",
+                        "width": "auto",
+                        "height": "auto",
+                    },
                 )
             )
 
         super().__init__(
             children=self.checkboxes,
-            layout=kwargs.get("layout", {"width": "auto", "height": "auto"}),
+            layout=kwargs.get("layout", {
+                "display": "flex",
+                "flex-flow": "row wrap",
+                "justify-content": "center",
+                "align-items": "center",
+                "align-content": "flex-start",
+                "width": "auto",
+                "height": "auto",
+            }),
         )
 
     @property
