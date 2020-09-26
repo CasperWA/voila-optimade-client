@@ -8,7 +8,6 @@ nglview~=2.7
 numpy~=1.19
 optimade~=0.12.1
 pandas~=1.1
-pkginfo~=1.5
 requests~=2.24
 voila~=0.2.3
 widget_periodictable~=2.1

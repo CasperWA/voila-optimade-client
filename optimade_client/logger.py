@@ -8,11 +8,9 @@ import warnings
 
 import appdirs
 import ipywidgets as ipw
-from pkginfo import Installed
 
 
-PKG_INFO = Installed("optimade_client")
-LOG_DIR = Path(appdirs.user_log_dir(PKG_INFO.name, PKG_INFO.author))
+LOG_DIR = Path(appdirs.user_log_dir("optimade-client", "Casper Welzel Andersen"))
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 LOG_FILE = LOG_DIR / "optimade_client.log"
