@@ -9,4 +9,4 @@ numpy~=1.19
 optimade~=0.12.0
 pandas~=1.1
 requests~=2.24
-voila~=0.2.2
+voila~=0.2.3
