@@ -16,5 +16,5 @@ invoke update-version --version="${GITHUB_REF#refs/tags/}"
 
 echo "\n### Commit updated files ###"
 git add setup.py
-git add optimade_client/version.py
+git add optimade_client/__init__.py
 git commit -m "Release ${GITHUB_REF#refs/tags/}"
