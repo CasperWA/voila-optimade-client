@@ -10,7 +10,7 @@ import appdirs
 import ipywidgets as ipw
 
 
-LOG_DIR = Path(appdirs.user_log_dir("optimade-client", "Casper Welzel Andersen"))
+LOG_DIR = Path(appdirs.user_log_dir("optimade-client", "CasperWA"))
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 LOG_FILE = LOG_DIR / "optimade_client.log"
