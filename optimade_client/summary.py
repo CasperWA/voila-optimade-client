@@ -26,21 +26,58 @@ from optimade_client.subwidgets import (
 from optimade_client.warnings import OptimadeClientWarning
 
 
-class OptimadeSummaryWidget(ipw.VBox):
+class OptimadeSummaryWidget(ipw.Box):
     """Overview of OPTIMADE entity (focusing on structure)
-    Combined view of structure viewer on the left and tabs on the right for detailed information
+    Combined view of structure viewer and tabs for detailed information.
+
+    Set `direction` to "horizontal" or "vertical" to show the two widgets either
+    horizontally or vertically, respectively.
     """
 
     entity = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, **kwargs):
-        self.viewer = StructureViewer(**kwargs)
-        self.summary = SummaryTabs(**kwargs)
+    def __init__(self, direction: str = None, **kwargs):
+        if direction == "horizontal":
+            direction = "row"
+            layout_viewer = {
+                "width": "50%",
+                "height": "auto",
+                "margin": "0px 0px 0px 0px",
+                "padding": "0px 0px 10px 0px",
+            }
+            layout_tabs = {
+                "width": "50%",
+                "height": "345px",
+            }
+        else:
+            direction = "column"
+            layout_viewer = {
+                "width": "auto",
+                "height": "auto",
+                "margin": "0px 0px 0px 0px",
+                "padding": "0px 0px 10px 0px",
+            }
+            layout_tabs = {
+                "width": "auto",
+                "height": "345px",
+            }
+
+        kwargs.pop("layout", None)
+
+        self.viewer = StructureViewer(layout=layout_viewer, **kwargs)
+        self.summary = SummaryTabs(layout=layout_tabs, **kwargs)
 
         self.children = (self.viewer, self.summary)
+
         super().__init__(
             children=self.children,
-            layout=ipw.Layout(width="auto", height="auto"),
+            layout={
+                "display": "flex",
+                "flex_flow": direction,
+                "align_items": "stretch",
+                "width": "100%",
+                "height": "auto",
+            },
             **kwargs,
         )
 
@@ -313,14 +350,20 @@ class StructureViewer(ipw.VBox):
 
         self.download = DownloadChooser(**kwargs)
 
-        super().__init__(
-            children=(self.viewer_box, self.download),
-            layout={
+        layout = kwargs.pop(
+            "layout",
+            {
                 "width": "auto",
                 "height": "auto",
                 "margin": "0px 0px 0px 0px",
                 "padding": "0px 0px 10px 0px",
             },
+        )
+
+        super().__init__(
+            children=(self.viewer_box, self.download),
+            layout=layout,
+            **kwargs,
         )
 
         self.observe(self._on_change_structure, names="structure")
@@ -364,9 +407,17 @@ class SummaryTabs(ipw.Tab):
             ("Sites", StructureSites()),
         )
 
+        layout = kwargs.pop(
+            "layout",
+            {
+                "width": "auto",
+                "height": "345px",
+            },
+        )
+
         super().__init__(
             children=tuple(_[1] for _ in self.sections),
-            layout=ipw.Layout(width="auto", height="345px"),
+            layout=layout,
             **kwargs,
         )
         for index, title in enumerate([_[0] for _ in self.sections]):
