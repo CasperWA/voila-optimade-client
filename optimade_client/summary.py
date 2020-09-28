@@ -152,7 +152,7 @@ class DownloadChooser(ipw.HBox):
         # ),
     ]
     _download_button_format = """
-<input type="button" class="jupyter-widgets jupyter-button widget-button" value="Download" title="Download structure" style="width:auto;" {disabled}
+<input type="button" class="p-Widget jupyter-widgets jupyter-button widget-button mod-info" value="Download" title="Download structure" style="width:auto;" {disabled}
 onclick="var link = document.createElement('a');
 link.href = 'data:charset={encoding};base64,{data}';
 link.download = '{filename}';

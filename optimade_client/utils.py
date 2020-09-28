@@ -107,6 +107,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
+        requests.exceptions.ReadTimeout,
     ) as exc:
         return {
             "errors": [
@@ -264,6 +265,7 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
+        requests.exceptions.ReadTimeout,
     ):
         pass
     else:
@@ -304,6 +306,7 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
         except (
             requests.exceptions.ConnectTimeout,
             requests.exceptions.ConnectionError,
+            requests.exceptions.ReadTimeout,
         ):
             continue
         else:
@@ -405,6 +408,7 @@ def get_structures_schema(base_url: str) -> dict:
     except (
         requests.exceptions.ConnectTimeout,
         requests.exceptions.ConnectionError,
+        requests.exceptions.ReadTimeout,
     ) as exc:
         return {
             "errors": [

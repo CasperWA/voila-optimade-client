@@ -18,7 +18,7 @@ class PeriodicTable(ipw.VBox):
             value=False,
             description="Structure must ex-/include ALL chosen elements",
             indent=False,
-            width="auto",
+            layout={"width": "auto"},
             disabled=kwargs.get("disabled", False),
         )
         self.ptable = PTableWidget(**kwargs)
