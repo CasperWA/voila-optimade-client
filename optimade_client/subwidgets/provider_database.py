@@ -457,6 +457,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             except (
                 requests.exceptions.ConnectTimeout,
                 requests.exceptions.ConnectionError,
+                requests.exceptions.ReadTimeout,
             ) as exc:
                 response = {
                     "errors": {

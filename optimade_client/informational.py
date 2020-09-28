@@ -79,7 +79,7 @@ Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> t
         self._debug_log = REPORT_HANDLER.get_widget()
         self.report_bug = ipw.HTML(
             f"""
-<button type="button" class="jupyter-widgets jupyter-button widget-button"
+<button type="button" class="p-Widget jupyter-widgets jupyter-button widget-button mod-info"
 title="Create a bug issue on GitHub that includes a log file" style="width:auto;"
 onclick="
 var log = document.getElementById('{self._debug_log.element_id}');
@@ -98,7 +98,7 @@ document.body.removeChild(link);">
 <form target="_blank" style="width:auto;height:auto;" action="{SOURCE_URL}issues/new">
 <input type="hidden" name="title" value="{self.SUGGESTION_TEMPLATE["title"]}" />
 <input type="hidden" name="body" value="{self.SUGGESTION_TEMPLATE["body"]}" />
-<button type="submit" class="jupyter-widgets jupyter-button widget-button"
+<button type="submit" class="p-Widget jupyter-widgets jupyter-button widget-button mod-info"
 title="Create an enhancement issue on GitHub" style="width:auto;">
 <i class="fa fa-star"></i>Suggest a feature/change</button></form>"""
         )
