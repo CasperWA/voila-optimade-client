@@ -34,7 +34,7 @@ class HeaderDescription(ipw.VBox):
 
     HEADER = f"""<p style="font-size:14px;">
 <b>Currently valid OPTIMADE API version</b>: <code>v{__optimade_version__[0]}</code><br>
-<b>Client version</b>: <code>2020.9.27</code><br>
+<b>Client version</b>: <code>2020.9.29</code><br>
 <b>Source code</b>: <a href="{SOURCE_URL}" target="_blank">GitHub</a>
 </p>
 """

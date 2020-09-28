@@ -9,7 +9,7 @@ from .query_filter import OptimadeQueryFilterWidget
 from .summary import OptimadeSummaryWidget
 
 
-__version__ = "2020.9.27"
+__version__ = "2020.9.29"
 __all__ = (
     "HeaderDescription",
     "OptimadeClientFAQ",
