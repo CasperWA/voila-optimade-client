@@ -20,6 +20,7 @@ from optimade_client.subwidgets import (
     ResultsPageChooser,
 )
 from optimade_client.utils import (
+    ButtonStyle,
     perform_optimade_query,
     handle_errors,
     TIMEOUT_SECONDS,
@@ -47,8 +48,15 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         traitlets.Instance(LinksResourceAttributes, allow_none=True),
     )
 
-    def __init__(self, result_limit: int = None, **kwargs):
+    def __init__(
+        self, result_limit: int = None, button_style: ButtonStyle = None, **kwargs
+    ):
         self.page_limit = result_limit if result_limit else 10
+        if button_style and isinstance(button_style, str):
+            button_style = ButtonStyle[button_style.upper()]
+        else:
+            button_style = ButtonStyle.PRIMARY
+
         self.offset = 0
         self.number = 1
         self._data_available = None
@@ -66,7 +74,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
         self.query_button = ipw.Button(
             description="Search",
-            button_style="primary",
+            button_style=button_style.value,
             icon="search",
             disabled=True,
             tooltip="Search - No database chosen",

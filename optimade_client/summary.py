@@ -23,6 +23,7 @@ from optimade_client.subwidgets import (
     StructureSummary,
     StructureSites,
 )
+from optimade_client.utils import ButtonStyle
 from optimade_client.warnings import OptimadeClientWarning
 
 
@@ -36,7 +37,9 @@ class OptimadeSummaryWidget(ipw.Box):
 
     entity = traitlets.Instance(Structure, allow_none=True)
 
-    def __init__(self, direction: str = None, **kwargs):
+    def __init__(
+        self, direction: str = None, button_style: ButtonStyle = None, **kwargs
+    ):
         if direction == "horizontal":
             direction = "row"
             layout_viewer = {
@@ -62,9 +65,16 @@ class OptimadeSummaryWidget(ipw.Box):
                 "height": "345px",
             }
 
+        if button_style and isinstance(button_style, str):
+            button_style = ButtonStyle[button_style.upper()]
+        else:
+            button_style = ButtonStyle.DEFAULT
+
         kwargs.pop("layout", None)
 
-        self.viewer = StructureViewer(layout=layout_viewer, **kwargs)
+        self.viewer = StructureViewer(
+            layout=layout_viewer, button_style=button_style, **kwargs
+        )
         self.summary = SummaryTabs(layout=layout_tabs, **kwargs)
 
         self.children = (self.viewer, self.summary)
@@ -152,7 +162,7 @@ class DownloadChooser(ipw.HBox):
         # ),
     ]
     _download_button_format = """
-<input type="button" class="p-Widget jupyter-widgets jupyter-button widget-button mod-info" value="Download" title="Download structure" style="width:auto;" {disabled}
+<input type="button" class="p-Widget jupyter-widgets jupyter-button widget-button mod-{button_style}" value="Download" title="Download structure" style="width:auto;" {disabled}
 onclick="var link = document.createElement('a');
 link.href = 'data:charset={encoding};base64,{data}';
 link.download = '{filename}';
@@ -161,13 +171,22 @@ link.click();
 document.body.removeChild(link);" />
 """
 
-    def __init__(self, **kwargs):
+    def __init__(self, button_style: ButtonStyle = None, **kwargs):
+        if button_style and isinstance(button_style, str):
+            button_style = ButtonStyle[button_style.upper()]
+        else:
+            button_style = ButtonStyle.DEFAULT
+
         self.dropdown = ipw.Dropdown(
             options=("Select a format", {}), layout={"width": "auto"}
         )
         self.download_button = ipw.HTML(
             self._download_button_format.format(
-                disabled="disabled", encoding="", data="", filename=""
+                button_style=button_style.value,
+                disabled="disabled",
+                encoding="",
+                data="",
+                filename="",
             )
         )
 
@@ -350,7 +369,8 @@ class StructureViewer(ipw.VBox):
             },
         )
 
-        self.download = DownloadChooser(**kwargs)
+        button_style = kwargs.pop("button_style", None)
+        self.download = DownloadChooser(button_style=button_style, **kwargs)
 
         layout = kwargs.pop(
             "layout",

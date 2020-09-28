@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
@@ -38,6 +39,17 @@ PROVIDERS_URLS = [
 CACHE_DIR = Path(appdirs.user_cache_dir("optimade-client", "CasperWA"))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHED_PROVIDERS = CACHE_DIR / "cached_providers.json"
+
+
+class ButtonStyle(Enum):
+    """Enumeration of button styles"""
+
+    DEFAULT = "default"
+    PRIMARY = "primary"
+    INFO = "info"
+    SUCCESS = "success"
+    WARNING = "warning"
+    DANGER = "danger"
 
 
 def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
