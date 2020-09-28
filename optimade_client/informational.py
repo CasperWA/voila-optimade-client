@@ -1,13 +1,14 @@
 import logging
 import os
 from pathlib import Path
+import shutil
 from typing import Union
 from urllib.parse import urlencode
 
 import ipywidgets as ipw
 
-from optimade_client.logger import LOGGER, WIDGET_HANDLER, REPORT_HANDLER
-from optimade_client.utils import __optimade_version__, ButtonStyle
+from optimade_client.logger import LOG_DIR, LOGGER, REPORT_HANDLER, WIDGET_HANDLER
+from optimade_client.utils import __optimade_version__, ButtonStyle, CACHE_DIR
 
 
 IMG_DIR = Path(__file__).parent.joinpath("img")
@@ -244,16 +245,54 @@ class OptimadeLog(ipw.Accordion):
             description="Show DEBUG messages",
             disabled=False,
             indent=False,
+            width="auto",
+            height="auto",
+        )
+        self.clear_cache = ipw.Button(
+            description="Clear cache",
+            disabled=False,
+            tooltip="Clear cached responses (not logs)",
+            icon="cube",
+            layout={
+                "visibility": "visible" if self._debug else "hidden",
+                "width": "auto",
+            },
+        )
+        self.clear_logs = ipw.Button(
+            description="Clear logs",
+            disabled=False,
+            tooltip="Clear all log history",
+            icon="edit",
+            layout={
+                "visibility": "visible" if self._debug else "hidden",
+                "width": "auto",
+            },
         )
         self.log_output = WIDGET_HANDLER.get_widget()
         super().__init__(
-            children=(ipw.VBox(children=(self.toggle_debug, self.log_output)),),
+            children=(
+                ipw.VBox(
+                    children=(
+                        ipw.HBox(
+                            children=(
+                                self.toggle_debug,
+                                self.clear_cache,
+                                self.clear_logs,
+                            ),
+                            layout={"height": "auto", "width": "auto"},
+                        ),
+                        self.log_output,
+                    )
+                ),
+            ),
             **kwargs,
         )
         self.set_title(0, "Log")
-        self.selected_index = None
+        self.selected_index = 0 if self._debug else None
 
         self.toggle_debug.observe(self._toggle_debug_logging, names="value")
+        self.clear_cache.on_click(self._clear_cache)
+        self.clear_logs.on_click(self._clear_logs)
 
     def freeze(self):
         """Disable widget"""
@@ -272,16 +311,68 @@ class OptimadeLog(ipw.Accordion):
         self.toggle_debug.disabled = False
         self.log_output.reset()
 
-    @staticmethod
-    def _toggle_debug_logging(change: dict):
+    def _toggle_debug_logging(self, change: dict):
         """Set logging level depending on toggle button"""
         if change["new"]:
             # Set logging level DEBUG
             WIDGET_HANDLER.setLevel(logging.DEBUG)
             LOGGER.info("Set log output in widget to level DEBUG")
             LOGGER.debug("This should now be shown")
+
+            # Show debug buttons
+            self.clear_cache.layout.visibility = "visible"
+            self.clear_logs.layout.visibility = "visible"
         else:
             # Set logging level to INFO
             WIDGET_HANDLER.setLevel(logging.INFO)
             LOGGER.info("Set log output in widget to level INFO")
             LOGGER.debug("This should now NOT be shown")
+
+            # Hide debug buttons
+            self.clear_cache.layout.visibility = "hidden"
+            self.clear_logs.layout.visibility = "hidden"
+
+    @staticmethod
+    def _clear_cache(_):
+        """Clear cached responses (not logs)"""
+        if str(LOG_DIR).startswith(str(CACHE_DIR)):
+            log_sub_dir = list(Path(str(LOG_DIR)[len(f"{CACHE_DIR}/") :]).parts)
+
+        LOGGER.debug(
+            "Cache dir: %s - Log dir: %s - Log sub dir parts: %s",
+            CACHE_DIR,
+            LOG_DIR,
+            log_sub_dir,
+        )
+
+        for dirpath, dirnames, filenames in os.walk(CACHE_DIR):
+            log_dir_part = log_sub_dir.pop(0) if log_sub_dir else ""
+            if not log_sub_dir:
+                LOGGER.debug(
+                    "No more log sub directory parts. Removing %r from dirnames list.",
+                    log_dir_part,
+                )
+                dirnames.remove(log_dir_part)
+
+            for directory in list(dirnames):
+                if directory == log_dir_part:
+                    continue
+                LOGGER.debug(
+                    "Removing folder: %s", Path(dirpath).joinpath(directory).resolve()
+                )
+                shutil.rmtree(
+                    Path(dirpath).joinpath(directory).resolve(), ignore_errors=True
+                )
+                dirnames.remove(directory)
+            for filename in filenames:
+                LOGGER.debug(
+                    "Removing file: %s", Path(dirpath).joinpath(filename).resolve()
+                )
+                os.remove(Path(dirpath).joinpath(filename).resolve())
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _clear_logs(_):
+        """Clear all logs"""
+        shutil.rmtree(LOG_DIR, ignore_errors=True)
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
