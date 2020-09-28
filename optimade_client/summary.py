@@ -162,7 +162,9 @@ document.body.removeChild(link);" />
 """
 
     def __init__(self, **kwargs):
-        self.dropdown = ipw.Dropdown(options=("Select a format", {}), width="auto")
+        self.dropdown = ipw.Dropdown(
+            options=("Select a format", {}), layout={"width": "auto"}
+        )
         self.download_button = ipw.HTML(
             self._download_button_format.format(
                 disabled="disabled", encoding="", data="", filename=""
