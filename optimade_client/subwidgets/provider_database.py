@@ -331,9 +331,19 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             # This may be called if a provider is suddenly removed (bad provider)
             return
 
+        if not self.__perform_query:
+            self.__perform_query = True
+            LOGGER.debug(
+                "Will not perform query with pageing: name=%s value=%s",
+                change["name"],
+                change["new"],
+            )
+            return
+
         pageing: Union[int, str] = change["new"]
         LOGGER.debug(
-            "Detected change in page_chooser's .page_offset, .page_number, or .page_link: %r",
+            "Detected change in page_chooser: name=%s value=%s",
+            change["name"],
             pageing,
         )
         if change["name"] == "page_offset":
@@ -362,11 +372,6 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             with self.hold_trait_notifications():
                 self.__perform_query = False
                 self.page_chooser.update_offset()
-
-        if not self.__perform_query:
-            self.__perform_query = True
-            LOGGER.debug("Will not perform query with pageing: %r", pageing)
-            return
 
         try:
             # Freeze and disable both dropdown widgets
