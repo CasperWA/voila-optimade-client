@@ -39,7 +39,10 @@ class OptimadeSummaryWidget(ipw.Box):
     entity = traitlets.Instance(Structure, allow_none=True)
 
     def __init__(
-        self, direction: str = None, button_style: ButtonStyle = None, **kwargs
+        self,
+        direction: str = None,
+        button_style: Union[ButtonStyle, str] = None,
+        **kwargs,
     ):
         if direction and direction == "horizontal":
             direction = "row"
@@ -180,7 +183,7 @@ link.click();
 document.body.removeChild(link);" />
 """
 
-    def __init__(self, button_style: ButtonStyle = None, **kwargs):
+    def __init__(self, button_style: Union[ButtonStyle, str] = None, **kwargs):
         if button_style:
             if isinstance(button_style, str):
                 self._button_style = ButtonStyle[button_style.upper()]

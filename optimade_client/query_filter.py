@@ -51,7 +51,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     )
 
     def __init__(
-        self, result_limit: int = None, button_style: ButtonStyle = None, **kwargs
+        self,
+        result_limit: int = None,
+        button_style: Union[ButtonStyle, str] = None,
+        **kwargs,
     ):
         self.page_limit = result_limit if result_limit else 10
         if button_style:

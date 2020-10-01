@@ -69,7 +69,9 @@ Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> t
         ),
     }
 
-    def __init__(self, logo: str = None, button_style: ButtonStyle = None, **kwargs):
+    def __init__(
+        self, logo: str = None, button_style: Union[ButtonStyle, str] = None, **kwargs
+    ):
         logo = logo if logo is not None else "optimade-text-right-transparent-bg.png"
         logo = self._get_file(str(IMG_DIR.joinpath(logo)))
         logo = ipw.Image(value=logo, format="png", width=375, height=137.5)
