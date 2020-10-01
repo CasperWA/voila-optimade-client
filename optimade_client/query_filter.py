@@ -530,6 +530,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             if not data_returned:
                 self.error_or_status_messages.value = "No structures found!"
 
+        except QueryError:
+            self.structure_drop.reset()
+            self.structure_page_chooser.reset()
+
         except Exception as exc:
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
