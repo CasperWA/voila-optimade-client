@@ -1,3 +1,4 @@
+# pylint: disable=too-many-arguments
 from typing import Dict, List, Union, Tuple, Callable, Any
 
 import ipywidgets as ipw
@@ -7,6 +8,7 @@ from optimade.models.utils import CHEMICAL_SYMBOLS
 
 from optimade_client.exceptions import ParserError
 from optimade_client.logger import LOGGER
+from optimade_client.subwidgets.intrangeslider import CustomIntRangeSlider
 from optimade_client.subwidgets.multi_checkbox import MultiCheckboxes
 from optimade_client.subwidgets.periodic_table import PeriodicTable
 
@@ -161,7 +163,10 @@ class FilterInput(ipw.HBox):
     def get_user_input(self):
         """The Widget.value"""
         try:
-            res = self.input_widget.value
+            if not isinstance(self.input_widget, CustomIntRangeSlider):
+                res = self.input_widget.value
+            else:
+                res = self.input_widget.get_value()
         except AttributeError as exc:
             raise ParserError(
                 msg="Correct attribute can not be found to retrieve widget value",
@@ -226,12 +231,20 @@ class FilterInputParser:
         return res, None
 
     @staticmethod
-    def ranged_int(field: str, value: Tuple[int, int]) -> str:
+    def ranged_int(
+        field: str, value: Tuple[Union[int, None], Union[int, None]]
+    ) -> Union[str, List[str]]:
         """Turn IntRangeSlider widget value into OPTIMADE filter string"""
         LOGGER.debug("ranged_int: Received value %r for field %r", value, field)
 
         low, high = value
-        if low == high:
+        res = ""
+        if low is None or high is None:
+            if low is not None:
+                res = f">={low}"
+            if high is not None:
+                res = f"<={high}"
+        elif low == high:
             # Exactly N of property
             res = f"={low}"
         else:
@@ -242,11 +255,15 @@ class FilterInputParser:
 
         return res
 
-    def nsites(self, value: Tuple[int, int]) -> Union[List[str], str]:
+    def nsites(
+        self, value: Tuple[Union[int, None], Union[int, None]]
+    ) -> Tuple[Union[List[str], str], None]:
         """Operator with integer values"""
         return self.ranged_int("nsites", value), None
 
-    def nelements(self, value: Tuple[int, int]) -> Union[List[str], str]:
+    def nelements(
+        self, value: Tuple[Union[int, None], Union[int, None]]
+    ) -> Tuple[Union[List[str], str], None]:
         """Operator with integer values"""
         return self.ranged_int("nelements", value), None
 
@@ -323,7 +340,7 @@ class FilterInputs(FilterTabSection):
                     "nelements",
                     {
                         "description": "Number of Elements",
-                        "input_widget": ipw.IntRangeSlider,
+                        "input_widget": CustomIntRangeSlider,
                         "min": 0,
                         "max": len(CHEMICAL_SYMBOLS),
                         "value": (0, len(CHEMICAL_SYMBOLS)),
@@ -346,7 +363,7 @@ class FilterInputs(FilterTabSection):
                     "nsites",
                     {
                         "description": "Number of Sites",
-                        "input_widget": ipw.IntRangeSlider,
+                        "input_widget": CustomIntRangeSlider,
                         "min": 0,
                         "max": 10000,
                         "value": (0, 10000),
