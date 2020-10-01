@@ -162,8 +162,8 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         """Set total number of entities"""
         try:
             value = int(value)
-        except (TypeError, ValueError):
-            raise InputError("data_returned must be an integer")
+        except (TypeError, ValueError) as exc:
+            raise InputError("data_returned must be an integer") from exc
         else:
             self._data_returned = value
 
@@ -177,8 +177,8 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         """Set total number of entities available"""
         try:
             value = int(value)
-        except (TypeError, ValueError):
-            raise InputError("data_available must be an integer")
+        except (TypeError, ValueError) as exc:
+            raise InputError("data_available must be an integer") from exc
         else:
             self._data_available = value
 
