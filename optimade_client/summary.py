@@ -19,6 +19,7 @@ except ImportError:
 from optimade.adapters import Structure
 
 from optimade_client import exceptions
+from optimade_client.logger import LOGGER
 from optimade_client.subwidgets import (
     StructureSummary,
     StructureSites,
@@ -40,7 +41,7 @@ class OptimadeSummaryWidget(ipw.Box):
     def __init__(
         self, direction: str = None, button_style: ButtonStyle = None, **kwargs
     ):
-        if direction == "horizontal":
+        if direction and direction == "horizontal":
             direction = "row"
             layout_viewer = {
                 "width": "50%",
@@ -65,8 +66,16 @@ class OptimadeSummaryWidget(ipw.Box):
                 "height": "345px",
             }
 
-        if button_style and isinstance(button_style, str):
-            button_style = ButtonStyle[button_style.upper()]
+        if button_style:
+            if isinstance(button_style, str):
+                button_style = ButtonStyle[button_style.upper()]
+            elif isinstance(button_style, ButtonStyle):
+                pass
+            else:
+                raise TypeError(
+                    "button_style should be either a string or a ButtonStyle Enum. "
+                    f"You passed type {type(button_style)!r}."
+                )
         else:
             button_style = ButtonStyle.DEFAULT
 
@@ -172,17 +181,25 @@ document.body.removeChild(link);" />
 """
 
     def __init__(self, button_style: ButtonStyle = None, **kwargs):
-        if button_style and isinstance(button_style, str):
-            button_style = ButtonStyle[button_style.upper()]
+        if button_style:
+            if isinstance(button_style, str):
+                self._button_style = ButtonStyle[button_style.upper()]
+            elif isinstance(button_style, ButtonStyle):
+                self._button_style = button_style
+            else:
+                raise TypeError(
+                    "button_style should be either a string or a ButtonStyle Enum. "
+                    f"You passed type {type(button_style)!r}."
+                )
         else:
-            button_style = ButtonStyle.DEFAULT
+            self._button_style = ButtonStyle.DEFAULT
 
         self.dropdown = ipw.Dropdown(
             options=("Select a format", {}), layout={"width": "auto"}
         )
         self.download_button = ipw.HTML(
             self._download_button_format.format(
-                button_style=button_style.value,
+                button_style=self._button_style.value,
                 disabled="disabled",
                 encoding="",
                 data="",
@@ -199,6 +216,7 @@ document.body.removeChild(link);" />
     @traitlets.observe("structure")
     def _on_change_structure(self, change: dict):
         """Update widget when a new structure is chosen"""
+        LOGGER.debug("Got new structure for DownloadChooser: %s", change["new"])
         if change["new"] is None:
             self.reset()
         else:
@@ -209,6 +227,10 @@ document.body.removeChild(link);" />
         """Update options according to chosen structure"""
         # Disordered structures not usable with ASE
         if "disorder" in self.structure.structure_features:
+            LOGGER.debug(
+                "'disorder' found in the structure's structure_features (%s)",
+                self.structure.structure_features,
+            )
             options = sorted(
                 [
                     option
@@ -220,6 +242,7 @@ document.body.removeChild(link);" />
         else:
             options = sorted(self._formats)
             options.insert(0, ("Select a format", {}))
+        LOGGER.debug("Will set the dropdown options to: %s", options)
         self.dropdown.options = options
 
     def _update_download_button(self, change: dict):
@@ -231,9 +254,16 @@ document.body.removeChild(link);" />
         `optimade-python-tools` and/or any related exceptions.
         """
         desired_format = change["new"]
+        LOGGER.debug(
+            "Updating the download button with desired format: %s", desired_format
+        )
         if not desired_format or desired_format is None:
             self.download_button.value = self._download_button_format.format(
-                disabled="disabled", encoding="", data="", filename=""
+                button_style=self._button_style.value,
+                disabled="disabled",
+                encoding="",
+                data="",
+                filename="",
             )
             return
 
@@ -257,17 +287,29 @@ document.body.removeChild(link);" />
                     )
                 else:
                     self.download_button.value = self._download_button_format.format(
-                        disabled="disabled", encoding="", data="", filename=""
+                        button_style=self._button_style.value,
+                        disabled="disabled",
+                        encoding="",
+                        data="",
+                        filename="",
                     )
                     warnings.warn(OptimadeClientWarning(warn))
             except Warning as warn:
                 self.download_button.value = self._download_button_format.format(
-                    disabled="disabled", encoding="", data="", filename=""
+                    button_style=self._button_style.value,
+                    disabled="disabled",
+                    encoding="",
+                    data="",
+                    filename="",
                 )
                 warnings.warn(OptimadeClientWarning(warn))
             except Exception as exc:
                 self.download_button.value = self._download_button_format.format(
-                    disabled="disabled", encoding="", data="", filename=""
+                    button_style=self._button_style.value,
+                    disabled="disabled",
+                    encoding="",
+                    data="",
+                    filename="",
                 )
                 if isinstance(exc, exceptions.OptimadeClientError):
                     raise exc
@@ -295,7 +337,11 @@ document.body.removeChild(link);" />
         data = base64.b64encode(output).decode()
 
         self.download_button.value = self._download_button_format.format(
-            disabled="", encoding=encoding, data=data, filename=filename
+            button_style=self._button_style.value,
+            disabled="",
+            encoding=encoding,
+            data=data,
+            filename=filename,
         )
 
     @staticmethod
@@ -338,6 +384,7 @@ document.body.removeChild(link);" />
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
+        LOGGER.debug("Will unfreeze %s", self.__class__.__name__)
         for widget in self.children:
             widget.disabled = False
 

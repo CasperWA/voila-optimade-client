@@ -74,8 +74,16 @@ Follow <a href="{SOURCE_URL}issues/12" target="_blank">the issue on GitHub</a> t
         logo = self._get_file(str(IMG_DIR.joinpath(logo)))
         logo = ipw.Image(value=logo, format="png", width=375, height=137.5)
 
-        if button_style is not None and isinstance(button_style, str):
-            button_style = ButtonStyle[button_style.upper()]
+        if button_style:
+            if isinstance(button_style, str):
+                button_style = ButtonStyle[button_style.upper()]
+            elif isinstance(button_style, ButtonStyle):
+                pass
+            else:
+                raise TypeError(
+                    "button_style should be either a string or a ButtonStyle Enum. "
+                    f"You passed type {type(button_style)!r}."
+                )
         else:
             button_style = ButtonStyle.DEFAULT
 

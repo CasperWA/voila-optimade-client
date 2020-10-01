@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from enum import Enum
+from enum import Enum, EnumMeta
 from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
@@ -55,7 +55,23 @@ SESSION.mount("http://localhost", SESSION_ADAPTER_DEBUG)
 SESSION.mount("http://127.0.0.1", SESSION_ADAPTER_DEBUG)
 
 
-class ButtonStyle(Enum):
+class DefaultingEnum(EnumMeta):
+    """Override __getitem__()"""
+
+    def __getitem__(cls, name):
+        """Log warning and default to "DEFAULT" if name is not valid"""
+        if name not in cls._member_map_:
+            LOGGER.warning(
+                "%r is not a valid button style. Setting button style to 'DEFAULT'. "
+                "Valid button styles: %s",
+                name,
+                list(cls._member_map_.keys()),
+            )
+            name = "DEFAULT"
+        return cls._member_map_[name]
+
+
+class ButtonStyle(Enum, metaclass=DefaultingEnum):
     """Enumeration of button styles"""
 
     DEFAULT = "default"

@@ -54,8 +54,16 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self, result_limit: int = None, button_style: ButtonStyle = None, **kwargs
     ):
         self.page_limit = result_limit if result_limit else 10
-        if button_style and isinstance(button_style, str):
-            button_style = ButtonStyle[button_style.upper()]
+        if button_style:
+            if isinstance(button_style, str):
+                button_style = ButtonStyle[button_style.upper()]
+            elif isinstance(button_style, ButtonStyle):
+                pass
+            else:
+                raise TypeError(
+                    "button_style should be either a string or a ButtonStyle Enum. "
+                    f"You passed type {type(button_style)!r}."
+                )
         else:
             button_style = ButtonStyle.PRIMARY
 
