@@ -167,7 +167,21 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
     def _get_more_results(self, change):
         """Query for more results according to pageing"""
+        if not self.__perform_query:
+            self.__perform_query = True
+            LOGGER.debug(
+                "NOT going to perform query with change: name=%s value=%s",
+                change["name"],
+                change["new"],
+            )
+            return
+
         pageing: Union[int, str] = change["new"]
+        LOGGER.debug(
+            "Updating results with pageing change: name=%s value=%s",
+            change["name"],
+            pageing,
+        )
         if change["name"] == "page_offset":
             self.offset = pageing
             pageing = None
@@ -179,10 +193,6 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             with self.hold_trait_notifications():
                 self.__perform_query = False
                 self.structure_page_chooser.update_offset()
-
-        if not self.__perform_query:
-            self.__perform_query = True
-            return
 
         try:
             # Freeze and disable list of structures in dropdown widget
@@ -520,9 +530,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             if not data_returned:
                 self.error_or_status_messages.value = "No structures found!"
 
-        except QueryError:
+        except Exception as exc:
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+            raise QueryError(f"Bad stuff happened: {exc!r}") from exc
 
         finally:
             self.query_button.description = "Search"
