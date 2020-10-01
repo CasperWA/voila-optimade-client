@@ -637,8 +637,10 @@ def update_old_links_resources(resource: dict) -> Union[LinksResource, None]:
 
 def ordered_query_url(url: str) -> str:
     """Decode URL, sort queries, re-encode URL"""
+    LOGGER.debug("Ordering URL: %s", url)
     parsed_url = urlparse(url)
     queries = parse_qs(parsed_url.query)
+    LOGGER.debug("Queries to sort and order: %s", queries)
 
     sorted_keys = sorted(queries.keys())
 
@@ -647,9 +649,11 @@ def ordered_query_url(url: str) -> str:
         # Since the values are all lists, we also sort these
         res[key] = sorted(queries[key])
 
-    res = urlencode(res)
+    res = urlencode(res, doseq=True)
     res = (
         f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path};{parsed_url.params}?{res}"
         f"#{parsed_url.fragment}"
     )
+    LOGGER.debug("Newly ordered URL: %s", res)
+    LOGGER.debug("Treated URL after unparse(parse): %s", urlunparse(urlparse(res)))
     return urlunparse(urlparse(res))
