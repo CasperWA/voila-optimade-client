@@ -1,4 +1,7 @@
-include requirements*.txt
+exclude .*.ipynb
+include *.ipynb
+include jupyter_config.json
 include LICENSE
-include optimade_client/cli/static/*.json
+include README.md
+include requirements*.txt
 include optimade_client/img/*.png

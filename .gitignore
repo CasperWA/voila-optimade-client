@@ -6,14 +6,9 @@
 *.egg*
 .DS_Store
 
-dist
-
 # jupyter
 .ipynb_checkpoints
 .*.ipynb
 
 # logging
 optimade_client.log*
-
-# cache
-cached_providers.json

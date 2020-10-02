@@ -27,11 +27,10 @@ def update_version(_, version=""):
     """Update package version to today's date using CalVer"""
     if version:
         if re.match(r"20[2-9][0-9]\.1?[0-9]\.[1-3]?[0-9].*", version) is None:
-            print(
+            sys.exit(
                 f"Error: Passed version ({version}) does to match a date in the format "
                 "YYYY.(M)M.(D)D."
             )
-            sys.exit(1)
     else:
         # Use today's date
         today = date.today()
@@ -39,10 +38,10 @@ def update_version(_, version=""):
 
     update_file(
         TOP_DIR.joinpath("optimade_client/__init__.py"),
-        ("__version__ = .+", f'__version__ = "{version}"'),
+        (r"__version__ = .+", f'__version__ = "{version}"'),
     )
     update_file(
-        TOP_DIR.joinpath("setup.py"), ("version=([^,]+),", f'version="{version}",')
+        TOP_DIR.joinpath("setup.py"), (r"version=([^,]+),", f'version="{version}",')
     )
     update_file(
         TOP_DIR.joinpath("optimade_client/informational.py"),
