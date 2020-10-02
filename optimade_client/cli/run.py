@@ -1,48 +1,55 @@
+import argparse
 import os
 from pathlib import Path
 from shutil import copyfile
 import subprocess
 
-import click
+from voila.app import main as voila
 
+from optimade_client import __version__
 from optimade_client.cli.options import LOGGING_LEVELS
 
 
-@click.command()
-@click.help_option("-h", "--help")
-@click.version_option(
-    None, "-v", "--version", message="OPTIMADE Client version %(version)s"
-)
-@click.option(
-    "--log-level",
-    type=click.Choice(LOGGING_LEVELS, case_sensitive=False),
-    default="info",
-    show_default=True,
-    help="Set the log-level of the server.",
-)
-@click.option(
-    "--debug",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Will set the log-level to DEBUG. Note, parameter log-level takes precedence "
-    "if not 'info'!",
-)
-@click.option(
-    "--open-browser",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Attempt to open a browser upon starting the Voilà tornado server.",
-)
-def cli(log_level: str, debug: bool, open_browser: bool):
-    """Run OPTIMADE Client."""
-    from voila.app import main
+def main():
+    """Run the OPTIMADE Client."""
+    parser = argparse.ArgumentParser(
+        description=main.__doc__,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        help="Show the version and exit.",
+        version=f"OPTIMADE Client version {__version__}",
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        help="Set the log-level of the server.",
+        choices=LOGGING_LEVELS,
+        default="info",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Will set the log-level to DEBUG. Note, parameter log-level takes precedence "
+        "if not 'info'!",
+    )
+    parser.add_argument(
+        "--open-browser",
+        action="store_true",
+        help="Attempt to open a browser upon starting the Voilà tornado server.",
+    )
+
+    args = parser.parse_args()
+    log_level = args.log_level
+    debug = args.debug
+    open_browser = args.open_browser
 
     # Rename jupyter_config.json to voila.json and copy it Jupyter's config dir
     jupyter_config_dir = subprocess.getoutput("jupyter --config-dir")
     copyfile(
-        Path(__file__).parent.joinpath("static/jupyter_config.json").resolve(),
+        Path(__file__).parent.parent.parent.joinpath("jupyter_config.json").resolve(),
         f"{jupyter_config_dir}/voila.json",
     )
 
@@ -68,4 +75,4 @@ def cli(log_level: str, debug: bool, open_browser: bool):
     if not open_browser:
         argv.append("--no-browser")
 
-    main(argv)
+    voila(argv)
