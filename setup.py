@@ -52,7 +52,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "optimade-client = optimade_client.cli.run:cli",
+            "optimade-client = optimade_client.cli.run:main",
         ],
     },
 )
