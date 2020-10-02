@@ -1,3 +1,5 @@
+exclude .*.ipynb
+include *.ipynb
 include jupyter_config.json
 include LICENSE
 include README.md
