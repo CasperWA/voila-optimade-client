@@ -3,8 +3,12 @@ import os
 from pathlib import Path
 from shutil import copyfile
 import subprocess
+import sys
 
-from voila.app import main as voila
+try:
+    from voila.app import main as voila
+except ImportError:
+    voila = None
 
 from optimade_client import __version__
 from optimade_client.cli.options import LOGGING_LEVELS
@@ -45,6 +49,14 @@ def main():
     log_level = args.log_level
     debug = args.debug
     open_browser = args.open_browser
+
+    # Make sure Voilà is installed
+    if voila is None:
+        sys.exit(
+            "Voilà is not installed.\nPlease run:\n\n     pip install optimade-client[server]\n\n"
+            "Or the equivalent, matching the installation in your environment, to install Voilà "
+            "(and ASE for a larger download format selection)."
+        )
 
     # Rename jupyter_config.json to voila.json and copy it Jupyter's config dir
     jupyter_config_dir = subprocess.getoutput("jupyter --config-dir")
