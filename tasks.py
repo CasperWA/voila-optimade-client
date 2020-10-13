@@ -47,5 +47,9 @@ def update_version(_, version=""):
         TOP_DIR.joinpath("optimade_client/informational.py"),
         (r"Client version.*</code>", f"Client version</b>: <code>{version}</code>"),
     )
+    update_file(
+        TOP_DIR.joinpath("optimade_client/cli/run.py"),
+        (r'VERSION = ".+"', f'VERSION = "{version}"'),
+    )
 
     print(f"Bumped version to {version} !")

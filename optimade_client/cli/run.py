@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 from pathlib import Path
 from shutil import copyfile
@@ -10,11 +11,12 @@ try:
 except ImportError:
     voila = None
 
-from optimade_client import __version__
-from optimade_client.cli.options import LOGGING_LEVELS
+
+LOGGING_LEVELS = [logging.getLevelName(level).lower() for level in range(0, 51, 10)]
+VERSION = "2020.10.2"  # Avoid importing optimade-client package
 
 
-def main():
+def main(args: list = None):
     """Run the OPTIMADE Client."""
     parser = argparse.ArgumentParser(
         description=main.__doc__,
@@ -24,7 +26,7 @@ def main():
         "--version",
         action="version",
         help="Show the version and exit.",
-        version=f"OPTIMADE Client version {__version__}",
+        version=f"OPTIMADE Client version {VERSION}",
     )
     parser.add_argument(
         "--log-level",
@@ -36,8 +38,7 @@ def main():
     parser.add_argument(
         "--debug",
         action="store_true",
-        help="Will set the log-level to DEBUG. Note, parameter log-level takes precedence "
-        "if not 'info'!",
+        help="Will overrule log-level option and set the log-level to 'debug'.",
     )
     parser.add_argument(
         "--open-browser",
@@ -45,7 +46,7 @@ def main():
         help="Attempt to open a browser upon starting the Voilà tornado server.",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     log_level = args.log_level
     debug = args.debug
     open_browser = args.open_browser
@@ -60,6 +61,7 @@ def main():
 
     # Rename jupyter_config.json to voila.json and copy it Jupyter's config dir
     jupyter_config_dir = subprocess.getoutput("jupyter --config-dir")
+    Path(jupyter_config_dir).mkdir(parents=True, exist_ok=True)
     copyfile(
         Path(__file__).parent.parent.parent.joinpath("jupyter_config.json").resolve(),
         f"{jupyter_config_dir}/voila.json",
@@ -72,13 +74,11 @@ def main():
         check=False,
     )
 
-    log_level = log_level.lower()
-    if debug and log_level == "info":
-        log_level = "debug"
-
     argv = ["OPTIMADE Client.ipynb"]
 
-    if log_level == "debug":
+    if debug:
+        if log_level not in ("debug", "info"):
+            print("[OPTIMADE-Client] Overwriting requested log-level to: 'debug'")
         os.environ["OPTIMADE_CLIENT_DEBUG"] = "True"
         argv.append("--debug")
     else:
@@ -86,5 +86,8 @@ def main():
 
     if not open_browser:
         argv.append("--no-browser")
+
+    if "--debug" not in argv:
+        argv.append(f"--Voila.log_level={getattr(logging, log_level.upper())}")
 
     voila(argv)

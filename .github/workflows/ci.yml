@@ -59,14 +59,20 @@ jobs:
       with:
         python-version: ${{ matrix.python-version}}
 
-    - name: Install dependencies
+    - name: Install initial dependencies
       run: |
         python -m pip install -U pip
         pip install -U setuptools
         pip install -e .[testing]
 
     - name: PyTest
-      run: pytest -vvv --cov=optimade_client --cov-report=xml tests/
+      run: pytest -vvv --cov=optimade_client --cov-report=xml --cov-append tests/
+
+    - name: Install server dependencies
+      run: pip install -e .[server]
+
+    - name: PyTest (with 'server' extra)
+      run: pytest --cov=optimade_client --cov-report=xml --cov-append tests/cli/
 
     - name: Upload coverage to Codecov
       if: matrix.python-version == 3.8 && github.repository == 'CasperWA/voila-optimade-client'

@@ -1,12 +1,11 @@
-from optimade_client import utils
-
-
 def test_fetch_providers_wrong_url():
     """Test when fetch_providers is provided a wrong URL
 
     It should now return at the very least the cached list of providers
     """
     import json
+
+    from optimade_client import utils
 
     wrong_url = "https://this.is.a.wrong.url"
 
@@ -21,6 +20,8 @@ def test_fetch_providers_wrong_url():
 
 def test_fetch_providers_content():
     """Test known content in dict of database providers"""
+    from optimade_client.utils import fetch_providers
+
     exmpl = {
         "type": "links",
         "id": "exmpl",
@@ -33,12 +34,14 @@ def test_fetch_providers_content():
         },
     }
 
-    assert exmpl in utils.fetch_providers()
+    assert exmpl in fetch_providers()
 
 
 def test_exmpl_not_in_list():
     """Make sure the 'exmpl' database provider is not in the final list"""
     from optimade.models import LinksResourceAttributes
+
+    from optimade_client.utils import get_list_of_valid_providers
 
     exmpl = (
         "Example provider",
@@ -82,7 +85,7 @@ def test_exmpl_not_in_list():
         ),
     )
 
-    list_of_database_providers = utils.get_list_of_valid_providers()
+    list_of_database_providers = get_list_of_valid_providers()
 
     assert exmpl not in list_of_database_providers
     assert mcloud in list_of_database_providers or odbx in list_of_database_providers
@@ -93,6 +96,8 @@ def test_ordered_query_url():
 
     Testing already sorted URLs, making sure they come out exactly the same as when they came in.
     """
+    from optimade_client.utils import ordered_query_url
+
     normal_url = (
         "https://optimade.materialsproject.org/v1.0.0/structures?filter=%28+nelements%3E%3D1+AND+"
         "nelements%3C%3D9+AND+nsites%3E%3D1+AND+nsites%3C%3D444+%29+AND+%28+NOT+structure_features"
@@ -106,8 +111,8 @@ def test_ordered_query_url():
         "=json&response_format=xml"
     )
 
-    ordered_url = utils.ordered_query_url(normal_url)
+    ordered_url = ordered_query_url(normal_url)
     assert ordered_url == normal_url
 
-    ordered_url = utils.ordered_query_url(multi_query_param_url)
+    ordered_url = ordered_query_url(multi_query_param_url)
     assert ordered_url == multi_query_param_url
