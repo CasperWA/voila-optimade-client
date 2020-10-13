@@ -32,6 +32,14 @@ jobs:
         pip install -U setuptools
         pip install pre-commit
 
+    - name: Set PY env var
+      run: echo "::set-env name=PY::$(python -VV | sha256sum | cut -d' ' -f1)"
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
     - name: Test with pre-commit
       run: pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
