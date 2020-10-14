@@ -9,30 +9,6 @@ on:
       - 'push-action/**'
 
 jobs:
-
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-
-    - name: Install dependencies
-      run: |
-        python -m pip install -U pip
-        pip install flake8
-
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --statistics
-
   pre-commit:
 
     runs-on: ubuntu-latest
@@ -56,11 +32,18 @@ jobs:
         pip install -U setuptools
         pip install pre-commit
 
+    - name: Set PY env var
+      run: echo "::set-env name=PY::$(python -VV | sha256sum | cut -d' ' -f1)"
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
     - name: Test with pre-commit
       run: pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
 
   pytest:
-
     runs-on: ubuntu-latest
 
     strategy:
