@@ -20,7 +20,7 @@ with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
 
 setup(
     name="optimade-client",
-    version="2020.10.2",
+    version="2020.10.14",
     license="MIT License",
     author="Casper Welzel Andersen",
     author_email="casper.andersen@epfl.ch",
