@@ -20,19 +20,19 @@ For AiiDAlab, use the App Store in the [Home App](https://github.com/aiidalab/ai
 
 ## Usage
 
-### Default
+### AiiDAlab
 
 To use the OPTIMADE structure importer in your own AiiDAlab application write the following:
 
 ```python
-from optimade_client import OptimadeQueryWidget
+from aiidalab_widget_base import OptimadeQueryWidget
 from aiidalab_widgets_base.viewers import StructureDataViewer
 from ipywidgets import dlink
 
 structure_query = OptimadeQueryWidget()
 structure_viewer = StructureDataViewer()
 
-# Save to `_` in order to suppress output in App Mode
+# Save to `_` in order to suppress output
 _ = dlink((structure_query, 'structure'), (structure_viewer, 'structure'))
 
 display(structure_query)
@@ -47,12 +47,39 @@ See the [OPTIMADE API specification](https://github.com/Materials-Consortia/OPTi
 In order to delve deeper into the details of a particular structure, you can also import and display `OptimadeResultsWidget`.  
 See the notebook [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) for an example of how to set up a general purpose OPTIMADE importer.
 
-### Embedded
+#### Embedded
 
 The query widget may also be embedded into another app.  
 For this a more "minimalistic" version of the widget can be used by passing `embedded=True` upon initiating the widget, i.e., `structure_query = OptimadeQueryWidget(embedded=True)`.
 
 Everything else works the same - so you would still have to link up the query widget to the rest of your app.
+
+### General Jupyter notebook
+
+The package's widgets can be used in any general Jupyter notebook as well as AiiDAlab.
+Example:
+
+```python
+from optimade_client import
+    OptimadeQueryProviderWidget,
+    OptimadeQueryFilterWidget,
+    OptimadeSummaryWidget
+from ipywidgets import dlink
+
+database_selector = OptimadeQueryProviderWidget()
+structure_query = OptimadeQueryFilterWidget()
+structure_viewer = OptimadeSummaryWidget()
+
+# Save to `_` in order to suppress output
+_ = dlink((database_selector, 'database'), (structure_query, 'database'))
+_ = dlink((structure_query, 'structure'), (structure_viewer, 'entity'))
+
+display(database_selector, structure_query, structure_viewer)
+```
+
+This will use the package's own structure viewer and summary widget.
+
+Note, the `OptimadeQueryWidget` mentioned above is a special wrapper widget in AiiDAlab for the `OptimadeQueryProviderWidget` and `OptimadeQueryFilterWidget` widgets.
 
 ### Running application locally
 
@@ -61,7 +88,7 @@ First, you will need to install the package either from [PyPI](https://pypi.org/
 #### PyPI
 
 ```shell
-$ pip install optimade-client
+$ pip install optimade-client[server]
 ```
 
 #### GitHub
@@ -69,12 +96,12 @@ $ pip install optimade-client
 ```shell
 $ git clone https://github.com/CasperWA/voila-optimade-client.git
 $ cd voila-optimade-client
-voila-optimade-client$ pip install .
+voila-optimade-client$ pip install .[server]
 ```
 
-If you wish to contribute to the application, you can install it in "editable" mode by using the `-e` flag: `pip install -e .`
+Note, it is important to install the `server` extra in order to also install the `voila` package (and the `ase` package for a wider variety of download formats).
 
-To now run the application (notebook) [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) you can simply run the command `optimade-client` in a terminal and go to the printed URL (usually <http://localhost:8866>) or pass the `--open-browser` option to let the program try to automatically open your default browser at the URL.
+To now run the application (notebook) [`OPTIMADE Client.ipynb`](OPTIMADE%20Client.ipynb) you can simply run the command `optimade-client` in a terminal and go to the printed URL (usually <http://localhost:8866>) or pass the `--open-browser` option to let the program try to automatically open your default browser.
 
 The application will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
@@ -82,17 +109,30 @@ The configuration will automatically be copied to Jupyter's configuration direct
 ```shell
 $ optimade-client
 ...
-[Voila] Voila is running at:
+[Voila] Voilà is running at:
 http://localhost:8866/
 ...
 ```
 
 For a list of all options that can be passed to `optimade-client` use the `-h/--help` option.
 
+## Contribute
+
+If you wish to contribute to the application, you can install it in "editable" mode by using the `-e` flag: `pip install -e .[dev]`.
+It is recommended that you use the GitHub-route mentioned above.
+
+You should also install `pre-commit` in the cloned git repository by running:
+
+```shell
+voila-optimade-client$ pre-commit install
+```
+
+To start making contributions, fork the repository and create PRs.
+
 ## Configuration (Voilà)
 
-For running the application (in Voilà) on Binder, the configuration file [`jupyter_config.json`](optimade_client/cli/static/jupyter_config.json) can be used.  
-If you wish to start the Voilà server locally with the same configuration, either copy the [`jupyter_config.json`](optimade_client/cli/static/jupyter_config.json) file to your Jupyter config directory, renaming it to `voila.json` or pass the configurations when you start the server using the CLI.
+For running the application (in Voilà) on Binder, the configuration file [`jupyter_config.json`](optimade_client/jupyter_config.json) can be used.  
+If you wish to start the Voilà server locally with the same configuration, either copy the [`jupyter_config.json`](optimade_client/jupyter_config.json) file to your Jupyter config directory, renaming it to `voila.json` or pass the configurations when you start the server using the CLI.
 
 > **Note**: `jupyter_config.json` is automatically copied over as `voila.json` when running the application using the `optimade-client` command.
 
@@ -108,7 +148,7 @@ Example of passing configurations when you start the Voilà server using the CLI
 ```shell
 $ voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 "OPTIMADE Client.ipynb"
 ...
-[Voila] Voila is running at:
+[Voila] Voilà is running at:
 http://localhost:8866/
 ...
 ```
@@ -117,7 +157,7 @@ To see the full list of configurations you can call `voila` and pass `--help-all
 
 ## License
 
-MIT. The terms of the license can be found in the LICENSE file.
+MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.
 
 ## Contact
 

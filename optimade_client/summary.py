@@ -8,7 +8,10 @@ import traitlets
 
 import nglview
 
-from ase import Atoms as aseAtoms
+try:
+    from ase import Atoms as aseAtoms
+except ImportError:
+    aseAtoms = None
 
 try:
     from pymatgen import Molecule as pymatgenMolecule, Structure as pymatgenStructure
@@ -197,6 +200,7 @@ document.body.removeChild(link);" />
         else:
             self._button_style = ButtonStyle.DEFAULT
 
+        self._initialize_options()
         self.dropdown = ipw.Dropdown(
             options=("Select a format", {}), layout={"width": "auto"}
         )
@@ -226,7 +230,21 @@ document.body.removeChild(link);" />
             self._update_options()
             self.unfreeze()
 
-    def _update_options(self):
+    def _initialize_options(self) -> None:
+        """Initialize options according to installed packages"""
+        for imported_object, adapter_format in [
+            (aseAtoms, "ase"),
+            (pymatgenStructure, "pymatgen"),
+        ]:
+            if imported_object is None:
+                LOGGER.debug("%s not recognized to be installed.", adapter_format)
+                self._formats = [
+                    option
+                    for option in self._formats
+                    if option[1].get("adapter_format", "") != adapter_format
+                ]
+
+    def _update_options(self) -> None:
         """Update options according to chosen structure"""
         # Disordered structures not usable with ASE
         if "disorder" in self.structure.structure_features:
@@ -241,10 +259,9 @@ document.body.removeChild(link);" />
                     if option[1].get("adapter_format", "") != "ase"
                 ]
             )
-            options.insert(0, ("Select a format", {}))
         else:
             options = sorted(self._formats)
-            options.insert(0, ("Select a format", {}))
+        options.insert(0, ("Select a format", {}))
         LOGGER.debug("Will set the dropdown options to: %s", options)
         self.dropdown.options = options
 

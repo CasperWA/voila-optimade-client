@@ -18,4 +18,5 @@ echo "\n### Commit updated files ###"
 git add setup.py
 git add optimade_client/__init__.py
 git add optimade_client/informational.py
+git add optimade_client/cli/run.py
 git commit -m "Release ${GITHUB_REF#refs/tags/}"

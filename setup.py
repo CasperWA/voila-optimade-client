@@ -9,11 +9,14 @@ with open(MODULE_DIR.joinpath("README.md")) as handle:
 with open(MODULE_DIR.joinpath("requirements.txt")) as handle:
     REQUIREMENTS = [f"{_.strip()}" for _ in handle.readlines() if " " not in _]
 
+with open(MODULE_DIR.joinpath("requirements_server.txt")) as handle:
+    SERVER = [f"{_.strip()}" for _ in handle.readlines()]
+
 with open(MODULE_DIR.joinpath("requirements_testing.txt")) as handle:
     TESTING = [f"{_.strip()}" for _ in handle.readlines()]
 
 with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
-    DEV = [f"{_.strip()}" for _ in handle.readlines()] + TESTING
+    DEV = [f"{_.strip()}" for _ in handle.readlines()] + TESTING + SERVER
 
 setup(
     name="optimade-client",
@@ -28,9 +31,9 @@ setup(
     python_requires=">=3.6",
     packages=find_packages(),
     include_package_data=True,
-    package_data={"optimade_client": ["img/*.png", "cli/static/*.json"]},
+    package_data={"optimade_client": ["img/*.png", "*.json"]},
     install_requires=REQUIREMENTS,
-    extras_require={"dev": DEV, "testing": TESTING},
+    extras_require={"dev": DEV, "testing": TESTING, "server": SERVER},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Framework :: AiiDA",
