@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - stable
+      - 'push-action/**'
 
 jobs:
 
@@ -77,4 +83,12 @@ jobs:
         pip install -e .[testing]
 
     - name: PyTest
-      run: pytest --cov=./optimade_client/
+      run: pytest -vvv --cov=optimade_client --cov-report=xml tests/
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == 3.8 && github.repository == 'CasperWA/voila-optimade-client'
+      uses: codecov/codecov-action@v1
+      with:
+        name: optimade-client
+        file: ./coverage.xml
+        flags: optimade-client
