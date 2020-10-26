@@ -36,6 +36,7 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         embedded: bool = False,
         database_limit: int = None,
         width_ratio: Union[Tuple[int, int], List[int]] = None,
+        width_space: int = None,
         **kwargs,
     ):
         database_limit = database_limit if database_limit and database_limit > 0 else 10
@@ -63,11 +64,13 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
             else:
                 width_ratio = (10, 21)
 
+            width_space = width_space if width_space is not None else 1
+
             super().__init__(
                 n_rows=1, n_columns=sum(width_ratio), layout=layout, **kwargs
             )
             self[:, : width_ratio[0]] = self.chooser
-            self[:, width_ratio[0] + 1 :] = self.summary
+            self[:, width_ratio[0] + width_space :] = self.summary
 
             ipw.dlink((self.chooser, "provider"), (self.summary, "provider"))
             ipw.dlink(
