@@ -1,5 +1,8 @@
+import warnings
+
 import ipywidgets as ipw
 import traitlets
+from typing import Union, Tuple, List
 
 from optimade.models import LinksResourceAttributes
 
@@ -7,6 +10,7 @@ from optimade_client.subwidgets import (
     ProviderImplementationChooser,
     ProviderImplementationSummary,
 )
+from optimade_client.warnings import OptimadeClientWarning
 
 
 DEFAULT_FILTER_VALUE = (
@@ -27,7 +31,14 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         default_value=("", None),
     )
 
-    def __init__(self, embedded: bool = False, database_limit: int = None, **kwargs):
+    def __init__(
+        self,
+        embedded: bool = False,
+        database_limit: int = None,
+        width_ratio: Union[Tuple[int, int], List[int]] = None,
+        width_space: int = None,
+        **kwargs,
+    ):
         database_limit = database_limit if database_limit and database_limit > 0 else 10
 
         layout = ipw.Layout(width="100%", height="auto")
@@ -42,9 +53,24 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
             super().__init__(n_rows=1, n_columns=1, layout=layout, **kwargs)
             self[:, :] = self.chooser
         else:
-            super().__init__(n_rows=1, n_columns=31, layout=layout, **kwargs)
-            self[:, :10] = self.chooser
-            self[:, 11:] = self.summary
+            if width_ratio is not None and isinstance(width_ratio, (tuple, list)):
+                if len(width_ratio) != 2 or sum(width_ratio) <= 0:
+                    width_ratio = (10, 21)
+                    warnings.warn(
+                        "width_ratio is not a list or tuple of length 2. "
+                        f"Will use defaults {width_ratio}.",
+                        OptimadeClientWarning,
+                    )
+            else:
+                width_ratio = (10, 21)
+
+            width_space = width_space if width_space is not None else 1
+
+            super().__init__(
+                n_rows=1, n_columns=sum(width_ratio), layout=layout, **kwargs
+            )
+            self[:, : width_ratio[0]] = self.chooser
+            self[:, width_ratio[0] + width_space :] = self.summary
 
             ipw.dlink((self.chooser, "provider"), (self.summary, "provider"))
             ipw.dlink(
