@@ -78,7 +78,7 @@ def test_exmpl_not_in_list():
                 "description": "A public database of crystal structures mostly derived from ab "
                 "initio structure prediction from the group of Dr Andrew Morris at the University "
                 "of Birmingham https://ajm143.github.io",
-                "base_url": "https://optimade.odbx.science/v1.0.0",
+                "base_url": "https://optimade-index.odbx.science/v1.0.0",
                 "homepage": "https://odbx.science",
                 "link_type": "external",
             }
