@@ -2,7 +2,6 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from shutil import copyfile
 import subprocess
 import sys
 
@@ -59,24 +58,21 @@ def main(args: list = None):
             "(and ASE for a larger download format selection)."
         )
 
-    # Rename jupyter_config.json to voila.json and copy it Jupyter's config dir
-    jupyter_config_dir = subprocess.getoutput("jupyter --config-dir")
-    Path(jupyter_config_dir).mkdir(parents=True, exist_ok=True)
-    copyfile(
-        Path(__file__).parent.joinpath("static/jupyter_config.json").resolve(),
-        f"{jupyter_config_dir}/voila.json",
+    notebook = str(
+        Path(__file__).parent.joinpath("static/OPTIMADE-Client.ipynb").resolve()
     )
-
-    notebook = Path(__file__).parent.joinpath("static/OPTIMADE-Client.ipynb").resolve()
+    config_path = str(Path(__file__).parent.joinpath("static").resolve())
 
     # "Trust" notebook
-    subprocess.run(
-        ["jupyter", "trust", notebook],
-        cwd=Path(__file__).parent.parent.parent.resolve(),
-        check=False,
-    )
+    subprocess.run(["jupyter", "trust", notebook], check=False)
 
     argv = [notebook]
+
+    if sys.version_info.minor <= 6:
+        # Python 3.6 and below (officially only supports Python 3.6+)
+        argv.append(f'--Voila.config_file_paths=["{config_path}"]')
+    else:
+        argv.append(f"--Voila.config_file_paths={config_path}")
 
     if debug:
         if log_level not in ("debug", "info"):
