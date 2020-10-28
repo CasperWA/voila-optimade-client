@@ -1,8 +1,1 @@
-{
-    "VoilaConfiguration": {
-        "enable_nbextensions": true
-    },
-    "VoilaExecutePreprocessor": {
-        "timeout": 180
-    }
-}
+static/jupyter_config.json

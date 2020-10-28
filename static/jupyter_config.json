@@ -1,0 +1,12 @@
+{
+    "VoilaConfiguration": {
+        "enable_nbextensions": true
+    },
+    "VoilaExecutePreprocessor": {
+        "timeout": 180
+    },
+    "MappingKernelManager": {
+      "cull_idle_timeout": 900,
+      "cull_interval": 60
+    }
+}
