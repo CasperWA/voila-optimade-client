@@ -63,9 +63,7 @@ def main(args: list = None):
     jupyter_config_dir = subprocess.getoutput("jupyter --config-dir")
     Path(jupyter_config_dir).mkdir(parents=True, exist_ok=True)
     copyfile(
-        Path(__file__)
-        .parent.parent.parent.joinpath("static/jupyter_config.json")
-        .resolve(),
+        Path(__file__).parent.joinpath("static/jupyter_config.json").resolve(),
         f"{jupyter_config_dir}/voila.json",
     )
 
