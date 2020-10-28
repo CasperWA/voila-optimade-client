@@ -67,14 +67,16 @@ def main(args: list = None):
         f"{jupyter_config_dir}/voila.json",
     )
 
+    notebook = Path(__file__).parent.joinpath("static/OPTIMADE-Client.ipynb").resolve()
+
     # "Trust" notebook
     subprocess.run(
-        ["jupyter", "trust", "OPTIMADE Client.ipynb"],
+        ["jupyter", "trust", notebook],
         cwd=Path(__file__).parent.parent.parent.resolve(),
         check=False,
     )
 
-    argv = ["OPTIMADE Client.ipynb"]
+    argv = [notebook]
 
     if debug:
         if log_level not in ("debug", "info"):

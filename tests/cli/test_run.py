@@ -26,7 +26,16 @@ def test_log_level(run_cli):
     - `info`: Normal setting. There should be minimal output.
     - `debug`: Below normal setting (INFO). There should be maximum output.
     """
-    signed_text = "Notebook already signed: OPTIMADE Client.ipynb\n"
+    from pathlib import Path
+
+    path_to_notebook = (
+        Path(__file__)
+        .parent.parent.parent.joinpath(
+            "optimade_client/cli/static/OPTIMADE-Client.ipynb"
+        )
+        .resolve()
+    )
+    signed_text = f"Notebook already signed: {path_to_notebook}\n"
 
     log_level = "warning"
 
