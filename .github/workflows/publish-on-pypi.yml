@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
     env:
-      PUBLISH_UPDATE_BRANCH: develop
+      PUBLISH_UPDATE_BRANCH: develop_test
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@master
       with:
         python-version: 3.8
 
