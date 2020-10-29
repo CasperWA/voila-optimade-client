@@ -26,40 +26,29 @@ jobs:
         python -m pip install --upgrade pip
         pip install -U setuptools
 
-    - name: Update version and update '${{ env.PUBLISH_UPDATE_BRANCH }}'
+    - name: Update version and tag
+      run: .github/static/update_version.sh
+
+    - name: Push updates to '${{ env.PUBLISH_UPDATE_BRANCH }}'
       uses: CasperWA/push-protected@v2
       with:
         token: ${{ secrets.RELEASE_PAT }}
         branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
-        changes: .github/static/update_version.sh
+        force: true
+        tags: true
 
-    - name: Update tag to latest commit (getting the newest version locally)
-      run: |
-        git config --local user.email "casper.andersen@epfl.ch"
-        git config --local user.name "CasperWA"
+    # - name: Build source distribution
+    #   run: python ./setup.py sdist
 
-        git fetch origin
-        git branch ${{ env.PUBLISH_UPDATE_BRANCH }} origin/${{ env.PUBLISH_UPDATE_BRANCH }}
-        git checkout ${{ env.PUBLISH_UPDATE_BRANCH }}
+    # - name: Publish package to TestPyPI
+    #   uses: pypa/gh-action-pypi-publish@master
+    #   with:
+    #     user: __token__
+    #     password: ${{ secrets.test_pypi_password }}
+    #     repository_url: https://test.pypi.org/legacy/
 
-        TAG_MSG=.github/static/release_tag_msg.txt
-        sed -i "s|TAG_NAME|${GITHUB_REF#refs/tags/}|g" "${TAG_MSG}"
-
-        git tag -af -F "${TAG_MSG}" ${GITHUB_REF#refs/tags/}
-        git push -f --tags
-
-    - name: Build source distribution
-      run: python ./setup.py sdist
-
-    - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.test_pypi_password }}
-        repository_url: https://test.pypi.org/legacy/
-
-    - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+    # - name: Publish package to PyPI
+    #   uses: pypa/gh-action-pypi-publish@master
+    #   with:
+    #     user: __token__
+    #     password: ${{ secrets.pypi_password }}
