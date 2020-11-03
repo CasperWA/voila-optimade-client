@@ -287,6 +287,7 @@ document.body.removeChild(link);" />
             )
             return
 
+        output = None
         with warnings.catch_warnings():
             warnings.filterwarnings("error")
 

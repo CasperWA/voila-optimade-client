@@ -30,12 +30,6 @@ from optimade_client.utils import (
 )
 
 
-DEFAULT_FILTER_VALUE = (
-    'chemical_formula_descriptive CONTAINS "Al" OR (chemical_formula_anonymous = "AB" AND '
-    'elements HAS ALL "Si","Al","O")'
-)
-
-
 class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     ipw.VBox
 ):
