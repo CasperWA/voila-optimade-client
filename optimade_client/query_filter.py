@@ -48,6 +48,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self,
         result_limit: int = None,
         button_style: Union[ButtonStyle, str] = None,
+        embedded: bool = False,
         **kwargs,
     ):
         self.page_limit = result_limit if result_limit else 10
@@ -75,7 +76,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.filter_header = ipw.HTML(
             '<h4 style="margin:0px;padding:0px;">Apply filters</h4>'
         )
-        self.filters = FilterTabs()
+        self.filters = FilterTabs(show_large_filters=not embedded)
         self.filters.freeze()
         self.filters.on_submit(self.retrieve_data)
 

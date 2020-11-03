@@ -19,11 +19,11 @@ __all__ = ("FilterTabs",)
 class FilterTabs(ipw.Tab):
     """Separate filter inputs into tabs"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, show_large_filters: bool = True):
         sections: Tuple[Tuple[str, FilterTabSection]] = (
-            ("Basic", FilterInputs()),
+            ("Basic", FilterInputs(show_large_filters=show_large_filters)),
             # ("Advanced", ipw.HTML("This input tab has not yet been implemented.")),
-            ("Raw", FilterRaw()),
+            ("Raw", FilterRaw(show_large_filters=show_large_filters)),
         )
 
         super().__init__(
@@ -73,6 +73,10 @@ class FilterTabSection(ipw.VBox):
     """Base class for a filter tab section"""
 
     range_nx = traitlets.Dict(allow_none=True)
+
+    def __init__(self, show_large_filters: bool = True, **kwargs):
+        super().__init__(**kwargs)
+        self._show_large_filters = show_large_filters
 
     @traitlets.observe("range_nx")
     def update_ranged_inputs(self, change: dict):
@@ -334,6 +338,7 @@ class FilterInputs(FilterTabSection):
                         "unselected_color": "#5096f1",  # Blue
                         "selected_colors": ["#66BB6A", "#EF5350"],  # Green, red
                         "border_color": "#000000",  # Black
+                        "extended": "self._show_large_filters",
                     },
                 ),
                 (
@@ -394,6 +399,7 @@ class FilterInputs(FilterTabSection):
     }
 
     def __init__(self, **kwargs):
+        self._show_large_filters = kwargs.get("show_large_filters", True)
         self.query_fields: Dict[str, FilterInput] = {}
         self._layout = ipw.Layout(width="auto")
 
@@ -492,6 +498,9 @@ class FilterInputs(FilterTabSection):
         for user_input in inputs:
             input_config = user_input[1]
             if isinstance(input_config, dict):
+                for key, value in input_config.items():
+                    if isinstance(value, str) and value.startswith("self."):
+                        input_config[key] = getattr(self, value[len("self.") :])
                 new_input = FilterInput(**input_config)
             else:
                 new_input = FilterInput(field=input_config)
