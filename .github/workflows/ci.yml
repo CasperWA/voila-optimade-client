@@ -104,7 +104,9 @@ jobs:
     - name: Try to install source distribution
       run: |
         pwd
-        ORIGINAL_PWD=$(pwd)
-        VERSION=$( git tag -l 20* --sort="version:refname" | tail -1 )
+        export ORIGINAL_PWD=$(pwd)
+        export VERSION=$( git tag -l 20* --sort="version:refname" | tail -1 )
+        echo "ORIGINAL_PWD: ${ORIGINAL_PWD}"
+        echo "VERSION: ${VERSION}"
         cd /
         pip install ${ORIGINAL_PWD}/dist/optimade-client-${VERSION}.tar.gz
