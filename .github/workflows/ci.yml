@@ -81,3 +81,29 @@ jobs:
         name: optimade-client
         file: ./coverage.xml
         flags: optimade-client
+
+  sdist:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install initial dependencies
+      run: |
+        python -m pip install -U pip
+        pip install -U setuptools
+
+    - name: Build source distribution
+      run: python setup.py sdist
+
+    - name: Try to install source distribution
+      run: |
+        pwd
+        ORIGINAL_PWD=$(pwd)
+        cd /
+        pip install ${ORIGINAL_PWD}/dist/optimade-client-$( git tag -l 20* --sort="version:refname" | tail -1 ).tar.gz
