@@ -6,7 +6,7 @@ MODULE_DIR = Path(__file__).resolve().parent
 with open(MODULE_DIR.joinpath("README.md")) as handle:
     README = handle.read()
 
-with open(MODULE_DIR.joinpath("requirements.txt")) as handle:
+with open(MODULE_DIR.joinpath("requirements_base.txt")) as handle:
     REQUIREMENTS = [f"{_.strip()}" for _ in handle.readlines() if " " not in _]
 
 with open(MODULE_DIR.joinpath("requirements_server.txt")) as handle:
