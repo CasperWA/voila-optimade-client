@@ -2,20 +2,21 @@ from pathlib import Path
 from setuptools import setup, find_packages
 
 MODULE_DIR = Path(__file__).resolve().parent
+REQUIREMENTS_DIR = MODULE_DIR / "requirements"
 
 with open(MODULE_DIR.joinpath("README.md")) as handle:
     README = handle.read()
 
-with open(MODULE_DIR.joinpath("requirements_base.txt")) as handle:
-    REQUIREMENTS = [f"{_.strip()}" for _ in handle.readlines() if " " not in _]
+with open(REQUIREMENTS_DIR.joinpath("requirements_base.txt")) as handle:
+    BASE = [f"{_.strip()}" for _ in handle.readlines() if " " not in _]
 
-with open(MODULE_DIR.joinpath("requirements_server.txt")) as handle:
+with open(REQUIREMENTS_DIR.joinpath("requirements_server.txt")) as handle:
     SERVER = [f"{_.strip()}" for _ in handle.readlines()]
 
-with open(MODULE_DIR.joinpath("requirements_testing.txt")) as handle:
+with open(REQUIREMENTS_DIR.joinpath("requirements_testing.txt")) as handle:
     TESTING = [f"{_.strip()}" for _ in handle.readlines()]
 
-with open(MODULE_DIR.joinpath("requirements_dev.txt")) as handle:
+with open(REQUIREMENTS_DIR.joinpath("requirements_dev.txt")) as handle:
     DEV = [f"{_.strip()}" for _ in handle.readlines()] + TESTING + SERVER
 
 setup(
@@ -32,7 +33,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     package_data={"optimade_client": ["img/*.png", "*.json"]},
-    install_requires=REQUIREMENTS,
+    install_requires=BASE,
     extras_require={"dev": DEV, "testing": TESTING, "server": SERVER},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
