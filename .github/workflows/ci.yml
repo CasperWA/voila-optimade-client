@@ -105,6 +105,7 @@ jobs:
       run: |
         pwd
         export ORIGINAL_PWD=$(pwd)
+        git tag -l 20* --sort="version:refname" | tail -1
         export VERSION=$( git tag -l 20* --sort="version:refname" | tail -1 )
         echo "ORIGINAL_PWD: ${ORIGINAL_PWD}"
         echo "VERSION: ${VERSION}"
