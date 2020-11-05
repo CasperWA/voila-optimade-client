@@ -82,7 +82,7 @@ jobs:
         file: ./coverage.xml
         flags: optimade-client
 
-  sdist:
+  build-package:
     runs-on: ubuntu-latest
 
     steps:
