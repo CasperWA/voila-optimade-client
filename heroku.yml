@@ -1,0 +1,5 @@
+build:
+  docker:
+    web: heroku/Dockerfile
+run:
+  web: voila --port=$PORT --no-browser --Voila.config_file_paths=/app/optimade_client/cli/static/ /app/OPTIMADE-Client.ipynb
