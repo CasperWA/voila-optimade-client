@@ -2,5 +2,6 @@
     "name": "OPTIMADE Client",
     "description": "Voilà/Jupyter client for searching through OPTIMADE databases.",
     "repository": "https://github.com/CasperWA/voila-optimade-client",
-    "logo": "https://raw.githubusercontent.com/CasperWA/voila-optimade-client/232f11d39076b328e07c8bb6928c3a6847523f6c/img/optimade-no-text-transparent-bg.png"
+    "logo": "https://raw.githubusercontent.com/CasperWA/voila-optimade-client/232f11d39076b328e07c8bb6928c3a6847523f6c/img/optimade-no-text-transparent-bg.png",
+    "stack": "container"
 }
