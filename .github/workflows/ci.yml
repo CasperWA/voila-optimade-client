@@ -81,3 +81,35 @@ jobs:
         name: optimade-client
         file: ./coverage.xml
         flags: optimade-client
+
+  build-package:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install initial dependencies
+      run: |
+        python -m pip install -U pip
+        pip install -U setuptools
+
+    - name: Build source distribution
+      run: python setup.py sdist
+
+    - name: Try to install source distribution
+      run: |
+        # Get latest git tag (for version)
+        # Move to root directory to ensure we're not in a place where checked out files
+        # may be sourced
+        ORIGINAL_PWD=$(pwd)
+        VERSION=$( git tag -l 20* --sort="version:refname" | tail -1 )
+        cd /
+        if [ "$(pwd)" = "${ORIGINAL_PWD}" ]; then echo "In original pwd: $(pwd)" && exit 1; fi
+        pip install ${ORIGINAL_PWD}/dist/optimade-client-${VERSION}.tar.gz
