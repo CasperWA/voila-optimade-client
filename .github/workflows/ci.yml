@@ -105,5 +105,6 @@ jobs:
       run: |
         pwd
         ORIGINAL_PWD=$(pwd)
+        VERSION=$( git tag -l 20* --sort="version:refname" | tail -1 )
         cd /
-        pip install ${ORIGINAL_PWD}/dist/optimade-client-$( git tag -l 20* --sort="version:refname" | tail -1 ).tar.gz
+        pip install ${ORIGINAL_PWD}/dist/optimade-client-${VERSION}.tar.gz
