@@ -1,7 +1,7 @@
 exclude .*.ipynb
 include LICENSE
 include README.md
-include requirements/requirements*.txt
+include requirements*.txt
 include optimade_client/img/*.png
 include optimade_client/cli/static/*.json
 include optimade_client/cli/static/*.ipynb
