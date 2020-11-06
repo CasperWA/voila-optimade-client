@@ -84,11 +84,10 @@ jobs:
 
   build-package:
     runs-on: ubuntu-latest
-    name: Check build and installation of PyPI source distribution
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Check build and installation
+    - name: Check build and installation of PyPI source distribution
       uses: CasperWA/check-sdist-action@v1
