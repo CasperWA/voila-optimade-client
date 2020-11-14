@@ -5,6 +5,7 @@ from .output_summary import *  # noqa: F403
 from .periodic_table import *  # noqa: F403
 from .provider_database import *  # noqa: F403
 from .results import *  # noqa: F403
+from .sort_selector import *  # noqa: F403
 
 
 __all__ = (
@@ -14,4 +15,5 @@ __all__ = (
     + periodic_table.__all__  # noqa: F405
     + provider_database.__all__  # noqa: F405
     + results.__all__  # noqa: F405
+    + sort_selector.__all__  # noqa: F405
 )

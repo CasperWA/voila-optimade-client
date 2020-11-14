@@ -456,54 +456,35 @@ def validate_api_version(version: str, raise_on_fail: bool = True) -> str:
     return ""
 
 
-def get_structures_schema(base_url: str) -> dict:
-    """Retrieve provider's /structures endpoint schema"""
+def get_entry_endpoint_schema(base_url: str, endpoint: str = None) -> dict:
+    """Retrieve provider's entry endpoint schema (default: /structures)."""
     result = {}
 
-    endpoint = "/info/structures"
-    url_path = (
-        base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
-    )
+    endpoint = endpoint if endpoint is not None else "structures"
+    endpoint = f"/info/{endpoint.strip('/')}"
 
-    try:
-        response = SESSION.get(url_path, timeout=TIMEOUT_SECONDS)
-        if response.from_cache:
-            LOGGER.debug("Request to %s was taken from cache !", url_path)
-    except (
-        requests.exceptions.ConnectTimeout,
-        requests.exceptions.ConnectionError,
-        requests.exceptions.ReadTimeout,
-    ) as exc:
-        return {
-            "errors": [
-                {
-                    "detail": (
-                        f"CLIENT: Connection error or timeout.\nURL: {url_path}\n"
-                        f"Exception: {exc!r}"
-                    )
-                }
-            ]
-        }
-    else:
-        if response.status_code != 200:
-            return {
-                "errors": [
-                    {
-                        "detail": f"CLIENT: Not a successful 200 response.\nURL: {url_path}",
-                        "status": response.status_code,
-                    }
-                ]
-            }
-
-        properties = response.get("data", {}).get("properties", {})
-        output_fields_by_json = response.get("output_fields_by_format", {}).get(
-            "json", []
+    response = perform_optimade_query(endpoint=endpoint, base_url=base_url)
+    msg, _ = handle_errors(response)
+    if msg:
+        LOGGER.error(
+            "Could not retrieve information about entry-endpoint %r.\n  Message: %r\n  Response:"
+            "\n%s",
+            endpoint[len("/info/") :],
+            msg,
+            response,
         )
-        for field in output_fields_by_json:
-            if field in properties:
-                result[field] = properties[field]
-
         return result
+
+    return response.get("data", {}).get("properties", {})
+
+
+def get_sortable_fields(base_url: str, endpoint: str = None) -> List[str]:
+    """Retrieve sortable fields for entry endpoint (default: /structures)."""
+    endpoint = endpoint if endpoint is not None else "structures"
+
+    schema = get_entry_endpoint_schema(base_url, endpoint)
+
+    return [field for field in schema if schema[field].get("sortable", False)]
 
 
 def handle_errors(response: dict) -> Tuple[str, set]:
