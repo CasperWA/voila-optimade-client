@@ -17,6 +17,7 @@ from optimade_client.logger import LOGGER
 from optimade_client.subwidgets import (
     FilterTabs,
     ResultsPageChooser,
+    SortSelector,
     StructureDropdown,
 )
 from optimade_client.utils import (
@@ -25,6 +26,7 @@ from optimade_client.utils import (
     handle_errors,
     ordered_query_url,
     perform_optimade_query,
+    get_sortable_fields,
     SESSION,
     TIMEOUT_SECONDS,
 )
@@ -92,6 +94,11 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.structures_header = ipw.HTML(
             '<h4 style="margin-bottom:0px;padding:0px;">Results</h4>'
         )
+
+        self.sort_selector = SortSelector(disabled=True)
+        self.sorting = self.sort_selector.value
+        self.sort_selector.observe(self._sort, names="value")
+
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
         self.error_or_status_messages = ipw.HTML("")
@@ -107,6 +114,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.filters,
                 self.query_button,
                 self.structures_header,
+                self.sort_selector,
                 self.structure_drop,
                 self.error_or_status_messages,
                 self.structure_page_chooser,
@@ -148,6 +156,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.query_button.description = "Search"
                 self.query_button.icon = "search"
                 self.query_button.tooltip = "Search"
+                self.sort_selector.valid_fields = sorted(
+                    get_sortable_fields(self.database[1].base_url)
+                )
                 self.unfreeze()
 
     def _on_structure_select(self, change):
@@ -220,12 +231,23 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.query_button.tooltip = "Search"
             self.unfreeze()
 
+    def _sort(self, change: dict) -> None:
+        """"Perform new query with new sorting"""
+        sort = change["new"]
+        if not sort:
+            raise ValueError(
+                f"The sort parameter could not be determined (sort={sort!r})."
+            )
+        self.sorting = sort
+        self.retrieve_data({})
+
     def freeze(self):
         """Disable widget"""
         self.query_button.disabled = True
         self.filters.freeze()
         self.structure_drop.freeze()
         self.structure_page_chooser.freeze()
+        self.sort_selector.freeze()
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
@@ -233,6 +255,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.filters.unfreeze()
         self.structure_drop.unfreeze()
         self.structure_page_chooser.unfreeze()
+        self.sort_selector.unfreeze()
 
     def reset(self):
         """Reset widget"""
@@ -244,6 +267,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.filters.reset()
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+            self.sort_selector.reset()
 
     def _uses_new_structure_features(self) -> bool:
         """Check whether self.database_version is >= v1.0.0-rc.2"""
@@ -437,6 +461,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             "page_limit": self.page_limit,
             "page_offset": self.offset,
             "page_number": self.number,
+            "sort": self.sorting,
         }
         LOGGER.debug(
             "Parameters (excluding filter) sent to query util func: %s",
