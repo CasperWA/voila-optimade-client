@@ -25,7 +25,7 @@ class PeriodicTable(ipw.VBox):
         )
         self.select_any_all = ipw.Checkbox(
             value=False,
-            description="Structure must ex-/include ALL chosen elements",
+            description="Structures can ex-/include any chosen elements",
             indent=False,
             layout={"width": "auto"},
             disabled=self.disabled,
@@ -55,11 +55,11 @@ class PeriodicTable(ipw.VBox):
             self.ptable.selected_elements,
         )
         LOGGER.debug(
-            "PeriodicTable: Select ANY (False) or ALL (True) = %r",
+            "PeriodicTable: Select ANY (True) or ALL (False) = %r",
             self.select_any_all.value,
         )
 
-        return self.select_any_all.value, self.ptable.selected_elements.copy()
+        return not self.select_any_all.value, self.ptable.selected_elements.copy()
 
     @property
     def disabled(self) -> None:
