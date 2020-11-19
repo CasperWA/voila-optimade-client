@@ -1,9 +1,9 @@
 # OPTIMADE client (in Voilà)
 
-[![Materials Cloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CasperWA/voila-optimade-client/develop/docs/resources/mcloud_badge.json)](https://dev-tools.materialscloud.org/optimadeclient/)
+[![MaterialsCloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CasperWA/voila-optimade-client/develop/docs/resources/mcloud_badge.json)](https://materialscloud.org/optimadeclient/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/CasperWA/voila-optimade-client/develop?urlpath=%2Fvoila%2Frender%2FOPTIMADE-Client.ipynb)
 
-Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, Materials Cloud, NoMaD, Materials Project, ODBX, OQMD, and more ...).
+Query for and import structures from [OPTIMADE](https://www.optimade.org) providers (COD, MaterialsCloud, NoMaD, Materials Project, ODBX, OQMD, and more ...).
 
 Current supported OPTIMADE API versions: `1.0.0`, `1.0.0-rc.2`, `1.0.0-rc.1`, `0.10.1`
 
@@ -12,7 +12,7 @@ Current supported OPTIMADE API versions: `1.0.0`, `1.0.0-rc.2`, `1.0.0-rc.1`, `0
 This Jupyter-based app is intended to run either:
 
 - In [AiiDAlab](https://aiidalab.materialscloud.org) as well as inside a [Quantum Mobile](https://materialscloud.org/work/quantum-mobile) Virtual Machine;
-- As a [Materials Cloud tool](https://dev-tools.materialscloud.org/optimadeclient/);
+- As a [MaterialsCloud tool](https://materialscloud.org/optimadeclient/);
 - As a standalone [MyBinder application](https://mybinder.org/v2/gh/CasperWA/voila-optimade-client/develop?urlpath=%2Fvoila%2Frender%2FOPTIMADE-Client.ipynb); or
 - As a standalone local application (see more information about this below).
 
