@@ -42,7 +42,7 @@ class HeaderDescription(ipw.VBox):
 This is a friendly client to search through databases and other implementations exposing an OPTIMADE RESTful API.
 To get more information about the OPTIMADE API,
 please see <a href="https://www.optimade.org/" target="_blank">the offical web page</a>.
-All providers are retrieved from <a href="https://providers.optimade.org/" target="_blank">Materials-Consortia's list of providers</a>.
+All providers are retrieved from <a href="https://providers.optimade.org/" target="_blank">the OPTIMADE consortium's list of providers</a>.
 </p>
 <p style="line-height:1.5;font-size:14px;margin-top:5px;">
 <i>Note</i>: The structure property <code>assemblies</code> is currently not supported.
@@ -171,45 +171,48 @@ class OptimadeClientFAQ(ipw.Accordion):
 
     FAQ = [
         {
-            "Q": "Why is a provider from Materials-Consortia's list of providers not shown in the "
-            "client?",
+            "Q": "Why is a given provider not shown in the client?",
+            "A": """<p style="font-size:14px;">The most likely reason is that they have not yet registered with <a href="https://github.com/Materials-Consortia/providers" target="_blank">the OPTIMADE consortium's list of providers repository</a>.
+Please contact the given provider and let them know they can register themselves there.</p>""",
+        },
+        {
+            "Q": "Why is the provider I wish to use greyed out and disabled?",
             "A": """<p style="font-size:14px;">There may be different reasons:</p>
 <ul style="line-height:1.5;font-size:14px;">
-  <li>The provider has not supplied a link to an OPTIMADE index meta-database</li>
-  <li>The provider has implemented an unsupported version</li>
-  <li>The provider has supplied a link that could not be reached</li>
+  <li>The provider has not supplied a link to an OPTIMADE index meta-database.</li>
+  <li>The provider has implemented an unsupported specification version.</li>
+  <li>The provider has supplied a link that could not be reached.</li>
+  <li>The provider claims to implement a supported specification version, but certain required features are not fully implemented.</li>
 </ul>
-<p style="line-height:1.5;font-size:14px;">Please go to <a href="https://github.com/Materials-Consortia/providers" target="_blank">the Materials-Consortia list of providers repository</a> to update the provider in question's details.</p>""",
+<p style="line-height:1.5;font-size:14px;">Please go to <a href="https://github.com/Materials-Consortia/providers" target="_blank">the OPTIMADE consortium's list of providers repository</a> to update the provider in question's details.</p>""",
         },
         {
             "Q": "When I choose a provider, why can I not find any databases?",
             "A": """<p style="font-size:14px;">There may be different reasons:</p>
 <ul style="line-height:1.5;font-size:14px;">
-  <li>The provider does not have a <code>/structures</code> endpoint</li>
-  <li>The implementation is of an unsupported version</li>
-  <li>The implementation could not be reached</li>
+  <li>The provider does not have a <code>/structures</code> endpoint.</li>
+  <li>The implementation is of an unsupported version.</li>
+  <li>The implementation could not be reached.</li>
 </ul>
-<p style="line-height:1.5;font-size:14px;">An implementation may also be removed upon choosing it. This is do to OPTIMADE API version incompatibility between the implementation and this client.</p>""",
+<p style="line-height:1.5;font-size:14px;">An implementation may also be removed upon the user choosing it. This is due to OPTIMADE API version incompatibility between the implementation and this client.</p>""",
         },
         {
             "Q": "I know a database hosts X number of structures, why can I only find Y?",
             "A": f"""<p style="line-height:1.5;font-size:14px;">All searches (including the raw input search) will be pre-processed prior to sending the query.
 This is done to ensure the best experience when using the client.
-Specifically, all structures with <code>"assemblies"</code> and <code>"unknown_positions"</code>
-in the <code>"structural_features"</code> property are excluded.</p>
+Specifically, all structures with <code>"assemblies"</code> and <code>"unknown_positions"</code> (for pre-v1 implementations) in the <code>"structural_features"</code> property are excluded.</p>
 <p style="line-height:1.5;font-size:14px;"><code>"assemblies"</code> handling will be implemented at a later time.
 See <a href="{SOURCE_URL}issues/12" target="_blank">this issue</a> for more information.</p>
-<p style="line-height:1.5;font-size:14px;"><code>"unknown_positions"</code> may be handled later, however, since these structures present difficulties for viewing, it will not be prioritized.</p>
 <p style="line-height:1.5;font-size:14px;">Finally, a provider may choose to expose only a subset of their database.</p>""",
         },
         {
-            "Q": "Why is the number of downloadable formats changing?",
+            "Q": "Why are some downloadable formats greyed out and disabled for certain structures?",
             "A": """<p style="line-height:1.5;font-size:14px;">Currently, only two libraries are used to transform the OPTIMADE structure into other known data types:</p>
 <ul style="line-height:1.5;font-size:14px;">
-  <li>The <a href="https://github.com/Materials-Consortia/optimade-python-tools" target="_blank">OPTIMADE Python Tools</a> library</li>
-  <li>The <a href="https://wiki.fysik.dtu.dk/ase/index.html" target="_blank">Atomistic Simulation Environment (ASE)</a> library</li>
+  <li>The <a href="https://github.com/Materials-Consortia/optimade-python-tools" target="_blank">OPTIMADE Python Tools</a> library.</li>
+  <li>The <a href="https://wiki.fysik.dtu.dk/ase/index.html" target="_blank">Atomistic Simulation Environment (ASE)</a> library.</li>
 </ul>
-<p style="line-height:1.5;font-size:14px;">ASE does not support transforming structures with partial occupancies, hence the options using ASE will be removed when such structures are chosen in the application.
+<p style="line-height:1.5;font-size:14px;">ASE does not support transforming structures with partial occupancies, hence the options using ASE will be disabled when such structures are chosen in the application.
 There are plans to also integrate <a href="https://pymatgen.org/" target="_blank">pymatgen</a>, however, the exact integration is still under design.</p>""",
         },
     ]
