@@ -85,10 +85,11 @@ def test_exmpl_not_in_list():
         ),
     )
 
-    list_of_database_providers = get_list_of_valid_providers()
+    list_of_database_providers, disabled_providers = get_list_of_valid_providers()
 
     assert exmpl not in list_of_database_providers
-    assert mcloud in list_of_database_providers or odbx in list_of_database_providers
+    assert mcloud in list_of_database_providers and odbx in list_of_database_providers
+    assert mcloud[0] not in disabled_providers or odbx[0] not in disabled_providers
 
 
 def test_ordered_query_url():

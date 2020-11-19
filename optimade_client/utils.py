@@ -107,7 +107,7 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
         base_url + endpoint[1:] if base_url.endswith("/") else base_url + endpoint
     )
 
-    if filter is not None:
+    if filter:
         if isinstance(filter, dict):
             pass
         elif isinstance(filter, str):
@@ -370,20 +370,23 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
     return ""
 
 
-def get_list_of_valid_providers() -> List[Tuple[str, LinksResourceAttributes]]:
+def get_list_of_valid_providers() -> Tuple[
+    List[Tuple[str, LinksResourceAttributes]], List[str]
+]:
     """Get curated list of database providers
 
     Return formatted list of tuples to use with a dropdown-widget.
     """
     providers = fetch_providers()
     res = []
+    invalid_providers = []
 
     for entry in providers:
         provider = LinksResource(**entry)
 
-        # Skip if "exmpl"
-        if provider.id == "exmpl":
-            LOGGER.debug("Skipping example provider.")
+        # Skip if "exmpl", "optimade" or "aiida"
+        if provider.id in ["exmpl", "optimade", "aiida"]:
+            LOGGER.debug("Skipping provider: %s", provider)
             continue
 
         attributes = provider.attributes
@@ -398,9 +401,10 @@ def get_list_of_valid_providers() -> List[Tuple[str, LinksResourceAttributes]]:
             )
             continue
 
-        # Skip if there is no base URL
+        # Disable if there is no base URL
         if attributes.base_url is None:
             LOGGER.debug("Base URL found to be None for provider: %s", str(provider))
+            invalid_providers.append((attributes.name, attributes))
             continue
 
         versioned_base_url = get_versioned_base_url(attributes.base_url)
@@ -411,11 +415,12 @@ def get_list_of_valid_providers() -> List[Tuple[str, LinksResourceAttributes]]:
             LOGGER.debug(
                 "Could not determine versioned base URL for provider: %s", str(provider)
             )
+            invalid_providers.append((attributes.name, attributes))
             continue
 
         res.append((attributes.name, attributes))
 
-    return res
+    return res + invalid_providers, [name for name, _ in invalid_providers]
 
 
 def validate_api_version(version: str, raise_on_fail: bool = True) -> str:

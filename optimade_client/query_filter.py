@@ -425,8 +425,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         optimade_filter = self.filters.collect_value()
         optimade_filter = (
             "( {} ) AND ( {} )".format(optimade_filter, add_to_filter)
-            if optimade_filter
-            else add_to_filter
+            if optimade_filter and add_to_filter
+            else optimade_filter or add_to_filter or None
         )
         LOGGER.debug("Querying with filter: %s", optimade_filter)
 

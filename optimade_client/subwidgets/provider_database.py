@@ -11,6 +11,8 @@ import ipywidgets as ipw
 import requests
 import traitlets
 
+from ipywidgets_extended.dropdown import DropdownExtended
+
 from optimade.models import LinksResource, LinksResourceAttributes
 from optimade.models.links import LinkType
 
@@ -62,7 +64,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         dropdown_layout = ipw.Layout(width="auto")
 
         providers = []
-        providers = get_list_of_valid_providers()
+        providers, invalid_providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
         if self.debug:
             from optimade_client.utils import VERSION_PARTS
@@ -78,7 +80,11 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             )
             providers.insert(1, ("Local server", local_provider))
 
-        self.providers = ipw.Dropdown(options=providers, layout=dropdown_layout)
+        self.providers = DropdownExtended(
+            options=providers,
+            disabled_options=invalid_providers,
+            layout=dropdown_layout,
+        )
         self.child_dbs = ipw.Dropdown(
             options=self.INITIAL_CHILD_DBS, layout=dropdown_layout, disabled=True
         )

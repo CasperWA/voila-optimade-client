@@ -2,6 +2,7 @@ appdirs~=1.4.4
 ase~=3.20
 cachecontrol[filecache]~=0.12.6
 ipywidgets~=7.5
+ipywidgets-extended~=1.0
 nglview~=2.7
 optimade~=0.12.3
 pandas~=1.1
