@@ -6,6 +6,7 @@ import warnings
 import ipywidgets as ipw
 import traitlets
 
+from ipywidgets_extended import DropdownExtended
 import nglview
 
 try:
@@ -20,6 +21,7 @@ except ImportError:
     pymatgenStructure = None
 
 from optimade.adapters import Structure
+from optimade.models import StructureFeatures
 
 from optimade_client import exceptions
 from optimade_client.logger import LOGGER
@@ -201,9 +203,9 @@ document.body.removeChild(link);" />
             self._button_style = ButtonStyle.DEFAULT
 
         self._initialize_options()
-        self.dropdown = ipw.Dropdown(
-            options=("Select a format", {}), layout={"width": "auto"}
-        )
+        options = self._formats
+        options.insert(0, ("Select a format", {}))
+        self.dropdown = DropdownExtended(options=options, layout={"width": "auto"})
         self.download_button = ipw.HTML(
             self._download_button_format.format(
                 button_style=self._button_style.value,
@@ -223,10 +225,16 @@ document.body.removeChild(link);" />
     @traitlets.observe("structure")
     def _on_change_structure(self, change: dict):
         """Update widget when a new structure is chosen"""
-        LOGGER.debug("Got new structure for DownloadChooser: %s", change["new"])
         if change["new"] is None:
+            LOGGER.debug(
+                "Got no new structure for DownloadChooser (change['new']=%s).",
+                change["new"],
+            )
             self.reset()
         else:
+            LOGGER.debug(
+                "Got new structure for DownloadChooser: id=%s", change["new"].id
+            )
             self._update_options()
             self.unfreeze()
 
@@ -246,24 +254,22 @@ document.body.removeChild(link);" />
 
     def _update_options(self) -> None:
         """Update options according to chosen structure"""
-        # Disordered structures not usable with ASE
-        if "disorder" in self.structure.structure_features:
+        disabled_options = []
+        if StructureFeatures.DISORDER in self.structure.structure_features:
+            # Disordered structures not usable with ASE
             LOGGER.debug(
                 "'disorder' found in the structure's structure_features (%s)",
                 self.structure.structure_features,
             )
-            options = sorted(
-                [
-                    option
-                    for option in self._formats
-                    if option[1].get("adapter_format", "") != "ase"
-                ]
-            )
-        else:
-            options = sorted(self._formats)
-        options.insert(0, ("Select a format", {}))
-        LOGGER.debug("Will set the dropdown options to: %s", options)
-        self.dropdown.options = options
+            disabled_options = [
+                label
+                for label, value in self._formats
+                if value.get("adapter_format", "") == "ase"
+            ]
+        LOGGER.debug(
+            "Will disable the following dropdown options: %s", disabled_options
+        )
+        self.dropdown.disabled_options = disabled_options
 
     def _update_download_button(self, change: dict):
         """Update Download button with correct onclick value
