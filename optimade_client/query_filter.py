@@ -96,6 +96,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         )
 
         self.sort_selector = SortSelector(disabled=True)
+        self.sorting = self.sort_selector.value
+        self.sort_selector.observe(self._sort, names="value")
 
         self.structure_drop = StructureDropdown(disabled=True)
         self.structure_drop.observe(self._on_structure_select, names="value")
@@ -228,6 +230,16 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.query_button.icon = "search"
             self.query_button.tooltip = "Search"
             self.unfreeze()
+
+    def _sort(self, change: dict) -> None:
+        """"Perform new query with new sorting"""
+        sort = change["new"]
+        if not sort:
+            raise ValueError(
+                f"The sort parameter could not be determined (sort={sort!r})."
+            )
+        self.sorting = sort
+        self.retrieve_data({})
 
     def freeze(self):
         """Disable widget"""
@@ -449,6 +461,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             "page_limit": self.page_limit,
             "page_offset": self.offset,
             "page_number": self.number,
+            "sort": self.sorting,
         }
         LOGGER.debug(
             "Parameters (excluding filter) sent to query util func: %s",

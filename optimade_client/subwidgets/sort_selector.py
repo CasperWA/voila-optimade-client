@@ -1,4 +1,4 @@
-# pylint: disable=no-self-use
+# pylint: disable=no-self-use,too-many-instance-attributes
 from enum import Enum
 from typing import List, Union
 
@@ -30,6 +30,8 @@ class SortSelector(ipw.HBox):
     valid_fields = traitlets.List(
         traitlets.Unicode(), default_value=[field.default_value]
     )
+
+    value = traitlets.Unicode(f"{order.default_value.value}{field.default_value}")
 
     def __init__(
         self,
@@ -113,6 +115,10 @@ class SortSelector(ipw.HBox):
         """Activate widget (in its current state)"""
         self.disabled = False
 
+    def _update_latest_sorting(self) -> None:
+        """Update `latest_sorting` with current values for `field` and `order`."""
+        self.latest_sorting = {"field": self.field, "order": self.order}
+
     def _toggle_sort_availability(self) -> None:
         """Enable/Disable "Sort" button according to user choices."""
         for key, value in self.latest_sorting.items():
@@ -166,5 +172,11 @@ class SortSelector(ipw.HBox):
         self.order_select.icon = self._get_order_icon()
         self._toggle_sort_availability()
 
-    def _sort_clicked(self, button: dict) -> None:
-        """The Sort button has been clicked."""
+    def _sort_clicked(self, _: dict) -> None:
+        """The Sort button has been clicked.
+
+        Set value to current sorting settings.
+        Any usage of this widget should "observe" the `value` attribute to toggle sorting.
+        """
+        self._update_latest_sorting()
+        self.value = f"{self.order.value}{self.field}"
