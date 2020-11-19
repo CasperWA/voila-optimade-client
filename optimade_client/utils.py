@@ -391,6 +391,13 @@ def get_list_of_valid_providers() -> Tuple[
 
         attributes = provider.attributes
 
+        # NOTE: Temporarily disable providers NOT properly satisfying the OPTIMADE specification
+        temp_disable_providers = ["cod", "tcod", "nmd"]
+        if provider.id in temp_disable_providers:
+            LOGGER.debug("Temporarily disabling provider: %s", str(provider))
+            invalid_providers.append((attributes.name, attributes))
+            continue
+
         # Skip if not an 'external' link_type database
         if attributes.link_type != LinkType.EXTERNAL:
             LOGGER.debug(
