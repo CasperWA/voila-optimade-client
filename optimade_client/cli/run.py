@@ -44,11 +44,17 @@ def main(args: list = None):
         action="store_true",
         help="Attempt to open a browser upon starting the Voilà tornado server.",
     )
+    parser.add_argument(
+        "--template",
+        type=str,
+        help="Use another template than the default.",
+    )
 
     args = parser.parse_args(args)
     log_level = args.log_level
     debug = args.debug
     open_browser = args.open_browser
+    template = args.template
 
     # Make sure Voilà is installed
     if voila is None:
@@ -87,5 +93,8 @@ def main(args: list = None):
 
     if "--debug" not in argv:
         argv.append(f"--Voila.log_level={getattr(logging, log_level.upper())}")
+
+    if template:
+        argv.append(f"--template={template}")
 
     voila(argv)
