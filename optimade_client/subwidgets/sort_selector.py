@@ -62,7 +62,7 @@ class SortSelector(ipw.HBox):
             button_style="",
             tooltip=self.order.name.capitalize(),
             icon=self._get_order_icon(),
-            layout={"width": "101px"},
+            layout={"width": "auto", "min_width": "105px"},
         )
         self.order_select.observe(self._change_order, names="value")
 
