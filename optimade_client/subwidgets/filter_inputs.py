@@ -203,30 +203,40 @@ class FilterInput(ipw.HBox):
 class FilterInputParser:
     """Parse user input for filters"""
 
-    def __default__(self, value: Any) -> Any:  # pylint: disable=no-self-use
-        """Default parsing fallback function"""
-        return value, None
-
-    def parse(self, key: str, value: Any) -> Any:
+    def parse(self, key: str, value: Any) -> Tuple[Any, Union[None, str]]:
         """Reroute to self.<key>(value)"""
-        if isinstance(value, str):
-            # Remove any superfluous whitespace at the beginning and end of string values
-            value = value.strip()
-
         func = getattr(self, key, None)
         if func is None:
             return self.__default__(value)
         return func(value)
 
     @staticmethod
-    def chemical_formula_descriptive(value: str) -> str:
-        """Chemical formula descriptive is a free form input"""
+    def __default__(value: Any) -> Tuple[Any, None]:
+        """Default parsing fallback function"""
+        return value, None
+
+    @staticmethod
+    def default_string_filter(value: str) -> Tuple[str, None]:
+        """Default handling of string filters
+
+        Remove any superfluous whitespace at the beginning and end of string values.
+        Remove embedded `"` and wrap the value in `"` (if the value is supplied).
+        """
+        value = value.strip()
         value = value.replace('"', "")
         res = f'"{value}"' if value else ""
         return res, None
 
+    def id(self, value: str) -> Tuple[str, None]:  # pylint: disable=invalid-name
+        """id is a string input"""
+        return self.default_string_filter(value)
+
+    def chemical_formula_descriptive(self, value: str) -> Tuple[str, None]:
+        """Chemical formula descriptive is a free form input"""
+        return self.default_string_filter(value)
+
     @staticmethod
-    def nperiodic_dimensions(value: List[bool]) -> List[int]:
+    def nperiodic_dimensions(value: List[bool]) -> Tuple[List[int], None]:
         """Return list of nperiodic_dimensions values according to checkbox choices"""
         res = []
         for include, periodicity in zip(value, range(4)):
@@ -274,7 +284,7 @@ class FilterInputParser:
     @staticmethod
     def elements(
         value: Tuple[bool, Dict[str, int]]
-    ) -> Tuple[Union[List[str], List[Tuple[str]]], bool]:
+    ) -> Tuple[Union[List[str], List[Tuple[str]]], str]:
         """Extract included and excluded elements"""
         use_all = value[0]
         ptable_value = value[1]
