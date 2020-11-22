@@ -284,7 +284,7 @@ class FilterInputParser:
     @staticmethod
     def elements(
         value: Tuple[bool, Dict[str, int]]
-    ) -> Tuple[Union[List[str], List[Tuple[str]]], str]:
+    ) -> Tuple[Union[List[str], List[Tuple[str]]], List[str]]:
         """Extract included and excluded elements"""
         use_all = value[0]
         ptable_value = value[1]
@@ -306,21 +306,24 @@ class FilterInputParser:
             exclude,
         )
 
-        res = []
+        values = []
+        operators = []
         if exclude:
             elements = ",".join([f'"{element}"' for element in exclude])
-            res.append(("NOT", elements))
+            values.append(("NOT", elements))
+            operators.append(" HAS ANY ")
         if include:
             include_elements = ",".join([f'"{element}"' for element in include])
-            res.append(include_elements)
-
-        operator = " HAS ALL " if use_all else " HAS ANY "
+            values.append(include_elements)
+            operators.append(" HAS ALL " if use_all else " HAS ANY ")
 
         LOGGER.debug(
-            "elements: Resulting parsed operator: %r and value: %r", operator, res
+            "elements: Resulting parsed operator(s): %r and value(s): %r",
+            operators,
+            values,
         )
 
-        return res, operator
+        return values, operators
 
 
 class FilterInputs(FilterTabSection):
@@ -538,14 +541,24 @@ class FilterInputs(FilterTabSection):
                 parsed_operator = self.OPERATOR_MAP.get(field, "")
 
             if isinstance(parsed_value, (list, tuple, set)):
-                for value in parsed_value:
+                for index, value in enumerate(parsed_value):
                     inverse = ""
                     if isinstance(value, tuple) and value[0] == "NOT":
                         inverse = "NOT "
                         value = value[1]
-                    result.append(f"{inverse}{field}{parsed_operator}{value}")
+                    operator = (
+                        parsed_operator[index]
+                        if isinstance(parsed_operator, (list, tuple, set))
+                        else parsed_operator
+                    )
+                    result.append(f"{inverse}{field}{operator}{value}")
             elif isinstance(parsed_value, str):
-                result.append(f"{field}{parsed_operator}{parsed_value}")
+                operator = (
+                    parsed_operator[0]
+                    if isinstance(parsed_operator, (list, tuple, set))
+                    else parsed_operator
+                )
+                result.append(f"{field}{operator}{parsed_value}")
             else:
                 raise ParserError(
                     field=field,
