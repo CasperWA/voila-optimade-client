@@ -25,7 +25,7 @@ class PeriodicTable(ipw.VBox):
         )
         self.select_any_all = ipw.Checkbox(
             value=False,
-            description="Structures can ex-/include any chosen elements",
+            description="Structures can include any chosen elements (instead of all)",
             indent=False,
             layout={"width": "auto"},
             disabled=self.disabled,
