@@ -205,10 +205,6 @@ class FilterInputParser:
 
     def parse(self, key: str, value: Any) -> Tuple[Any, Union[None, str]]:
         """Reroute to self.<key>(value)"""
-        if isinstance(value, str):
-            # Remove any superfluous whitespace at the beginning and end of string values
-            value = value.strip()
-
         func = getattr(self, key, None)
         if func is None:
             return self.__default__(value)
@@ -221,7 +217,12 @@ class FilterInputParser:
 
     @staticmethod
     def default_string_filter(value: str) -> Tuple[str, None]:
-        """Default handling of string filters"""
+        """Default handling of string filters
+
+        Remove any superfluous whitespace at the beginning and end of string values.
+        Remove embedded `"` and wrap the value in `"` (if the value is supplied).
+        """
+        value = value.strip()
         value = value.replace('"', "")
         res = f'"{value}"' if value else ""
         return res, None
