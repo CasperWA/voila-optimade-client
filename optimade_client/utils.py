@@ -392,7 +392,9 @@ def get_list_of_valid_providers() -> Tuple[
         attributes = provider.attributes
 
         # NOTE: Temporarily disable providers NOT properly satisfying the OPTIMADE specification
-        temp_disable_providers = ["cod", "tcod", "nmd"]
+        # Follow issue #206: https://github.com/CasperWA/voila-optimade-client/issues/206
+        # For omdb: Follow issue #246: https://github.com/CasperWA/voila-optimade-client/issues/246
+        temp_disable_providers = ["cod", "tcod", "nmd", "omdb"]
         if provider.id in temp_disable_providers:
             LOGGER.debug("Temporarily disabling provider: %s", str(provider))
             invalid_providers.append((attributes.name, attributes))
