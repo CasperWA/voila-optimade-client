@@ -1,4 +1,5 @@
-from typing import Union
+from enum import Enum, auto
+from typing import List, Union
 import traitlets
 import ipywidgets as ipw
 import requests
@@ -32,6 +33,36 @@ from optimade_client.utils import (
 )
 
 
+class QueryFilterWidgetOrder(Enum):
+    """Order of filter query widget parts"""
+
+    filter_header = auto()
+    filters = auto()
+    query_button = auto()
+    structures_header = auto()
+    structure_drop = auto()
+    sort_selector = auto()
+    error_or_status_messages = auto()
+    structure_page_chooser = auto()
+
+    @classmethod
+    def default_order(
+        cls, as_str: bool = True
+    ) -> List[Union[str, "QueryFilterWidgetOrder"]]:
+        """Get the default order of filter query widget parts"""
+        default_order = [
+            cls.filter_header,
+            cls.filters,
+            cls.query_button,
+            cls.structures_header,
+            cls.sort_selector,
+            cls.structure_page_chooser,
+            cls.structure_drop,
+            cls.error_or_status_messages,
+        ]
+        return [_.name for _ in default_order] if as_str else default_order
+
+
 class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     ipw.VBox
 ):
@@ -51,6 +82,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         result_limit: int = None,
         button_style: Union[ButtonStyle, str] = None,
         embedded: bool = False,
+        subparts_order: List[str] = None,
         **kwargs,
     ):
         self.page_limit = result_limit if result_limit else 10
@@ -66,6 +98,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 )
         else:
             button_style = ButtonStyle.PRIMARY
+
+        subparts_order = subparts_order or QueryFilterWidgetOrder.default_order(
+            as_str=True
+        )
 
         self.offset = 0
         self.number = 1
@@ -108,17 +144,15 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self._get_more_results, names=["page_link", "page_offset", "page_number"]
         )
 
+        for subpart in subparts_order:
+            if not hasattr(self, subpart):
+                raise ValueError(
+                    f"Wrongly specified subpart_order: {subpart!r}. Available subparts "
+                    f"(and default order): {QueryFilterWidgetOrder.default_order(as_str=True)}"
+                )
+
         super().__init__(
-            children=[
-                self.filter_header,
-                self.filters,
-                self.query_button,
-                self.structures_header,
-                self.sort_selector,
-                self.structure_drop,
-                self.error_or_status_messages,
-                self.structure_page_chooser,
-            ],
+            children=[getattr(self, _) for _ in subparts_order],
             layout=ipw.Layout(width="auto", height="auto"),
             **kwargs,
         )
