@@ -504,12 +504,21 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
 
         return perform_optimade_query(**queries)
 
+    @staticmethod
+    def _check_species_mass(structure: dict) -> dict:
+        """Ensure species.mass is using OPTIMADE API v1.0.1 type"""
+        if structure.get("species", False):
+            for species in structure["species"] or []:
+                if not isinstance(species.get("mass", None), (list, type(None))):
+                    species.pop("mass", None)
+        return structure
+
     def _update_structures(self, data: list):
         """Update structures dropdown from response data"""
         structures = []
 
         for entry in data:
-            structure = Structure(entry)
+            structure = Structure(self._check_species_mass(entry))
 
             formula = structure.attributes.chemical_formula_descriptive
             if formula is None:
