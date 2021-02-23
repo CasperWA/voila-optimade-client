@@ -444,7 +444,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if link is not None:
             try:
                 if exclude_ids:
-                    filter_value = " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+                    filter_value = " AND ".join([f'id!="{id_}"' for id_ in exclude_ids])
 
                     parsed_url = urllib.parse.urlparse(link)
                     queries = urllib.parse.parse_qs(parsed_url.query)
@@ -496,7 +496,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             if exclude_ids:
                 filter_ += (
                     " AND ( "
-                    + " AND ".join([f"id!={id_}" for id_ in exclude_ids])
+                    + " AND ".join([f'id!="{id_}"' for id_ in exclude_ids])
                     + " )"
                 )
 
