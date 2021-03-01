@@ -1,3 +1,7 @@
+"""Test root utils.py functions"""
+# pylint: disable=import-error
+
+
 def test_fetch_providers_wrong_url():
     """Test when fetch_providers is provided a wrong URL
 
@@ -63,7 +67,7 @@ def test_exmpl_not_in_list():
                 "name": "Materials Cloud",
                 "description": "A platform for Open Science built for seamless "
                 "sharing of resources in computational materials science",
-                "base_url": "https://www.materialscloud.org/optimade/v1.0.0",
+                "base_url": "https://www.materialscloud.org/optimade/v1.0.1",
                 "homepage": "https://www.materialscloud.org",
                 "link_type": "external",
             }
@@ -87,9 +91,13 @@ def test_exmpl_not_in_list():
 
     list_of_database_providers, disabled_providers = get_list_of_valid_providers()
 
-    assert exmpl not in list_of_database_providers
-    assert mcloud in list_of_database_providers and odbx in list_of_database_providers
-    assert mcloud[0] not in disabled_providers or odbx[0] not in disabled_providers
+    assert exmpl not in list_of_database_providers, list_of_database_providers
+    assert (
+        mcloud in list_of_database_providers and odbx in list_of_database_providers
+    ), list_of_database_providers
+    assert (
+        mcloud[0] not in disabled_providers or odbx[0] not in disabled_providers
+    ), disabled_providers
 
 
 def test_ordered_query_url():
@@ -100,13 +108,13 @@ def test_ordered_query_url():
     from optimade_client.utils import ordered_query_url
 
     normal_url = (
-        "https://optimade.materialsproject.org/v1.0.0/structures?filter=%28+nelements%3E%3D1+AND+"
+        "https://optimade.materialsproject.org/v1.0.1/structures?filter=%28+nelements%3E%3D1+AND+"
         "nelements%3C%3D9+AND+nsites%3E%3D1+AND+nsites%3C%3D444+%29+AND+%28+NOT+structure_features"
         "+HAS+ANY+%22assemblies%22+%29&page_limit=10&page_number=1&page_offset=30&response_format"
         "=json"
     )
     multi_query_param_url = (
-        "https://optimade.materialsproject.org/v1.0.0/structures?filter=%28+nelements%3E%3D1+AND+"
+        "https://optimade.materialsproject.org/v1.0.1/structures?filter=%28+nelements%3E%3D1+AND+"
         "nelements%3C%3D9+AND+nsites%3E%3D1+AND+nsites%3C%3D444+%29+AND+%28+NOT+structure_features"
         "+HAS+ANY+%22assemblies%22+%29&page_limit=10&page_number=1&page_offset=30&response_format"
         "=json&response_format=xml"
