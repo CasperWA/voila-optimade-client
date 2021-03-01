@@ -215,6 +215,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
                     LOGGER.debug("Exclude child DBs: %r", exclude_child_dbs)
                     data_returned -= len(exclude_child_dbs)
+                    data_available -= len(exclude_child_dbs)
                     if exclude_child_dbs and data_returned:
                         child_dbs, links, data_returned, _ = self._query(
                             exclude_ids=exclude_child_dbs
