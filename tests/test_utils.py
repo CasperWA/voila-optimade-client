@@ -67,7 +67,7 @@ def test_exmpl_not_in_list():
                 "name": "Materials Cloud",
                 "description": "A platform for Open Science built for seamless "
                 "sharing of resources in computational materials science",
-                "base_url": "https://www.materialscloud.org/optimade/v1.0.1",
+                "base_url": "https://www.materialscloud.org/optimade/v1",
                 "homepage": "https://www.materialscloud.org",
                 "link_type": "external",
             }
@@ -82,7 +82,7 @@ def test_exmpl_not_in_list():
                 "description": "A public database of crystal structures mostly derived from ab "
                 "initio structure prediction from the group of Dr Andrew Morris at the University "
                 "of Birmingham https://ajm143.github.io",
-                "base_url": "https://optimade-index.odbx.science/v1.0.0",
+                "base_url": "https://optimade-index.odbx.science/v1",
                 "homepage": "https://odbx.science",
                 "link_type": "external",
             }

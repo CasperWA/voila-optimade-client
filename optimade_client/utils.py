@@ -332,18 +332,15 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
                 for key, value in zip(keys, values):
                     versions[key].append(value)
 
-            if versions.get("version", []):
-                for version in versions:
-                    version_path = f"/v{version}"
-                    if version_path in VERSION_PARTS:
-                        LOGGER.debug(
-                            "Found versioned base URL through /versions endpoint."
-                        )
-                        return (
-                            base_url + version_path[1:]
-                            if base_url.endswith("/")
-                            else base_url + version_path
-                        )
+            for version in versions.get("version", []):
+                version_path = f"/v{version}"
+                if version_path in VERSION_PARTS:
+                    LOGGER.debug("Found versioned base URL through /versions endpoint.")
+                    return (
+                        base_url + version_path[1:]
+                        if base_url.endswith("/")
+                        else base_url + version_path
+                    )
 
     timeout_seconds = 5  # Use custom timeout seconds due to potentially many requests
 
