@@ -39,7 +39,12 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         width_space: int = None,
         **kwargs,
     ):
-        database_limit = database_limit if database_limit and database_limit > 0 else 10
+        # At the moment, the pagination does not work properly as each database is not tested for
+        # validity immediately, only when each "page" is loaded. This can result in the pagination
+        # failing. Instead the default is set to 100 in an attempt to never actually do paging.
+        database_limit = (
+            database_limit if database_limit and database_limit > 0 else 100
+        )
 
         layout = ipw.Layout(width="100%", height="auto")
 
