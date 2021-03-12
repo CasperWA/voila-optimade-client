@@ -387,9 +387,9 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
     return ""
 
 
-def get_list_of_valid_providers() -> Tuple[
-    List[Tuple[str, LinksResourceAttributes]], List[str]
-]:
+def get_list_of_valid_providers(  # pylint: disable=too-many-branches
+    disable_providers: List[str] = None, skip_providers: List[str] = None
+) -> Tuple[List[Tuple[str, LinksResourceAttributes]], List[str]]:
     """Get curated list of database providers
 
     Return formatted list of tuples to use with a dropdown-widget.
@@ -397,22 +397,19 @@ def get_list_of_valid_providers() -> Tuple[
     providers = fetch_providers()
     res = []
     invalid_providers = []
+    disable_providers = disable_providers or []
+    skip_providers = skip_providers or ["exmpl", "optimade", "aiida"]
 
     for entry in providers:
         provider = LinksResource(**entry)
 
-        # Skip if "exmpl", "optimade" or "aiida"
-        if provider.id in ["exmpl", "optimade", "aiida"]:
+        if provider.id in skip_providers:
             LOGGER.debug("Skipping provider: %s", provider)
             continue
 
         attributes = provider.attributes
 
-        # NOTE: Temporarily disable providers NOT properly satisfying the OPTIMADE specification
-        # Follow issue #206: https://github.com/CasperWA/voila-optimade-client/issues/206
-        # For omdb: Follow issue #246: https://github.com/CasperWA/voila-optimade-client/issues/246
-        temp_disable_providers = ["cod", "tcod", "nmd", "omdb", "oqmd"]
-        if provider.id in temp_disable_providers:
+        if provider.id in disable_providers:
             LOGGER.debug("Temporarily disabling provider: %s", str(provider))
             invalid_providers.append((attributes.name, attributes))
             continue

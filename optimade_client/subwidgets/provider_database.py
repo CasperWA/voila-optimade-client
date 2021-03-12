@@ -1,5 +1,5 @@
 import os
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 import urllib.parse
 
 try:
@@ -50,10 +50,18 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
     INITIAL_CHILD_DBS = [("No provider chosen", None)]
 
-    def __init__(self, child_db_limit: int = None, **kwargs):
+    def __init__(
+        self,
+        child_db_limit: int = None,
+        disable_providers: List[str] = None,
+        skip_providers: List[str] = None,
+        skip_databases: Dict[str, List[str]] = None,
+        **kwargs,
+    ):
         self.child_db_limit = (
             child_db_limit if child_db_limit and child_db_limit > 0 else 10
         )
+        self.skip_child_dbs = skip_databases or {}
         self.offset = 0
         self.number = 1
         self.__perform_query = True
@@ -62,7 +70,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         self.debug = bool(os.environ.get("OPTIMADE_CLIENT_DEBUG", None))
 
         providers = []
-        providers, invalid_providers = get_list_of_valid_providers()
+        providers, invalid_providers = get_list_of_valid_providers(
+            disable_providers=disable_providers, skip_providers=skip_providers
+        )
         providers.insert(0, (self.HINT["provider"], None))
         if self.debug:
             from optimade_client.utils import VERSION_PARTS
@@ -212,7 +222,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 while True:
                     # Update list of structures in dropdown widget
                     exclude_child_dbs, final_child_dbs = self._update_child_dbs(
-                        child_dbs
+                        data=child_dbs,
+                        skip_dbs=self.skip_child_dbs.get(self.provider.name, []),
                     )
 
                     LOGGER.debug("Exclude child DBs: %r", exclude_child_dbs)
@@ -285,14 +296,22 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.child_dbs.index = 0
 
     @staticmethod
-    def _update_child_dbs(data: List[dict]) -> Tuple[List[str], List[LinksResource]]:
+    def _update_child_dbs(
+        data: List[dict], skip_dbs: List[str] = None
+    ) -> Tuple[List[str], List[LinksResource]]:
         """Update child DB dropdown from response data"""
         child_dbs = []
         exclude_dbs = []
+        skip_dbs = skip_dbs or []
 
         for entry in data:
             child_db = update_old_links_resources(entry)
             if child_db is None:
+                continue
+
+            # Skip if desired by user
+            if child_db.id in skip_dbs:
+                exclude_dbs.append(child_db.id)
                 continue
 
             attributes = child_db.attributes
@@ -393,7 +412,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
             data_returned = self.page_chooser.data_returned
             while True:
-                # Update list of structures in dropdown widget
+                # Update list of child DBs in dropdown widget
                 exclude_child_dbs, final_child_dbs = self._update_child_dbs(child_dbs)
 
                 data_returned -= len(exclude_child_dbs)
