@@ -61,8 +61,6 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
         self.debug = bool(os.environ.get("OPTIMADE_CLIENT_DEBUG", None))
 
-        dropdown_layout = ipw.Layout(width="auto")
-
         providers = []
         providers, invalid_providers = get_list_of_valid_providers()
         providers.insert(0, (self.HINT["provider"], None))
@@ -83,12 +81,16 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         self.providers = DropdownExtended(
             options=providers,
             disabled_options=invalid_providers,
-            layout=dropdown_layout,
+            layout=ipw.Layout(width="auto"),
         )
+
+        self.show_child_dbs = ipw.Layout(width="auto", display="none")
         self.child_dbs = ipw.Dropdown(
-            options=self.INITIAL_CHILD_DBS, layout=dropdown_layout, disabled=True
+            options=self.INITIAL_CHILD_DBS, layout=self.show_child_dbs
         )
-        self.page_chooser = ResultsPageChooser(self.child_db_limit, **kwargs)
+        self.page_chooser = ResultsPageChooser(
+            page_limit=self.child_db_limit, layout=self.show_child_dbs
+        )
 
         self.providers.observe(self._observe_providers, names="index")
         self.child_dbs.observe(self._observe_child_dbs, names="index")
@@ -111,13 +113,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
     def freeze(self):
         """Disable widget"""
         self.providers.disabled = True
-        self.child_dbs.disabled = True
+        self.show_child_dbs.display = "none"
         self.page_chooser.freeze()
 
     def unfreeze(self):
         """Activate widget (in its current state)"""
         self.providers.disabled = False
-        self.child_dbs.disabled = False
+        self.show_child_dbs.display = None
         self.page_chooser.unfreeze()
 
     def reset(self):
@@ -126,20 +128,20 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         self.offset = 0
         self.number = 1
 
-        self.providers.index = 0
         self.providers.disabled = False
+        self.providers.index = 0
 
+        self.show_child_dbs.display = "none"
         self.child_dbs.options = self.INITIAL_CHILD_DBS
-        self.child_dbs.disabled = True
 
     def _observe_providers(self, change: dict):
         """Update child database dropdown upon changing provider"""
         index = change["new"]
-        self.child_dbs.disabled = True
+        self.show_child_dbs.display = "none"
         self.provider = self.providers.value
         if index is None or self.providers.value is None:
+            self.show_child_dbs.display = "none"
             self.child_dbs.options = self.INITIAL_CHILD_DBS
-            self.child_dbs.disabled = True
             self.providers.index = 0
             self.child_dbs.index = 0
         else:
@@ -149,13 +151,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 # or we have failed to retrieve any implementations.
                 # Automatically choose the 1 implementation (if there),
                 # while otherwise keeping the dropdown disabled.
-                self.child_dbs.disabled = True
+                self.show_child_dbs.display = "none"
                 try:
                     self.child_dbs.index = 1
                 except IndexError:
                     pass
             else:
-                self.child_dbs.disabled = False
+                self.show_child_dbs.display = None
 
     def _observe_child_dbs(self, change):
         """Update database traitlet with base URL for chosen child database"""
@@ -265,8 +267,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     self.providers.index,
                     self.providers.value,
                 )
+                self.show_child_dbs.display = "none"
                 self.child_dbs.options = self.INITIAL_CHILD_DBS
-                self.child_dbs.disabled = True
 
         else:
             self.unfreeze()
@@ -431,8 +433,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     self.providers.index,
                     self.providers.value,
                 )
+                self.show_child_dbs.display = "none"
                 self.child_dbs.options = self.INITIAL_CHILD_DBS
-                self.child_dbs.disabled = True
 
         else:
             self.unfreeze()

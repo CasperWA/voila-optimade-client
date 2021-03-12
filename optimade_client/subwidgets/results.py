@@ -65,7 +65,7 @@ class ResultsPageChooser(ipw.HBox):  # pylint: disable=too-many-instance-attribu
         self._cache = {}
         self.__last_page_offset: typing.Union[None, int] = None
         self.__last_page_number: typing.Union[None, int] = None
-        self._layout = ipw.Layout(width="auto")
+        self._layout = kwargs.pop("layout", ipw.Layout(width="auto"))
 
         self._page_limit = page_limit
         self._data_returned = 0
