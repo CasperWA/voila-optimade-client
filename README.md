@@ -155,6 +155,10 @@ http://localhost:8866/
 
 To see the full list of configurations you can call `voila` and pass `--help-all`.
 
+### Running with "development" providers (Materials Cloud-specific)
+
+Set the environment variable `OPTIMADE_CLIENT_DEVELOPMENT_MODE` to `1` (the integer version for `True` (`1`) or `False` (`0`)) in order to force the use of development servers for providers (currently only relevant for Materials Cloud).
+
 ## License
 
 MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.

@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from enum import Enum, EnumMeta
+import os
 from pathlib import Path
 import re
 from typing import Tuple, List, Union, Iterable
@@ -60,6 +61,18 @@ SESSION.mount("http://", SESSION_ADAPTER)
 SESSION.mount("https://", SESSION_ADAPTER)
 SESSION.mount("http://localhost", SESSION_ADAPTER_DEBUG)
 SESSION.mount("http://127.0.0.1", SESSION_ADAPTER_DEBUG)
+
+try:
+    DEVELOPMENT_MODE = bool(int(os.getenv("OPTIMADE_CLIENT_DEVELOPMENT_MODE", "0")))
+except ValueError:
+    LOGGER.debug(
+        (
+            "OPTIMADE_CLIENT_DEVELOPMENT_MODE found, but cannot be parsed as a bool of an int. "
+            "Setting it to False. Found value: %s"
+        ),
+        os.getenv("OPTIMADE_CLIENT_DEVELOPMENT_MODE"),
+    )
+    DEVELOPMENT_MODE = False
 
 
 class DefaultingEnum(EnumMeta):
@@ -222,7 +235,7 @@ def update_local_providers_json(response: dict) -> None:
 def fetch_providers(providers_urls: Union[str, List[str]] = None) -> list:
     """Fetch OPTIMADE database providers (from Materials-Consortia)
 
-    :param providers_urls: String pr list of strings with versioned base URL(s)
+    :param providers_urls: String or list of strings with versioned base URL(s)
         to Materials-Consortia providers database
     """
     if providers_urls and not isinstance(providers_urls, (list, str)):
@@ -419,6 +432,27 @@ def get_list_of_valid_providers() -> Tuple[
             LOGGER.debug("Base URL found to be None for provider: %s", str(provider))
             invalid_providers.append((attributes.name, attributes))
             continue
+
+        # Use development servers for providers if desired and available
+        known_development_providers = [
+            ("mcloud", "https://dev-www.materialscloud.org/optimade")
+        ]
+        if DEVELOPMENT_MODE:
+            for provider_id, development_base_url in known_development_providers:
+                LOGGER.debug(
+                    "Setting base URL for %s to their development server", provider_id
+                )
+                if isinstance(attributes.base_url, dict):
+                    attributes.base_url["href"] = development_base_url
+                elif isinstance(attributes.base_url, Link):
+                    attributes.base_url.href = development_base_url
+                elif isinstance(attributes.base_url, (AnyUrl, str)):
+                    attributes.base_url = development_base_url
+                else:
+                    raise TypeError(
+                        "base_url not found to be a valid type. Must be either an optimade.models."
+                        f"Link or a dict. Found type: {type(attributes.base_url)}"
+                    )
 
         versioned_base_url = get_versioned_base_url(attributes.base_url)
         if versioned_base_url:

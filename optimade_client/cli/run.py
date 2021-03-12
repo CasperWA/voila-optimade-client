@@ -49,12 +49,18 @@ def main(args: list = None):
         type=str,
         help="Use another template than the default.",
     )
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Use development servers where applicable.",
+    )
 
     args = parser.parse_args(args)
     log_level = args.log_level
     debug = args.debug
     open_browser = args.open_browser
     template = args.template
+    dev = args.dev
 
     # Make sure Voilà is installed
     if voila is None:
@@ -87,6 +93,8 @@ def main(args: list = None):
         argv.append("--debug")
     else:
         os.environ.pop("OPTIMADE_CLIENT_DEBUG", None)
+
+    os.environ["OPTIMADE_CLIENT_DEVELOPMENT_MODE"] = "1" if dev else "0"
 
     if not open_browser:
         argv.append("--no-browser")
