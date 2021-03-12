@@ -16,6 +16,7 @@ class StructureDropdown(ipw.Dropdown):
 
     NO_OPTIONS = "Search for structures ..."
     HINT = "Select a structure"
+    NO_RESULTS = "No structures found!"
 
     def __init__(self, options=None, **kwargs):
         if options is None:
@@ -27,10 +28,16 @@ class StructureDropdown(ipw.Dropdown):
 
     def set_options(self, options: list):
         """Set options with hint at top/as first entry"""
-        options.insert(0, (self.HINT, None))
+        if options:
+            first_option = (self.HINT, None)
+            index = 1
+        else:
+            first_option = (self.NO_RESULTS, None)
+            index = 0
+        options.insert(0, first_option)
         self.options = options
         with self.hold_trait_notifications():
-            self.index = 0
+            self.index = index
 
     def reset(self):
         """Reset widget"""

@@ -546,9 +546,6 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         # Update list of structures in dropdown widget
         self.structure_drop.set_options(structures)
 
-        # Auto set to the first found entry
-        self.structure_drop.index = 1
-
     def retrieve_data(self, _):
         """Perform query and retrieve data"""
         self.offset = 0
@@ -591,10 +588,6 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 links_to_page=response.get("links", {}),
                 reset_cache=True,
             )
-
-            # Note if no data has been found
-            if not data_returned:
-                self.error_or_status_messages.value = "No structures found!"
 
         except QueryError:
             self.structure_drop.reset()
