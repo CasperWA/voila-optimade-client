@@ -238,6 +238,9 @@ document.body.removeChild(link);" />
             self._update_options()
             self.unfreeze()
 
+            # Auto-choose the first option in the dropdown (CIF)
+            self.dropdown.index = 1
+
     def _initialize_options(self) -> None:
         """Initialize options according to installed packages"""
         for imported_object, adapter_format in [
