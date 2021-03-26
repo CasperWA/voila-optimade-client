@@ -34,6 +34,22 @@ from optimade_client.utils import (
 
 __all__ = ("ProviderImplementationChooser", "ProviderImplementationSummary")
 
+PROVIDER_DATABASE_GROUPINGS = {
+    "Materials Cloud": {
+        "Collections": ["2dstructures", "curated-cofs"],
+        "Projects": [
+            "sssp",
+            "2dtopo",
+            "tc-applicability",
+            "threedd",
+            "scdm",
+            "stoceriaitf",
+            "pyrene-mofs",
+            "li-ion-conductors",
+        ],
+    }
+}
+
 
 class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attributes
     ipw.VBox
