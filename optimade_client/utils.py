@@ -62,6 +62,9 @@ SESSION.mount("https://", SESSION_ADAPTER)
 SESSION.mount("http://localhost", SESSION_ADAPTER_DEBUG)
 SESSION.mount("http://127.0.0.1", SESSION_ADAPTER_DEBUG)
 
+# Currently known providers' development OPTIMADE base URLs
+DEVELOPMENT_PROVIDERS = {"mcloud": "https://dev-www.materialscloud.org/optimade"}
+
 try:
     DEVELOPMENT_MODE = bool(int(os.getenv("OPTIMADE_CLIENT_DEVELOPMENT_MODE", "0")))
 except ValueError:
@@ -431,25 +434,24 @@ def get_list_of_valid_providers(  # pylint: disable=too-many-branches
             continue
 
         # Use development servers for providers if desired and available
-        known_development_providers = [
-            ("mcloud", "https://dev-www.materialscloud.org/optimade")
-        ]
-        if DEVELOPMENT_MODE:
-            for provider_id, development_base_url in known_development_providers:
-                LOGGER.debug(
-                    "Setting base URL for %s to their development server", provider_id
+        if DEVELOPMENT_MODE and provider.id in DEVELOPMENT_PROVIDERS:
+            development_base_url = DEVELOPMENT_PROVIDERS[provider.id]
+
+            LOGGER.debug(
+                "Setting base URL for %s to their development server", provider.id
+            )
+
+            if isinstance(attributes.base_url, dict):
+                attributes.base_url["href"] = development_base_url
+            elif isinstance(attributes.base_url, Link):
+                attributes.base_url.href = development_base_url
+            elif isinstance(attributes.base_url, (AnyUrl, str)):
+                attributes.base_url = development_base_url
+            else:
+                raise TypeError(
+                    "base_url not found to be a valid type. Must be either an optimade.models."
+                    f"Link or a dict. Found type: {type(attributes.base_url)}"
                 )
-                if isinstance(attributes.base_url, dict):
-                    attributes.base_url["href"] = development_base_url
-                elif isinstance(attributes.base_url, Link):
-                    attributes.base_url.href = development_base_url
-                elif isinstance(attributes.base_url, (AnyUrl, str)):
-                    attributes.base_url = development_base_url
-                else:
-                    raise TypeError(
-                        "base_url not found to be a valid type. Must be either an optimade.models."
-                        f"Link or a dict. Found type: {type(attributes.base_url)}"
-                    )
 
         versioned_base_url = get_versioned_base_url(attributes.base_url)
         if versioned_base_url:
