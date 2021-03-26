@@ -80,11 +80,7 @@ def main(args: list = None):
 
     argv = [notebook]
 
-    if sys.version_info.minor <= 6:
-        # Python 3.6 and below (officially only supports Python 3.6+)
-        argv.append(f'--Voila.config_file_paths=["{config_path}"]')
-    else:
-        argv.append(f"--Voila.config_file_paths={config_path}")
+    argv.append(f"--Voila.config_file_paths={config_path}")
 
     if debug:
         if log_level not in ("debug", "info"):
