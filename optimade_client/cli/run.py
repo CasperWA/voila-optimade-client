@@ -87,6 +87,7 @@ def main(args: list = None):
             print("[OPTIMADE-Client] Overwriting requested log-level to: 'debug'")
         os.environ["OPTIMADE_CLIENT_DEBUG"] = "True"
         argv.append("--debug")
+        argv.append("--show_tracebacks=True")
     else:
         os.environ.pop("OPTIMADE_CLIENT_DEBUG", None)
 
