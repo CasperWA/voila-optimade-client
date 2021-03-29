@@ -1,8 +1,8 @@
+from typing import Union, Tuple, List
 import warnings
 
 import ipywidgets as ipw
 import traitlets
-from typing import Union, Tuple, List
 
 from optimade.models import LinksResourceAttributes
 
