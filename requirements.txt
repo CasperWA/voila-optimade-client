@@ -7,5 +7,5 @@ nglview~=3.0
 optimade~=0.14.0
 pandas~=1.2
 requests~=2.25
-voila~=0.2.7
+voila~=0.2.9
 widget_periodictable~=2.1
