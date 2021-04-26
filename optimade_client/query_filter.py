@@ -266,7 +266,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             self.unfreeze()
 
     def _sort(self, change: dict) -> None:
-        """"Perform new query with new sorting"""
+        """Perform new query with new sorting"""
         sort = change["new"]
         if not sort:
             raise ValueError(
