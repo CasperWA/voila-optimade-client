@@ -8,5 +8,5 @@ optimade~=0.14.0
 pandas~=1.2
 requests~=2.25
 setuptools>=49.4
-voila~=0.2.9
+voila~=0.2.10
 widget_periodictable~=2.1
