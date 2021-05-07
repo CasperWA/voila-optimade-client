@@ -34,10 +34,6 @@ from optimade_client.logger import LOGGER
 __optimade_version__ = [
     "1.0.1",
     "1.0.0",
-    "1.0.0-rc.2",
-    "1.0.0-rc.1",
-    "0.10.1",
-    "0.10.0",
 ]
 
 TIMEOUT_SECONDS = 10  # Seconds before URL query timeout is raised
@@ -286,7 +282,7 @@ for ver in __optimade_version__:
             f"/v{'.'.join(ver.split('-')[0].split('+')[0].split('.')[:3])}",  # major.minor.patch
         ]
     )
-VERSION_PARTS = sorted(set(VERSION_PARTS), reverse=True)
+VERSION_PARTS = sorted(sorted(set(VERSION_PARTS), reverse=True), key=len)
 LOGGER.debug("All known version editions: %s", VERSION_PARTS)
 
 
@@ -583,7 +579,7 @@ def check_entry_properties(
     :param checks: An iterable, which only recognizes the following str entries:
     "sort", "sortable", "present", "queryable"
     The first two and latter two represent the same thing, i.e., whether a property is sortable
-    and whether a property is present in the entry-endpoint's resource's attributes, respsectively.
+    and whether a property is present in the entry-endpoint's resource's attributes, respectively.
     :param properties: Can be either a list or not of properties to check.
     :param entry_endpoint: A valid entry-endpoint for the OPTIMADE implementation,
     e.g., "structures", "_exmpl_calculations", or "/extensions/structures".
