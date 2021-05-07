@@ -462,7 +462,7 @@ class FilterInputs(FilterTabSection):
             widget = self.query_fields[field].input_widget
             cached_value: Tuple[int, int] = widget.value
             for attr in ("min", "max"):
-                if attr in config:
+                if attr in config and config[attr] is not None:
                     try:
                         new_value = int(config[attr])
                     except (TypeError, ValueError) as exc:
