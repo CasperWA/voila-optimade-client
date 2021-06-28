@@ -1,5 +1,5 @@
 appdirs~=1.4.4
-ase~=3.21
+ase~=3.22
 cachecontrol[filecache]~=0.12.6
 ipywidgets~=7.6
 ipywidgets-extended~=1.1
