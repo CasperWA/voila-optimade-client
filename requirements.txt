@@ -1,10 +1,10 @@
 appdirs~=1.4.4
-ase~=3.21
+ase~=3.22
 cachecontrol[filecache]~=0.12.6
 ipywidgets~=7.6
 ipywidgets-extended~=1.1
 nglview~=3.0
-optimade~=0.15.0
+optimade~=0.15.4
 pandas~=1.2
 requests~=2.25
 setuptools>=49.4
