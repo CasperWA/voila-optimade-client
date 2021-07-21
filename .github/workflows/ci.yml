@@ -76,7 +76,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: matrix.python-version == 3.8 && github.repository == 'CasperWA/voila-optimade-client'
-      uses: codecov/codecov-action@v1.5.2
+      uses: codecov/codecov-action@v2.0.1
       with:
         name: optimade-client
         file: ./coverage.xml
