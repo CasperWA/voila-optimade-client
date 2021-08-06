@@ -1,0 +1,9 @@
+---
+title: OPTIMADE Client
+authors: Casper Welzel Andersen
+description: |
+  AiiDAlab app to query for and import structures from OPTIMADE providers (COD,
+  Materials Cloud, NoMaD, Materials Project, OQMD, and more ...).
+external_url: https://www.optimade.org
+documentation_url: https://github.com/CasperWA/voila-optimade-client#readme
+state: stable
