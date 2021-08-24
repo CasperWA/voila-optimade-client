@@ -569,7 +569,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     }
                 }
         else:
-            filter_ = "( link_type=child OR type=child )"
+            filter_ = '( link_type="child" OR type="child" )'
             if exclude_ids:
                 filter_ += (
                     " AND ( "
