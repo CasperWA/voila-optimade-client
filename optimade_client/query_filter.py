@@ -507,8 +507,8 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def _check_species_mass(structure: dict) -> dict:
         """Ensure species.mass is using OPTIMADE API v1.0.1 type"""
-        if structure.get("species", False):
-            for species in structure["species"] or []:
+        if structure.get("attributes", {}).get("species", False):
+            for species in structure["attributes"]["species"] or []:
                 if not isinstance(species.get("mass", None), (list, type(None))):
                     species.pop("mass", None)
         return structure
@@ -518,6 +518,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         structures = []
 
         for entry in data:
+            # XXX: THIS IS TEMPORARY AND SHOULD BE REMOVED ASAP
+            entry["attributes"]["chemical_formula_anonymous"] = None
+
             structure = Structure(self._check_species_mass(entry))
 
             formula = structure.attributes.chemical_formula_descriptive
@@ -592,6 +595,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         except QueryError:
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
+            raise
 
         except Exception as exc:
             self.structure_drop.reset()

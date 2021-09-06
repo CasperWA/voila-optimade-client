@@ -13,12 +13,6 @@ from optimade_client.subwidgets import (
 from optimade_client.warnings import OptimadeClientWarning
 
 
-DEFAULT_FILTER_VALUE = (
-    'chemical_formula_descriptive CONTAINS "Al" OR (chemical_formula_anonymous = "AB" AND '
-    'elements HAS ALL "Si","Al","O")'
-)
-
-
 class OptimadeQueryProviderWidget(ipw.GridspecLayout):
     """Database/Implementation search and chooser widget for OPTIMADE
 
