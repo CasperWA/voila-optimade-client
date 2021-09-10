@@ -304,25 +304,24 @@ document.addEventListener('DOMContentLoaded', function() {
             self.reset()
         else:
             self.value = self._style
-            dataf = pd.DataFrame(
-                self._format_sites(),
-                columns=["Elements", "Occupancy", "x (Å)", "y (Å)", "z (Å)"],
-            )
-            self.value += (
-                dataf.to_html(
+            if all(
+                getattr(self.structure.attributes, field, None)
+                for field in [
+                    "species",
+                    "nsites",
+                    "species_at_sites",
+                    "cartesian_site_positions",
+                ]
+            ):
+                dataf = pd.DataFrame(
+                    self._format_sites(),
+                    columns=["Elements", "Occupancy", "x (Å)", "y (Å)", "z (Å)"],
+                )
+                self.value += dataf.to_html(
                     classes="df", index=False, table_id="sites", notebook=False
                 )
-                if all(
-                    getattr(self.structure.attributes, field, None)
-                    for field in [
-                        "species",
-                        "nsites",
-                        "species_at_sites",
-                        "cartesian_site_positions",
-                    ]
-                )
-                else NOT_AVAILABLE_MSG
-            )
+            else:
+                self.value += NOT_AVAILABLE_MSG
 
     def freeze(self):
         """Disable widget"""

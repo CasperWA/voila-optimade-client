@@ -12,8 +12,8 @@ __all__ = ("SortSelector",)
 class Order(Enum):
     """Sort order"""
 
-    ascending = ""
-    descending = "-"
+    ASCENDING = ""
+    DESCENDING = "-"
 
 
 class SortSelector(ipw.HBox):
@@ -22,16 +22,19 @@ class SortSelector(ipw.HBox):
     The "Sort" button will only be enabled if the the sorting field or order is changed.
     """
 
-    field = traitlets.Unicode(default_value="id", allow_none=False)
-    order = traitlets.UseEnum(Order, default_value=Order.ascending)
+    NO_AVAILABLE_FIELDS = "Not available"
+    DEFAULT_FIELD = "id"
+
+    field = traitlets.Unicode("", allow_none=False)
+    order = traitlets.UseEnum(Order, default_value=Order.ASCENDING)
     latest_sorting = traitlets.Dict(
-        default_value={"field": field.default_value, "order": order.default_value}
+        default_value={"field": None, "order": order.default_value}
     )
     valid_fields = traitlets.List(
-        traitlets.Unicode(), default_value=[field.default_value]
+        traitlets.Unicode(), default_value=[], allow_none=True
     )
 
-    value = traitlets.Unicode(f"{order.default_value.value}{field.default_value}")
+    value = traitlets.Unicode(None, allow_none=True)
 
     def __init__(
         self,
@@ -43,8 +46,7 @@ class SortSelector(ipw.HBox):
     ) -> None:
         self._disabled = disabled
 
-        if valid_fields is not None:
-            self.valid_fields = valid_fields
+        self.valid_fields = valid_fields or [self.NO_AVAILABLE_FIELDS]
 
         if field is not None:
             self.field = field
@@ -56,7 +58,7 @@ class SortSelector(ipw.HBox):
             pass
 
         self.order_select = ipw.ToggleButton(
-            value=self.order == Order.descending,
+            value=self.order == Order.DESCENDING,
             description=self.order.name.capitalize(),
             disabled=disabled,
             button_style="",
@@ -104,7 +106,7 @@ class SortSelector(ipw.HBox):
     def reset(self):
         """Reset widget"""
         self.order_select.value = False
-        self.fields_drop.options = ["id"]
+        self.fields_drop.options = [self.NO_AVAILABLE_FIELDS]
         self.sort_button.disabled = True
 
     def freeze(self):
@@ -132,28 +134,42 @@ class SortSelector(ipw.HBox):
     def _update_drop_options(self, change: dict) -> None:
         """Update list of sort fields dropdown."""
         fields = change["new"]
-        if fields is None:
-            self.fields_drop.options = ["id"]
+        if not fields:
+            self.fields_drop.options = [self.NO_AVAILABLE_FIELDS]
+            self.fields_drop.value = self.NO_AVAILABLE_FIELDS
+            self.freeze()
             return
         value = self.fields_drop.value
         self.fields_drop.options = fields
         if value in fields:
             self.fields_drop.value = value
+        elif self.DEFAULT_FIELD in fields:
+            self.fields_drop.value = self.DEFAULT_FIELD
         self.fields_drop.layout.width = "auto"
 
     def _validate_field(self, change: dict) -> None:
         """The traitlet field should be a valid OPTIMADE field."""
         field = change["new"]
-        if field is None:
-            return
-        self.field = field
-        self._toggle_sort_availability()
+        if field and field != self.NO_AVAILABLE_FIELDS:
+            self.field = field
+            self._toggle_sort_availability()
+        else:
+            self.freeze()
+
+    @traitlets.observe("field")
+    def _set_value_from_field(self, change: dict) -> None:
+        """Update `value` from the new `field`."""
+        value = change["new"]
+        if value and value != self.NO_AVAILABLE_FIELDS:
+            self.value = f"{self.order.value}{value}"
+        else:
+            self.value = None
 
     def _get_order_icon(self) -> str:
         """Return button icon according to sort order."""
-        if self.order == Order.ascending:
+        if self.order == Order.ASCENDING:
             return "sort-up"
-        if self.order == Order.descending:
+        if self.order == Order.DESCENDING:
             return "sort-down"
         raise traitlets.TraitError(
             f"Out of Order! Could not determine order from self.order: {self.order!r}"
@@ -166,7 +182,7 @@ class SortSelector(ipw.HBox):
         the order should be `descending`.
         """
         descending: bool = change["new"]
-        self.order = Order.descending if descending else Order.ascending
+        self.order = Order.DESCENDING if descending else Order.ASCENDING
         self.order_select.description = (
             self.order_select.tooltip
         ) = self.order.name.capitalize()
@@ -180,4 +196,7 @@ class SortSelector(ipw.HBox):
         Any usage of this widget should "observe" the `value` attribute to toggle sorting.
         """
         self._update_latest_sorting()
-        self.value = f"{self.order.value}{self.field}"
+        if self.field:
+            self.value = f"{self.order.value}{self.field}"
+        else:
+            self.value = None
