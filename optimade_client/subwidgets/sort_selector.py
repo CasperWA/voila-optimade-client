@@ -46,11 +46,6 @@ class SortSelector(ipw.HBox):
     ) -> None:
         self._disabled = disabled
 
-        self.valid_fields = valid_fields or [self.NO_AVAILABLE_FIELDS]
-
-        if field is not None:
-            self.field = field
-
         try:
             self.order = order
         except traitlets.TraitError:
@@ -82,6 +77,11 @@ class SortSelector(ipw.HBox):
             layout={"width": "auto"},
         )
         self.sort_button.on_click(self._sort_clicked)
+
+        self.valid_fields = valid_fields or [self.NO_AVAILABLE_FIELDS]
+
+        if field is not None:
+            self.field = field
 
         super().__init__(
             children=(self.order_select, self.fields_drop, self.sort_button), **kwargs
