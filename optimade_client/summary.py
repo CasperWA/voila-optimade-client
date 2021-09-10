@@ -238,8 +238,18 @@ document.body.removeChild(link);" />
             self._update_options()
             self.unfreeze()
 
-            # Auto-choose the first option in the dropdown (CIF)
-            self.dropdown.index = 1
+            # Auto-choose the first (available) option in the dropdown
+            available_formats = {
+                label: index for index, (label, _) in enumerate(self._formats)
+            }
+            available_formats.pop(self._formats[0][0])
+            for label in self.dropdown.disabled_options:
+                available_formats.pop(label)
+            if available_formats:
+                new_index = min(available_formats.values())
+                self.dropdown.index = new_index
+            else:
+                self.dropdown.index = 0
 
     def _initialize_options(self) -> None:
         """Initialize options according to installed packages"""
@@ -257,22 +267,39 @@ document.body.removeChild(link);" />
 
     def _update_options(self) -> None:
         """Update options according to chosen structure"""
-        disabled_options = []
+        disabled_options = set()
         if StructureFeatures.DISORDER in self.structure.structure_features:
             # Disordered structures not usable with ASE
             LOGGER.debug(
                 "'disorder' found in the structure's structure_features (%s)",
                 self.structure.structure_features,
             )
-            disabled_options = [
+            disabled_options |= {
                 label
                 for label, value in self._formats
                 if value.get("adapter_format", "") == "ase"
-            ]
+            }
+        if not self.structure.attributes.lattice_vectors:
+            LOGGER.debug("'lattice_vectors' not found for structure")
+            disabled_options |= {
+                label
+                for label, value in self._formats
+                if (
+                    value.get("adapter_format", "") == "ase"
+                    and value.get("final_format", "") in ("struct", "vasp")
+                )
+            }
+        if not self.structure.attributes.species:
+            LOGGER.debug("'species' not found for structure")
+            disabled_options |= {
+                label
+                for label, value in self._formats
+                if value.get("adapter_format", "") in ("cif", "pdb", "ase")
+            }
         LOGGER.debug(
             "Will disable the following dropdown options: %s", disabled_options
         )
-        self.dropdown.disabled_options = disabled_options
+        self.dropdown.disabled_options = list(disabled_options)
 
     def _update_download_button(self, change: dict):
         """Update Download button with correct onclick value
@@ -472,6 +499,8 @@ class StructureViewer(ipw.VBox):
     def _on_change_structure(self, change):
         """Update viewer for new structure"""
         self.reset()
+        if not change["new"].attributes.species:
+            return
         self._current_view = self.viewer.add_structure(
             nglview.TextStructure(change["new"].as_pdb)
         )

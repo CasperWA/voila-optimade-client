@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from typing import List, Union
+import traceback
 import traitlets
 import ipywidgets as ipw
 import requests
@@ -85,7 +86,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         subparts_order: List[str] = None,
         **kwargs,
     ):
-        self.page_limit = result_limit if result_limit else 10
+        self.page_limit = result_limit if result_limit else 25
         if button_style:
             if isinstance(button_style, str):
                 button_style = ButtonStyle[button_style.upper()]
@@ -268,10 +269,6 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def _sort(self, change: dict) -> None:
         """Perform new query with new sorting"""
         sort = change["new"]
-        if not sort:
-            raise ValueError(
-                f"The sort parameter could not be determined (sort={sort!r})."
-            )
         self.sorting = sort
         self.retrieve_data({})
 
@@ -600,7 +597,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         except Exception as exc:
             self.structure_drop.reset()
             self.structure_page_chooser.reset()
-            raise QueryError(f"Bad stuff happened: {exc!r}") from exc
+            raise QueryError(f"Bad stuff happened: {traceback.format_exc()}") from exc
 
         finally:
             self.query_button.description = "Search"
