@@ -147,6 +147,26 @@ def perform_optimade_query(  # pylint: disable=too-many-arguments,too-many-branc
 
     if response_fields is not None:
         queries["response_fields"] = response_fields
+    elif endpoint == "/structures":
+        queries["response_fields"] = ",".join(
+            [
+                "structure_features",
+                "chemical_formula_descriptive",
+                "chemical_formula_reduced",
+                "elements",
+                "nsites",
+                "lattice_vectors",
+                "species",
+                "cartesian_site_positions",
+                "species_at_sites",
+                "chemical_formula_hill",
+                "nelements",
+                "nperiodic_dimensions",
+                "last_modified",
+                "elements_ratios",
+                "dimension_types",
+            ]
+        )
 
     if email_address is not None:
         queries["email_address"] = email_address

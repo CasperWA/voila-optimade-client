@@ -137,7 +137,8 @@ class SortSelector(ipw.HBox):
             return
         value = self.fields_drop.value
         self.fields_drop.options = fields
-        self.fields_drop.value = value
+        if value in fields:
+            self.fields_drop.value = value
         self.fields_drop.layout.width = "auto"
 
     def _validate_field(self, change: dict) -> None:

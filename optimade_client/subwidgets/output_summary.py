@@ -1,5 +1,5 @@
 import re
-from typing import Match, List, Dict
+from typing import Match, List, Dict, Optional
 import ipywidgets as ipw
 import traitlets
 
@@ -13,7 +13,10 @@ from optimade.models.structures import Vector3D
 __all__ = ("StructureSummary", "StructureSites")
 
 
-def calc_cell_volume(cell: List[Vector3D]):
+NOT_AVAILABLE_MSG = "Not available in the DB for this structure"
+
+
+def calc_cell_volume(cell: List[Vector3D]) -> float:
     """
     Calculates the volume of a cell given the three lattice vectors.
 
@@ -27,14 +30,16 @@ def calc_cell_volume(cell: List[Vector3D]):
 
     :returns: the cell volume.
     """
-    # returns the volume of the primitive cell: |a_1 . (a_2 x a_3)|
-    a_1 = cell[0]
-    a_2 = cell[1]
-    a_3 = cell[2]
-    a_mid_0 = a_2[1] * a_3[2] - a_2[2] * a_3[1]
-    a_mid_1 = a_2[2] * a_3[0] - a_2[0] * a_3[2]
-    a_mid_2 = a_2[0] * a_3[1] - a_2[1] * a_3[0]
-    return abs(a_1[0] * a_mid_0 + a_1[1] * a_mid_1 + a_1[2] * a_mid_2)
+    if cell:
+        # returns the volume of the primitive cell: |a_1 . (a_2 x a_3)|
+        a_1 = cell[0]
+        a_2 = cell[1]
+        a_3 = cell[2]
+        a_mid_0 = a_2[1] * a_3[2] - a_2[2] * a_3[1]
+        a_mid_1 = a_2[2] * a_3[0] - a_2[0] * a_3[2]
+        a_mid_2 = a_2[0] * a_3[1] - a_2[1] * a_3[0]
+        return abs(a_1[0] * a_mid_0 + a_1[1] * a_mid_1 + a_1[2] * a_mid_2)
+    return 0.0
 
 
 class StructureSummary(ipw.VBox):
@@ -42,7 +47,7 @@ class StructureSummary(ipw.VBox):
     Show structure data as a set of HTML widgets in a VBox widget.
     """
 
-    structure = traitlets.Instance(Structure, allow_none=True)
+    structure: Optional[Structure] = traitlets.Instance(Structure, allow_none=True)
 
     _output_format = "<b>{title}</b>: {value}"
     _widget_data = {
@@ -60,7 +65,7 @@ class StructureSummary(ipw.VBox):
 
     def _on_change_structure(self, change: dict):
         """Update output according to change in `data`"""
-        if change["new"] is None:
+        if not isinstance(change["new"], Structure):
             self.reset()
             return
         self._update_output()
@@ -87,15 +92,29 @@ class StructureSummary(ipw.VBox):
     def _extract_data_from_structure(self) -> dict:
         """Extract and return desired data from Structure"""
         return {
-            "Chemical formula": self._add_style(
-                self._chemical_formula(self.structure.chemical_formula_reduced)
+            "Chemical formula": self._add_style(self._chemical_formula()),
+            "Elements": (
+                self._add_style(
+                    ", ".join(sorted(self.structure.attributes.elements or []))
+                )
+                if self.structure.attributes.elements
+                else NOT_AVAILABLE_MSG
             ),
-            "Elements": self._add_style(", ".join(sorted(self.structure.elements))),
-            "Number of sites": self._add_style(str(self.structure.nsites)),
-            "Unit cell": self._unit_cell(self.structure.lattice_vectors),
+            "Number of sites": (
+                self._add_style(str(self.structure.attributes.nsites or ""))
+                if self.structure.attributes.nsites
+                else NOT_AVAILABLE_MSG
+            ),
+            "Unit cell": (
+                self._unit_cell(self.structure.attributes.lattice_vectors or [])
+                if self.structure.attributes.lattice_vectors
+                else NOT_AVAILABLE_MSG
+            ),
             "Unit cell volume": (
-                f"{self._add_style('%.2f' % calc_cell_volume(self.structure.lattice_vectors))}"
+                f"{self._add_style('%.2f' % calc_cell_volume(self.structure.attributes.lattice_vectors or []))}"
                 " Å<sup>3</sup>"
+                if self.structure.attributes.lattice_vectors
+                else NOT_AVAILABLE_MSG
             ),
         }
 
@@ -107,9 +126,24 @@ class StructureSummary(ipw.VBox):
             f"{html_value}</span>"
         )
 
-    @staticmethod
-    def _chemical_formula(formula: str) -> str:
+    @property
+    def _chemical_formula_priority(self) -> List[str]:
+        """Return the desired priority order for chemical_formulas"""
+        return [
+            "chemical_formula_descriptive",
+            "chemical_formula_reduced",
+            "chemical_formula_hill",
+        ]
+
+    def _chemical_formula(self) -> str:
         """Format chemical formula to look pretty with ipywidgets.HTMLMath"""
+
+        for formula_type in self._chemical_formula_priority:
+            formula: str = getattr(self.structure.attributes, formula_type, None)
+            if formula:
+                break
+        else:
+            return NOT_AVAILABLE_MSG
 
         def wrap_number(number: Match) -> str:
             return f"<sub>{number.group(0)}</sub>"
@@ -274,8 +308,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 self._format_sites(),
                 columns=["Elements", "Occupancy", "x (Å)", "y (Å)", "z (Å)"],
             )
-            self.value += dataf.to_html(
-                classes="df", index=False, table_id="sites", notebook=False
+            self.value += (
+                dataf.to_html(
+                    classes="df", index=False, table_id="sites", notebook=False
+                )
+                if all(
+                    getattr(self.structure.attributes, field, None)
+                    for field in [
+                        "species",
+                        "nsites",
+                        "species_at_sites",
+                        "cartesian_site_positions",
+                    ]
+                )
+                else NOT_AVAILABLE_MSG
             )
 
     def freeze(self):

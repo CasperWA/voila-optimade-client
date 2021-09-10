@@ -190,9 +190,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 self.query_button.description = "Search"
                 self.query_button.icon = "search"
                 self.query_button.tooltip = "Search"
-                self.sort_selector.valid_fields = sorted(
-                    get_sortable_fields(self.database[1].base_url)
-                )
+                sortable_fields = get_sortable_fields(self.database[1].base_url)
+                if sortable_fields:
+                    self.sort_selector.valid_fields = sorted(sortable_fields)
                 self.unfreeze()
 
     def _on_structure_select(self, change):

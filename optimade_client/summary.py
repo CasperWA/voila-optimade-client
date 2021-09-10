@@ -257,22 +257,32 @@ document.body.removeChild(link);" />
 
     def _update_options(self) -> None:
         """Update options according to chosen structure"""
-        disabled_options = []
+        disabled_options = set()
         if StructureFeatures.DISORDER in self.structure.structure_features:
             # Disordered structures not usable with ASE
             LOGGER.debug(
                 "'disorder' found in the structure's structure_features (%s)",
                 self.structure.structure_features,
             )
-            disabled_options = [
+            disabled_options |= {
                 label
                 for label, value in self._formats
                 if value.get("adapter_format", "") == "ase"
-            ]
+            }
+        if not self.structure.attributes.lattice_vectors:
+            LOGGER.debug("'lattice_vectors' not found for structure")
+            disabled_options |= {
+                label
+                for label, value in self._formats
+                if (
+                    value.get("adapter_format", "") == "ase"
+                    and value.get("final_format", "") in ("struct", "vasp")
+                )
+            }
         LOGGER.debug(
             "Will disable the following dropdown options: %s", disabled_options
         )
-        self.dropdown.disabled_options = disabled_options
+        self.dropdown.disabled_options = list(disabled_options)
 
     def _update_download_button(self, change: dict):
         """Update Download button with correct onclick value
