@@ -69,7 +69,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
     )
 
     HINT = {"provider": "Select a provider", "child_dbs": "Select a database"}
-    INITIAL_CHILD_DBS = [("", ("No provider chosen", ()))]
+    INITIAL_CHILD_DBS = [("", (("No provider chosen", None),))]
 
     def __init__(
         self,
@@ -129,8 +129,8 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             page_limit=self.child_db_limit, layout=self.show_child_dbs
         )
 
-        self.providers.observe(self._observe_providers, names="index")
-        self.child_dbs.observe(self._observe_child_dbs, names="index")
+        self.providers.observe(self._observe_providers, names="value")
+        self.child_dbs.observe(self._observe_child_dbs, names="value")
         self.page_chooser.observe(
             self._get_more_child_dbs, names=["page_link", "page_offset", "page_number"]
         )
@@ -173,10 +173,10 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
 
     def _observe_providers(self, change: dict):
         """Update child database dropdown upon changing provider"""
-        index = change["new"]
+        value = change["new"]
         self.show_child_dbs.display = "none"
-        self.provider = self.providers.value
-        if index is None or self.providers.value is None:
+        self.provider = value
+        if value is None or not value:
             self.show_child_dbs.display = "none"
             self.child_dbs.grouping = self.INITIAL_CHILD_DBS
             self.providers.index = 0
@@ -196,13 +196,13 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             else:
                 self.show_child_dbs.display = None
 
-    def _observe_child_dbs(self, change):
+    def _observe_child_dbs(self, change: dict):
         """Update database traitlet with base URL for chosen child database"""
-        index = change["new"]
-        if index is None or not self.child_dbs._get_grouping_label_value(index)[1]:
+        value = change["new"]
+        if value is None or not value:
             self.database = "", None
         else:
-            self.database = self.child_dbs._get_grouping_label_value(index)
+            self.database = self.child_dbs.label, self.child_dbs.value
 
     @staticmethod
     def _remove_current_dropdown_option(dropdown: ipw.Dropdown) -> tuple:
