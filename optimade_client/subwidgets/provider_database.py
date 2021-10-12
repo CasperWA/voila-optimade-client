@@ -191,6 +191,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 self.show_child_dbs.display = "none"
                 try:
                     self.child_dbs.index = 1
+                    LOGGER.debug("Changed child_dbs index. New child_dbs: %s", self.child_dbs)
                 except IndexError:
                     pass
             else:
@@ -320,7 +321,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             self.HINT["child_dbs"] if data else "No valid implementations found"
         )
         new_data = list(data)
-        new_data.insert(0, ("", [(first_choice, ())]))
+        new_data.insert(0, ("", [(first_choice, None)]))
         self.child_dbs.grouping = new_data
 
     def _update_child_dbs(
