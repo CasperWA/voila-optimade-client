@@ -203,7 +203,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         if value is None or not value:
             self.database = "", None
         else:
-            self.database = self.child_dbs.label, self.child_dbs.value
+            self.database = self.child_dbs.label.strip(), self.child_dbs.value
 
     @staticmethod
     def _remove_current_dropdown_option(dropdown: ipw.Dropdown) -> tuple:
