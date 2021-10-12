@@ -191,7 +191,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                 self.show_child_dbs.display = "none"
                 try:
                     self.child_dbs.index = 1
-                    LOGGER.debug("Changed child_dbs index. New child_dbs: %s", self.child_dbs)
+                    LOGGER.debug(
+                        "Changed child_dbs index. New child_dbs: %s", self.child_dbs
+                    )
                 except IndexError:
                     pass
             else:
