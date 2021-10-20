@@ -27,7 +27,7 @@ jobs:
         pip install -U setuptools
 
     - name: Update version and tag
-      run: .github/static/update_version.sh
+      run: .github/utils/update_version.sh
 
     - name: Push updates to '${{ env.PUBLISH_UPDATE_BRANCH }}'
       uses: CasperWA/push-protected@v2
