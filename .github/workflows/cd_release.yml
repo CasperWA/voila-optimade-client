@@ -38,6 +38,12 @@ jobs:
 
         pip install ${invoke}
 
+    - name: Update changelog
+      uses: CharMixer/auto-changelog-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        release_branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
+
     - name: Update version and tag
       run: .github/utils/update_version.sh
 
@@ -50,7 +56,7 @@ jobs:
         tags: true
 
     - name: Get tagged versions
-      run: echo "PREVIOUS_VERSION=$(git tag -l --sort -version:refname | sed -n 2p)" >> $GITHUB_ENV
+      run: echo "PREVIOUS_VERSION=$(git tag -l --sort -version:refname | grep -E ^[^v] | sed -n 2p)" >> $GITHUB_ENV
 
     - name: Create release-specific changelog
       uses: CharMixer/auto-changelog-action@v1
