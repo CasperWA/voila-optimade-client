@@ -5,16 +5,16 @@ on:
     types:
       - published
 
+env:
+  PUBLISH_UPDATE_BRANCH: develop
+  GIT_USER_NAME: CasperWA
+  GIT_USER_EMAIL: "casper.andersen@epfl.ch"
+
 jobs:
   publish:
     name: Publish Python package on PyPI
     runs-on: ubuntu-latest
     if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
-
-    env:
-      PUBLISH_UPDATE_BRANCH: develop
-      GIT_USER_NAME: CasperWA
-      GIT_USER_EMAIL: "casper.andersen@epfl.ch"
 
     steps:
     - name: Checkout repository
@@ -89,3 +89,30 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
+
+  update-stable:
+    name: Update `stable` branch
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: stable
+        persist-credentials: false
+
+    - name: Setup git config
+      run: |
+        git config --global user.name "${GIT_USER_NAME}"
+        git config --global user.email "${GIT_USER_EMAIL}"
+
+    - name: Make `stable` branch equal to `develop` branch
+      run: git merge --ff-only origin/${{ env.PUBLISH_UPDATE_BRANCH }}
+
+    - name: Update `stable` branch
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.RELEASE_PAT }}
+        branch: stable
