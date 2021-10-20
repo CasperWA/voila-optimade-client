@@ -1,4 +1,4 @@
-name: Publish on PyPI
+name: CD - Publish on PyPI
 
 on:
   release:
@@ -7,24 +7,36 @@ on:
 
 jobs:
   publish:
+    name: Publish Python package on PyPI
     runs-on: ubuntu-latest
     if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
+
     env:
       PUBLISH_UPDATE_BRANCH: develop
+      GIT_USER_NAME: CasperWA
+      GIT_USER_EMAIL: "casper.andersen@epfl.ch"
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.7
 
-    - name: Update setuptools
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -U setuptools
+        pip install -U setuptools wheel
+
+        while IFS="" read -r line || [ -n "${line}" ]; do
+          if [[ "${line}" =~ ^invoke.*$ ]]; then
+            invoke="${line}"
+          fi
+        done < requirements/requirements_dev.txt
+
+        pip install ${invoke}
 
     - name: Update version and tag
       run: .github/utils/update_version.sh
@@ -36,6 +48,25 @@ jobs:
         branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
         force: true
         tags: true
+
+    - name: Get tagged versions
+      run: echo "PREVIOUS_VERSION=$(git tag -l --sort -version:refname | sed -n 2p)" >> $GITHUB_ENV
+
+    - name: Create release-specific changelog
+      uses: CharMixer/auto-changelog-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        release_branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
+        since_tag: "${{ env.PREVIOUS_VERSION }}"
+        output: "release_changelog.md"
+
+    - name: Append changelog to release body
+      run: |
+        gh api /repos/${{ github.repository }}/releases/${{ github.event.release.id }} --jq '.body' > release_body.md
+        cat release_changelog.md >> release_body.md
+        gh api /repos/${{ github.repository }}/releases/${{ github.event.release.id }} -X PATCH -F body='@release_body.md'
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
 
     - name: Build source distribution
       run: python ./setup.py sdist

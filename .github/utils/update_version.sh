@@ -2,11 +2,8 @@
 set -e
 
 echo -e "\n### Setting commit user ###"
-git config --local user.email "casper.andersen@epfl.ch"
-git config --local user.name "CasperWA"
-
-echo -e "\n### Install invoke ###"
-pip install -U invoke
+git config --local user.email "${GIT_USER_EMAIL}"
+git config --local user.name "${GIT_USER_NAME}"
 
 echo -e "\n### Update version ###"
 invoke update-version --version="${GITHUB_REF#refs/tags/}"
