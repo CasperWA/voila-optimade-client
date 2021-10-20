@@ -24,7 +24,7 @@ setup(
     version="2021.9.28",
     license="MIT License",
     author="Casper Welzel Andersen",
-    author_email="casper.andersen@epfl.ch",
+    author_email="casper+github@welzel.nu",
     description="Voilà/Jupyter client for searching through OPTIMADE databases.",
     long_description=README,
     long_description_content_type="text/markdown",

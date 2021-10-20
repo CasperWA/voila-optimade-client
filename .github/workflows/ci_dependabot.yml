@@ -16,7 +16,7 @@ jobs:
     env:
       DEPENDABOT_BRANCH: ci/dependabot-updates
       GIT_USER_NAME: CasperWA
-      GIT_USER_EMAIL: "casper.andersen@epfl.ch"
+      GIT_USER_EMAIL: "casper+github@welzel.nu"
       DEFAULT_REPO_BRANCH: develop
 
     steps:

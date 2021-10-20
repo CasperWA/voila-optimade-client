@@ -165,5 +165,5 @@ MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.
 
 ## Contact
 
-casper.andersen@epfl.ch  
+casper+github@welzel.nu  
 aiidalab@materialscloud.org

@@ -8,7 +8,7 @@ on:
 env:
   PUBLISH_UPDATE_BRANCH: develop
   GIT_USER_NAME: CasperWA
-  GIT_USER_EMAIL: "casper.andersen@epfl.ch"
+  GIT_USER_EMAIL: "casper+github@welzel.nu"
 
 jobs:
   publish:
