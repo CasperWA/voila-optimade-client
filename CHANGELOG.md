@@ -1,13 +1,29 @@
 # Changelog
 
-## [2021.10.21](https://github.com/CasperWA/voila-optimade-client/tree/2021.10.21) (2021-10-20)
+## [2021.12.2](https://github.com/CasperWA/voila-optimade-client/tree/2021.12.2) (2021-12-01)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2021.10.21...2021.12.2)
+
+**Fixed bugs:**
+
+- Never choose a "group" value in dropdowns [\#357](https://github.com/CasperWA/voila-optimade-client/issues/357)
+
+**Merged pull requests:**
+
+- Update dependencies [\#378](https://github.com/CasperWA/voila-optimade-client/pull/378) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#375](https://github.com/CasperWA/voila-optimade-client/pull/375) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#373](https://github.com/CasperWA/voila-optimade-client/pull/373) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#372](https://github.com/CasperWA/voila-optimade-client/pull/372) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#370](https://github.com/CasperWA/voila-optimade-client/pull/370) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#367](https://github.com/CasperWA/voila-optimade-client/pull/367) ([CasperWA](https://github.com/CasperWA))
+
+## [2021.10.21](https://github.com/CasperWA/voila-optimade-client/tree/2021.10.21) (2021-10-21)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2021.9.28...2021.10.21)
 
 **Fixed bugs:**
 
 - Auto-merge dependabot PRs not working [\#365](https://github.com/CasperWA/voila-optimade-client/issues/365)
-- Never choose a "group" value in dropdowns [\#357](https://github.com/CasperWA/voila-optimade-client/issues/357)
 
 **Closed issues:**
 
