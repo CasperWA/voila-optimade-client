@@ -330,9 +330,9 @@ def get_versioned_base_url(  # pylint: disable=too-many-branches
 
     for version in VERSION_PARTS:
         if version in base_url:
-            if re.match(fr".+{version}$", base_url):
+            if re.match(rf".+{version}$", base_url):
                 return base_url
-            if re.match(fr".+{version}/$", base_url):
+            if re.match(rf".+{version}/$", base_url):
                 return base_url[:-1]
             LOGGER.debug(
                 "Found version '%s' in base URL '%s', but not at the end of it. Will continue.",
