@@ -1,6 +1,25 @@
 # Changelog
 
-## [2021.12.2](https://github.com/CasperWA/voila-optimade-client/tree/2021.12.2) (2021-12-01)
+## [2022.3.30](https://github.com/CasperWA/voila-optimade-client/tree/2022.3.30) (2022-03-30)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2021.12.2...2022.3.30)
+
+**Merged pull requests:**
+
+- Update dependencies [\#414](https://github.com/CasperWA/voila-optimade-client/pull/414) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#408](https://github.com/CasperWA/voila-optimade-client/pull/408) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#405](https://github.com/CasperWA/voila-optimade-client/pull/405) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#402](https://github.com/CasperWA/voila-optimade-client/pull/402) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#400](https://github.com/CasperWA/voila-optimade-client/pull/400) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#396](https://github.com/CasperWA/voila-optimade-client/pull/396) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#393](https://github.com/CasperWA/voila-optimade-client/pull/393) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#390](https://github.com/CasperWA/voila-optimade-client/pull/390) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#388](https://github.com/CasperWA/voila-optimade-client/pull/388) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#385](https://github.com/CasperWA/voila-optimade-client/pull/385) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#382](https://github.com/CasperWA/voila-optimade-client/pull/382) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#380](https://github.com/CasperWA/voila-optimade-client/pull/380) ([CasperWA](https://github.com/CasperWA))
+
+## [2021.12.2](https://github.com/CasperWA/voila-optimade-client/tree/2021.12.2) (2021-12-02)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2021.10.21...2021.12.2)
 
