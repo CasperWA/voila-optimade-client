@@ -1,5 +1,13 @@
 # Changelog
 
+## [2022.4.20](https://github.com/CasperWA/voila-optimade-client/tree/2022.4.20) (2022-04-20)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.3.30...2022.4.20)
+
+**Merged pull requests:**
+
+- Update dependencies [\#418](https://github.com/CasperWA/voila-optimade-client/pull/418) ([CasperWA](https://github.com/CasperWA))
+
 ## [2022.3.30](https://github.com/CasperWA/voila-optimade-client/tree/2022.3.30) (2022-03-30)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2021.12.2...2022.3.30)
