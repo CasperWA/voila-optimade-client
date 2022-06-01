@@ -148,13 +148,8 @@ class DownloadChooser(ipw.HBox):
 
     _formats = [
         (
-            "Crystallographic Information File v1.0 (.cif)",
-            {"ext": ".cif", "adapter_format": "cif"},
-        ),
-        ("Protein Data Bank (.pdb)", {"ext": ".pdb", "adapter_format": "pdb"}),
-        (
-            "XMol XYZ File [via ASE] (.xyz)",
-            {"ext": ".xyz", "adapter_format": "ase", "final_format": "xyz"},
+            "Crystallographic Information File v1.0 [via ASE] (.cif)",
+            {"ext": ".cif", "adapter_format": "ase", "final_format": "cif"},
         ),
         (
             "XCrySDen Structure File [via ASE] (.xsf)",
@@ -172,6 +167,15 @@ class DownloadChooser(ipw.HBox):
             "Quantum ESPRESSO File [via ASE] (.in)",
             {"ext": ".in", "adapter_format": "ase", "final_format": "espresso-in"},
         ),
+        (
+            "XMol XYZ File [via ASE] (.xyz)",
+            {"ext": ".xyz", "adapter_format": "ase", "final_format": "xyz"},
+        ),
+        (
+            "Crystallographic Information File v1.0 (.cif)",
+            {"ext": ".cif", "adapter_format": "cif"},
+        ),
+        ("Protein Data Bank (.pdb)", {"ext": ".pdb", "adapter_format": "pdb"}),
         # Not yet implemented:
         # (
         #     "Protein Data Bank, macromolecular CIF v1.1 (PDBx/mmCIF) (.cif)",
@@ -502,7 +506,7 @@ class StructureViewer(ipw.VBox):
         if not change["new"].attributes.species:
             return
         self._current_view = self.viewer.add_structure(
-            nglview.TextStructure(change["new"].as_pdb)
+            nglview.ASEStructure(change["new"].convert('ase'))
         )
         self.viewer.add_representation("ball+stick", aspectRatio=4)
         self.viewer.add_representation("unitcell")
