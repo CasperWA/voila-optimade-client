@@ -11,6 +11,7 @@ except (ImportError, ModuleNotFoundError):
     from json import JSONDecodeError
 
 from optimade.adapters import Structure
+from optimade.adapters.structures.utils import species_from_species_at_sites
 from optimade.models import LinksResourceAttributes
 from optimade.models.utils import CHEMICAL_SYMBOLS, SemanticVersion
 
@@ -505,7 +506,11 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
     def _check_species_mass(structure: dict) -> dict:
         """Ensure species.mass is using OPTIMADE API v1.0.1 type"""
         if structure.get("attributes", {}).get("species", False):
-            for species in structure["attributes"]["species"] or []:
+            for species in structure["attributes"][
+                "species"
+            ] or species_from_species_at_sites(
+                structure["attributes"]["species_at_sites"]
+            ):
                 if not isinstance(species.get("mass", None), (list, type(None))):
                     species.pop("mass", None)
         return structure
