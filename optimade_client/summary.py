@@ -171,10 +171,10 @@ class DownloadChooser(ipw.HBox):
             "XMol XYZ File [via ASE] (.xyz)",
             {"ext": ".xyz", "adapter_format": "ase", "final_format": "xyz"},
         ),
-        (
-            "Crystallographic Information File v1.0 (.cif)",
-            {"ext": ".cif", "adapter_format": "cif"},
-        ),
+        # (
+        #     "Crystallographic Information File v1.0 (.cif)",
+        #     {"ext": ".cif", "adapter_format": "cif"},
+        # ),
         ("Protein Data Bank (.pdb)", {"ext": ".pdb", "adapter_format": "pdb"}),
         # Not yet implemented:
         # (
