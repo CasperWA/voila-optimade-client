@@ -506,7 +506,7 @@ class StructureViewer(ipw.VBox):
         if not change["new"].attributes.species:
             return
         self._current_view = self.viewer.add_structure(
-            nglview.ASEStructure(change["new"].convert('ase'))
+            nglview.ASEStructure(change["new"].convert("ase"))
         )
         self.viewer.add_representation("ball+stick", aspectRatio=4)
         self.viewer.add_representation("unitcell")
