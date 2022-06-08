@@ -1,5 +1,19 @@
 # Changelog
 
+## [2022.6.8](https://github.com/CasperWA/voila-optimade-client/tree/2022.6.8) (2022-06-08)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.4.20...2022.6.8)
+
+**Merged pull requests:**
+
+- Update dependencies [\#435](https://github.com/CasperWA/voila-optimade-client/pull/435) ([CasperWA](https://github.com/CasperWA))
+- Use ase format for viewer and default download format [\#432](https://github.com/CasperWA/voila-optimade-client/pull/432) ([unkcpz](https://github.com/unkcpz))
+- Tackle issue that some db not return species [\#431](https://github.com/CasperWA/voila-optimade-client/pull/431) ([unkcpz](https://github.com/unkcpz))
+- Update dependencies [\#430](https://github.com/CasperWA/voila-optimade-client/pull/430) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#427](https://github.com/CasperWA/voila-optimade-client/pull/427) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#425](https://github.com/CasperWA/voila-optimade-client/pull/425) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#423](https://github.com/CasperWA/voila-optimade-client/pull/423) ([CasperWA](https://github.com/CasperWA))
+
 ## [2022.4.20](https://github.com/CasperWA/voila-optimade-client/tree/2022.4.20) (2022-04-20)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.3.30...2022.4.20)
