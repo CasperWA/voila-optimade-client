@@ -12,7 +12,7 @@ except ImportError:
 
 
 LOGGING_LEVELS = [logging.getLevelName(level).lower() for level in range(0, 51, 10)]
-VERSION = "2022.6.8"  # Avoid importing optimade-client package
+VERSION = "2022.6.9"  # Avoid importing optimade-client package
 
 
 def main(args: list = None):
