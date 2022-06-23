@@ -1,5 +1,17 @@
 # Changelog
 
+## [2022.6.23](https://github.com/CasperWA/voila-optimade-client/tree/2022.6.23) (2022-06-15)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.6.9...2022.6.23)
+
+**Fixed bugs:**
+
+- Avoid using v1.2.0 for ipywidgets-extended [\#442](https://github.com/CasperWA/voila-optimade-client/pull/442) ([CasperWA](https://github.com/CasperWA))
+
+**Merged pull requests:**
+
+- Update dependencies [\#443](https://github.com/CasperWA/voila-optimade-client/pull/443) ([CasperWA](https://github.com/CasperWA))
+
 ## [2022.6.9](https://github.com/CasperWA/voila-optimade-client/tree/2022.6.9) (2022-06-09)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.6.8...2022.6.9)
