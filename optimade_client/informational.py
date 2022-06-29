@@ -384,8 +384,8 @@ class OptimadeLog(ipw.Accordion):
                 os.remove(Path(dirpath).joinpath(filename).resolve())
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    @staticmethod
-    def _clear_logs(_):
+    def _clear_logs(self, _):
         """Clear all logs"""
         shutil.rmtree(LOG_DIR, ignore_errors=True)
         LOG_DIR.mkdir(parents=True, exist_ok=True)
+        self.log_output.reset()
