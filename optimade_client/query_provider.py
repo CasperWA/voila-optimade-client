@@ -1,4 +1,4 @@
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 import warnings
 
 import ipywidgets as ipw
@@ -11,6 +11,12 @@ from optimade_client.subwidgets import (
     ProviderImplementationSummary,
 )
 from optimade_client.warnings import OptimadeClientWarning
+from optimade_client.parameters import (
+    PROVIDER_DATABASE_GROUPINGS,
+    SKIP_DATABASE,
+    SKIP_PROVIDERS,
+    DISABLE_PROVIDERS,
+)
 
 
 class OptimadeQueryProviderWidget(ipw.GridspecLayout):
@@ -31,6 +37,12 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         database_limit: int = None,
         width_ratio: Union[Tuple[int, int], List[int]] = None,
         width_space: int = None,
+        disable_providers: List[str] = DISABLE_PROVIDERS,
+        skip_providers: List[str] = SKIP_PROVIDERS,
+        skip_databases: Dict[str, List[str]] = SKIP_DATABASE,
+        provider_database_groupings: Dict[
+            str, Dict[str, List[str]]
+        ] = PROVIDER_DATABASE_GROUPINGS,
         **kwargs,
     ):
         # At the moment, the pagination does not work properly as each database is not tested for
@@ -43,7 +55,12 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         layout = ipw.Layout(width="100%", height="auto")
 
         self.chooser = ProviderImplementationChooser(
-            child_db_limit=database_limit, **kwargs
+            child_db_limit=database_limit,
+            disable_providers=disable_providers,
+            skip_providers=skip_providers,
+            skip_databases=skip_databases,
+            provider_database_groupings=provider_database_groupings,
+            **kwargs,
         )
 
         self.summary = ProviderImplementationSummary(**kwargs) if not embedded else None

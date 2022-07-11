@@ -36,25 +36,6 @@ from optimade_client.utils import (
 
 __all__ = ("ProviderImplementationChooser", "ProviderImplementationSummary")
 
-PROVIDER_DATABASE_GROUPINGS = {
-    "Materials Cloud": {
-        "General": sorted(["2dstructures", "curated-cofs"]),
-        "Projects": sorted(
-            [
-                "sssp",
-                "2dtopo",
-                "tc-applicability",
-                "threedd",
-                "scdm",
-                "stoceriaitf",
-                "pyrene-mofs",
-                "li-ion-conductors",
-            ]
-        ),
-        "Other": ["optimade-sample"],
-    }
-}
-
 
 class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attributes
     ipw.VBox
@@ -84,11 +65,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
             child_db_limit if child_db_limit and child_db_limit > 0 else 10
         )
         self.skip_child_dbs = skip_databases or {}
-        self.child_db_groupings = (
-            provider_database_groupings
-            if provider_database_groupings is not None
-            else PROVIDER_DATABASE_GROUPINGS
-        )
+        self.child_db_groupings = provider_database_groupings or {}
         self.offset = 0
         self.number = 1
         self.__perform_query = True
