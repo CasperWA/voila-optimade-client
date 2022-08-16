@@ -23,7 +23,7 @@ class SortSelector(ipw.HBox):
     """
 
     NO_AVAILABLE_FIELDS = "Not available"
-    DEFAULT_FIELD = "id"
+    DEFAULT_FIELD = "nsites"
 
     field = traitlets.Unicode("", allow_none=False)
     order = traitlets.UseEnum(Order, default_value=Order.ASCENDING)
