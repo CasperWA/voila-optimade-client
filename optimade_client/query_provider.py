@@ -11,7 +11,7 @@ from optimade_client.subwidgets import (
     ProviderImplementationSummary,
 )
 from optimade_client.warnings import OptimadeClientWarning
-from optimade_client.parameters import (
+from optimade_client.default_parameters import (
     PROVIDER_DATABASE_GROUPINGS,
     SKIP_DATABASE,
     SKIP_PROVIDERS,
