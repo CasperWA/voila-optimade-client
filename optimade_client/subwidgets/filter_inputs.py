@@ -33,6 +33,8 @@ class FilterTabs(ipw.Tab):
         for index, title in enumerate([_[0] for _ in sections]):
             self.set_title(index, title)
 
+        self.observe(self.on_tab_change, names="selected_index")
+
     def freeze(self):
         """Disable widget"""
         for widget in self.children:
@@ -68,6 +70,12 @@ class FilterTabs(ipw.Tab):
         for section_widget in self.children:
             section_widget.range_nx = data
 
+    def on_tab_change(self, change):
+        # If tab is changed from "Basic" to "Raw",
+        # populate the corresponding raw query from the "Basic" tab
+        if change['name'] == 'selected_index' and change['old'] == 0 and change['new'] == 1:
+            basic_query_string = self.children[0].collect_value()
+            self.children[1].set_value(basic_query_string)
 
 class FilterTabSection(ipw.VBox):
     """Base class for a filter tab section"""
@@ -101,7 +109,12 @@ class FilterRaw(FilterTabSection):
             )
         ]
 
-        super().__init__(children=self.inputs, layout={"width": "auto"}, **kwargs)
+        info_text = ipw.HTML(
+            "Raw string is generated from the active filters in the 'Basic' tab. <br>"
+            "Further modifications can be made, but they will be not be reflected in the 'Basic' tab."
+        )
+
+        super().__init__(children=[info_text] + self.inputs, layout={"width": "auto"}, **kwargs)
 
     def reset(self):
         """Reset widget"""
@@ -128,6 +141,8 @@ class FilterRaw(FilterTabSection):
         for user_input in self.inputs:
             user_input.on_submit(callback=callback, remove=remove)
 
+    def set_value(self, value):
+        self.inputs[0].set_value(value)
 
 class FilterInput(ipw.HBox):
     """Combination of HTML and input widget for filter inputs
@@ -198,6 +213,12 @@ class FilterInput(ipw.HBox):
             self.input_widget._submission_callbacks.register_callback(  # pylint: disable=protected-access
                 callback, remove=remove
             )
+
+    def set_value(self, value):
+        if isinstance(self.input_widget, ipw.Text):
+            self.input_widget.value = value
+        else:
+            raise NotImplementedError
 
 
 class FilterInputParser:
