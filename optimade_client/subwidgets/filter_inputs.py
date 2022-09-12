@@ -73,9 +73,14 @@ class FilterTabs(ipw.Tab):
     def on_tab_change(self, change):
         # If tab is changed from "Basic" to "Raw",
         # populate the corresponding raw query from the "Basic" tab
-        if change['name'] == 'selected_index' and change['old'] == 0 and change['new'] == 1:
+        if (
+            change["name"] == "selected_index"
+            and change["old"] == 0
+            and change["new"] == 1
+        ):
             basic_query_string = self.children[0].collect_value()
             self.children[1].set_value(basic_query_string)
+
 
 class FilterTabSection(ipw.VBox):
     """Base class for a filter tab section"""
@@ -114,7 +119,9 @@ class FilterRaw(FilterTabSection):
             "Further modifications can be made, but they will be not be reflected in the 'Basic' tab."
         )
 
-        super().__init__(children=[info_text] + self.inputs, layout={"width": "auto"}, **kwargs)
+        super().__init__(
+            children=[info_text] + self.inputs, layout={"width": "auto"}, **kwargs
+        )
 
     def reset(self):
         """Reset widget"""
@@ -143,6 +150,7 @@ class FilterRaw(FilterTabSection):
 
     def set_value(self, value):
         self.inputs[0].set_value(value)
+
 
 class FilterInput(ipw.HBox):
     """Combination of HTML and input widget for filter inputs
