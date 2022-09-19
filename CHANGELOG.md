@@ -1,6 +1,22 @@
 # Changelog
 
-## [2022.6.23](https://github.com/CasperWA/voila-optimade-client/tree/2022.6.23) (2022-06-15)
+## [2022.9.19](https://github.com/CasperWA/voila-optimade-client/tree/2022.9.19) (2022-09-19)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.6.23...2022.9.19)
+
+**Merged pull requests:**
+
+- Don't use v1.2.1 from `ipywidgets-extended` [\#458](https://github.com/CasperWA/voila-optimade-client/pull/458) ([CasperWA](https://github.com/CasperWA))
+- Populate raw filter string from basic filter [\#457](https://github.com/CasperWA/voila-optimade-client/pull/457) ([eimrek](https://github.com/eimrek))
+- Update dependencies [\#455](https://github.com/CasperWA/voila-optimade-client/pull/455) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#452](https://github.com/CasperWA/voila-optimade-client/pull/452) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#450](https://github.com/CasperWA/voila-optimade-client/pull/450) ([CasperWA](https://github.com/CasperWA))
+- Move default database providers defaults setup parameters to one file [\#449](https://github.com/CasperWA/voila-optimade-client/pull/449) ([unkcpz](https://github.com/unkcpz))
+- Logger clean and handler explicitly import [\#447](https://github.com/CasperWA/voila-optimade-client/pull/447) ([unkcpz](https://github.com/unkcpz))
+- SortSelector widget use nsites as default field to sort [\#445](https://github.com/CasperWA/voila-optimade-client/pull/445) ([unkcpz](https://github.com/unkcpz))
+- Update dependencies [\#444](https://github.com/CasperWA/voila-optimade-client/pull/444) ([CasperWA](https://github.com/CasperWA))
+
+## [2022.6.23](https://github.com/CasperWA/voila-optimade-client/tree/2022.6.23) (2022-06-23)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.6.9...2022.6.23)
 
