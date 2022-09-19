@@ -37,12 +37,12 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         database_limit: int = None,
         width_ratio: Union[Tuple[int, int], List[int]] = None,
         width_space: int = None,
-        disable_providers: List[str] = DISABLE_PROVIDERS,
-        skip_providers: List[str] = SKIP_PROVIDERS,
-        skip_databases: Dict[str, List[str]] = SKIP_DATABASE,
-        provider_database_groupings: Dict[
-            str, Dict[str, List[str]]
-        ] = PROVIDER_DATABASE_GROUPINGS,
+        disable_providers: Union[List[str], None] = None,
+        skip_providers: Union[List[str], None] = None,
+        skip_databases: Union[List[str], None] = None,
+        provider_database_groupings: Union[
+            Dict[str, Dict[str, List[str]]], None
+        ] = None,
         **kwargs,
     ):
         # At the moment, the pagination does not work properly as each database is not tested for
@@ -50,6 +50,12 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         # failing. Instead the default is set to 100 in an attempt to never actually do paging.
         database_limit = (
             database_limit if database_limit and database_limit > 0 else 100
+        )
+        disable_providers = disable_providers or DISABLE_PROVIDERS
+        skip_providers = skip_providers or SKIP_PROVIDERS
+        skip_databases = skip_databases or SKIP_DATABASE
+        provider_database_groupings = (
+            provider_database_groupings or PROVIDER_DATABASE_GROUPINGS
         )
 
         layout = ipw.Layout(width="100%", height="auto")

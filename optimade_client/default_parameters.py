@@ -1,8 +1,7 @@
-# Check https://www.optimade.org/providers-dashboard/
-# If provider has no DB attached put into SKIP_PROVIDERS means not
-# going to support it at the moment.
-# Otherwise put in DISABLE_PROVIDERS means the client need to support
-# it but has issue to serve the data.
+# The lists are set based on the status of providers from https://www.optimade.org/providers-dashboard/.
+# If the provider has no databases attached, it is put into SKIP_PROVIDERS list means that the optimate-client will not support it.
+# Otherwise put in DISABLE_PROVIDERS means the client need to be supported but can't because of issues.
+
 SKIP_PROVIDERS = [
     "exmpl",
     "optimade",
