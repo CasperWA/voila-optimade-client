@@ -40,9 +40,7 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         disable_providers: Optional[List[str]] = None,
         skip_providers: Optional[List[str]] = None,
         skip_databases: Optional[List[str]] = None,
-        provider_database_groupings: Optional[
-            Dict[str, Dict[str, List[str]]]
-        ] = None,
+        provider_database_groupings: Optional[Dict[str, Dict[str, List[str]]]] = None,
         **kwargs,
     ):
         # At the moment, the pagination does not work properly as each database is not tested for
