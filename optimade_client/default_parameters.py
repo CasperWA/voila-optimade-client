@@ -1,6 +1,13 @@
-# The lists are set based on the status of providers from https://www.optimade.org/providers-dashboard/.
-# If the provider has no databases attached, it is put into SKIP_PROVIDERS list means that the optimate-client will not support it.
-# Otherwise put in DISABLE_PROVIDERS means the client need to be supported but can't because of issues.
+"""Default initialization parameters
+
+The lists are set, based on the status of providers from
+https://www.optimade.org/providers-dashboard/.
+
+If the provider has no available databases, it should be put into the SKIP_PROVIDERS list,
+meaning it will not be supported.
+Providers in the DISABLE_PROVIDERS list are ones the client should support,
+but cannot because of one issue or another.
+"""
 
 SKIP_PROVIDERS = [
     "exmpl",

@@ -1,4 +1,4 @@
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List, Dict, Optional
 import warnings
 
 import ipywidgets as ipw
@@ -34,14 +34,14 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
     def __init__(
         self,
         embedded: bool = False,
-        database_limit: int = None,
-        width_ratio: Union[Tuple[int, int], List[int]] = None,
-        width_space: int = None,
-        disable_providers: Union[List[str], None] = None,
-        skip_providers: Union[List[str], None] = None,
-        skip_databases: Union[List[str], None] = None,
-        provider_database_groupings: Union[
-            Dict[str, Dict[str, List[str]]], None
+        database_limit: Optional[int] = None,
+        width_ratio: Optional[Union[Tuple[int, int], List[int]]] = None,
+        width_space: Optional[int] = None,
+        disable_providers: Optional[List[str]] = None,
+        skip_providers: Optional[List[str]] = None,
+        skip_databases: Optional[List[str]] = None,
+        provider_database_groupings: Optional[
+            Dict[str, Dict[str, List[str]]]
         ] = None,
         **kwargs,
     ):
