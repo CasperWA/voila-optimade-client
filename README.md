@@ -160,7 +160,7 @@ MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.
 
 | | |
 |---|---|
-| <img src="https://avatars1.githubusercontent.com/u/72801303?s=200&v=4" width="50"> | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 957189; BIG-MAP |
+| [<img src="https://avatars1.githubusercontent.com/u/72801303?s=200&v=4" width="50">](https://www.big-map.eu/) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 957189; [BIG-MAP](https://www.big-map.eu/) |
 
 ## Contact
 
