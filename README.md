@@ -1,4 +1,5 @@
 # OPTIMADE client (in Voilà)
+<!-- markdownlint-disable MD033 -->
 
 [![MaterialsCloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CasperWA/voila-optimade-client/develop/docs/resources/mcloud_badge.json)](https://materialscloud.org/optimadeclient/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/CasperWA/voila-optimade-client/develop?urlpath=%2Fvoila%2Frender%2FOPTIMADE-Client.ipynb)
@@ -88,15 +89,15 @@ First, you will need to install the package either from [PyPI](https://pypi.org/
 #### PyPI
 
 ```shell
-$ pip install optimade-client[server]
+pip install optimade-client[server]
 ```
 
 #### GitHub
 
 ```shell
-$ git clone https://github.com/CasperWA/voila-optimade-client.git
-$ cd voila-optimade-client
-voila-optimade-client$ pip install .[server]
+git clone https://github.com/CasperWA/voila-optimade-client.git
+cd voila-optimade-client
+pip install .[server]
 ```
 
 Note, it is important to install the `server` extra in order to also install the `voila` package (and the `ase` package for a wider variety of download formats).
@@ -107,11 +108,7 @@ The application will be run in Voilà using Voilà's own `tornado`-based server.
 The configuration will automatically be copied to Jupyter's configuration directory before starting the server.
 
 ```shell
-$ optimade-client
-...
-[Voila] Voilà is running at:
-http://localhost:8866/
-...
+optimade-client
 ```
 
 For a list of all options that can be passed to `optimade-client` use the `-h/--help` option.
@@ -124,7 +121,7 @@ It is recommended that you use the GitHub-route mentioned above.
 You should also install `pre-commit` in the cloned git repository by running:
 
 ```shell
-voila-optimade-client$ pre-commit install
+pre-commit install
 ```
 
 To start making contributions, fork the repository and create PRs.
@@ -139,18 +136,14 @@ If you wish to start the Voilà server locally with the same configuration, eith
 Locate your Jupyter config directory:
 
 ```shell
-$ jupyter --config-dir
+jupyter --config-dir
 /path/to/jupyter/config/dir
 ```
 
 Example of passing configurations when you start the Voilà server using the CLI:
 
 ```shell
-$ voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 "OPTIMADE-Client.ipynb"
-...
-[Voila] Voilà is running at:
-http://localhost:8866/
-...
+voila --enable_nbextensions=True --VoilaExecutePreprocessor.timeout=180 "OPTIMADE-Client.ipynb"
 ```
 
 To see the full list of configurations you can call `voila` and pass `--help-all`.
@@ -162,6 +155,12 @@ Set the environment variable `OPTIMADE_CLIENT_DEVELOPMENT_MODE` to `1` (the inte
 ## License
 
 MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.
+
+## Acknowledgements
+
+| | |
+|---|---|
+| <img src="https://avatars1.githubusercontent.com/u/72801303?s=200&v=4" width="50"> | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 957189; BIG-MAP |
 
 ## Contact
 
