@@ -1,5 +1,4 @@
 # OPTIMADE client (in Voilà)
-<!-- markdownlint-disable MD033 -->
 
 [![MaterialsCloud](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/CasperWA/voila-optimade-client/develop/docs/resources/mcloud_badge.json)](https://materialscloud.org/optimadeclient/)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/CasperWA/voila-optimade-client/develop?urlpath=%2Fvoila%2Frender%2FOPTIMADE-Client.ipynb)
@@ -160,7 +159,7 @@ MIT. The terms of the license can be found in the [LICENSE](LICENSE) file.
 
 | | |
 |---|---|
-| [<img src="https://avatars1.githubusercontent.com/u/72801303?s=200&v=4" width="50">](https://www.big-map.eu/) | This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 957189; [BIG-MAP](https://www.big-map.eu/) |
+| [![BIG-MAP](https://avatars1.githubusercontent.com/u/72801303?s=200&v=4)](https://www.big-map.eu/) | [BIG-MAP](https://www.big-map.eu/); This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 957189. The project is part of [BATTERY 2030+](https://battery2030.eu/), the large-scale European research initiative for inventing the sustainable batteries of the future. |
 
 ## Contact
 
