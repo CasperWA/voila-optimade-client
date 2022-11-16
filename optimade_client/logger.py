@@ -1,5 +1,6 @@
 """Logging to both file and widget"""
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 from typing import List
@@ -277,9 +278,7 @@ LOGGER = logging.getLogger("OPTIMADE_Client")
 LOGGER.setLevel(logging.DEBUG)
 
 # Save a file with all messages (DEBUG level)
-FILE_HANDLER = logging.handlers.RotatingFileHandler(
-    LOG_FILE, maxBytes=1000000, backupCount=5
-)
+FILE_HANDLER = RotatingFileHandler(LOG_FILE, maxBytes=1000000, backupCount=5)
 FILE_HANDLER.setLevel(logging.DEBUG)
 
 # Write to Output widget (INFO level is default, overrideable with environment variable)

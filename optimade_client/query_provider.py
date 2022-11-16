@@ -1,4 +1,4 @@
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict, Optional
 import warnings
 
 import ipywidgets as ipw
@@ -11,6 +11,12 @@ from optimade_client.subwidgets import (
     ProviderImplementationSummary,
 )
 from optimade_client.warnings import OptimadeClientWarning
+from optimade_client.default_parameters import (
+    PROVIDER_DATABASE_GROUPINGS,
+    SKIP_DATABASE,
+    SKIP_PROVIDERS,
+    DISABLE_PROVIDERS,
+)
 
 
 class OptimadeQueryProviderWidget(ipw.GridspecLayout):
@@ -28,9 +34,13 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
     def __init__(
         self,
         embedded: bool = False,
-        database_limit: int = None,
-        width_ratio: Union[Tuple[int, int], List[int]] = None,
-        width_space: int = None,
+        database_limit: Optional[int] = None,
+        width_ratio: Optional[Union[Tuple[int, int], List[int]]] = None,
+        width_space: Optional[int] = None,
+        disable_providers: Optional[List[str]] = None,
+        skip_providers: Optional[List[str]] = None,
+        skip_databases: Optional[List[str]] = None,
+        provider_database_groupings: Optional[Dict[str, Dict[str, List[str]]]] = None,
         **kwargs,
     ):
         # At the moment, the pagination does not work properly as each database is not tested for
@@ -39,11 +49,22 @@ class OptimadeQueryProviderWidget(ipw.GridspecLayout):
         database_limit = (
             database_limit if database_limit and database_limit > 0 else 100
         )
+        disable_providers = disable_providers or DISABLE_PROVIDERS
+        skip_providers = skip_providers or SKIP_PROVIDERS
+        skip_databases = skip_databases or SKIP_DATABASE
+        provider_database_groupings = (
+            provider_database_groupings or PROVIDER_DATABASE_GROUPINGS
+        )
 
         layout = ipw.Layout(width="100%", height="auto")
 
         self.chooser = ProviderImplementationChooser(
-            child_db_limit=database_limit, **kwargs
+            child_db_limit=database_limit,
+            disable_providers=disable_providers,
+            skip_providers=skip_providers,
+            skip_databases=skip_databases,
+            provider_database_groupings=provider_database_groupings,
+            **kwargs,
         )
 
         self.summary = ProviderImplementationSummary(**kwargs) if not embedded else None
