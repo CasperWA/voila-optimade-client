@@ -33,24 +33,20 @@ from optimade_client.utils import (
     get_sortable_fields,
     SESSION,
     TIMEOUT_SECONDS,
+    CACHE_DIR,
 )
 
-from pathlib import Path
-
-CACHING_FOLDER = Path.home().joinpath(".cache", "optimade-client")
-CACHING_FOLDER.mkdir(parents=True, exist_ok=True)
-CACHING_FILENAME = "cached_ranges.json"
+CACHED_RANGES = CACHE_DIR / "cached_ranges.json"
 
 
 def get_cached_ranges() -> dict:
     """get the dict of cached data from caching folder
-    The source of caching data is set to `~/.cache/optimade-client/caching.json`"""
-    caching_file = Path.joinpath(CACHING_FOLDER, CACHING_FILENAME)
-    if not caching_file.exists():
+    The source of caching data is set to `CACHED_RANGES` folder"""
+    if not CACHED_RANGES.exists():
         # The caching file not created yet
         return dict()
     else:
-        with caching_file.open("r") as fh:
+        with CACHED_RANGES.open("r") as fh:
             cached_data = json.load(fh)
 
         return cached_data
@@ -58,19 +54,18 @@ def get_cached_ranges() -> dict:
 
 def set_cached_ranges(value: dict):
     """set the caching data to store file"""
-    caching_file = Path.joinpath(CACHING_FOLDER, CACHING_FILENAME)
-    if not caching_file.exists():
+    if not CACHED_RANGES.exists():
         # touch a new file
-        with caching_file.open("w") as fh:
+        with CACHED_RANGES.open("w") as fh:
             json.dump({}, fh, indent=2)
 
     # update with a new dict
-    with caching_file.open("r") as fh:
+    with CACHED_RANGES.open("r") as fh:
         cached_data = json.load(fh)
         cached_data = value
 
     # write back to update
-    with caching_file.open("w") as fh:
+    with CACHED_RANGES.open("w") as fh:
         json.dump(cached_data, fh, indent=2)
 
 
