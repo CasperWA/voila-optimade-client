@@ -6,11 +6,7 @@ import re
 from typing import Tuple, List, Union, Iterable
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 
-try:
-    import simplejson as json
-except (ImportError, ModuleNotFoundError):
-    import json
-
+import json
 from json import JSONDecodeError
 
 import appdirs

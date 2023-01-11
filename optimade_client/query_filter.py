@@ -5,11 +5,7 @@ import traceback
 import traitlets
 import ipywidgets as ipw
 import requests
-
-try:
-    from simplejson import JSONDecodeError
-except (ImportError, ModuleNotFoundError):
-    from json import JSONDecodeError
+from json import JSONDecodeError
 
 from optimade.adapters import Structure
 from optimade.adapters.structures.utils import species_from_species_at_sites
