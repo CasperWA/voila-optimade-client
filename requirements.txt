@@ -6,7 +6,7 @@ ipywidgets-extended>=1.1.1,<2,!=1.2.0,!=1.2.1
 nglview~=3.0
 optimade~=0.18.0
 pandas~=1.3
-requests~=2.30
+requests~=2.31
 setuptools>=49.4
 urllib3<2
 voila~=0.4.0
