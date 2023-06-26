@@ -1,4 +1,4 @@
 codecov~=2.1
-pytest~=7.3
+pytest~=7.4
 pytest-cov~=4.1
 pytest-tornasync~=0.6.0.post2
