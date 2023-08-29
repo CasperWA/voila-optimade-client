@@ -7,4 +7,4 @@ optimade~=0.25.1
 pandas~=2.0
 requests>=2.28
 urllib3<3
-widget_periodictable~=3.0
+widget_periodictable~=3.1
