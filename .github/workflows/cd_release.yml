@@ -5,90 +5,37 @@ on:
     types:
       - published
 
-env:
-  PUBLISH_UPDATE_BRANCH: develop
-  GIT_USER_NAME: CasperWA
-  GIT_USER_EMAIL: "casper+github@welzel.nu"
-
 jobs:
   publish:
-    name: Publish Python package on PyPI
-    runs-on: ubuntu-latest
+    name: External
+    uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@v2.4.0
     if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
+    with:
+      # General
+      git_username: CasperWA
+      git_email: "casper+github@welzel.nu"
+      release_branch: develop
+      install_extras: "[dev]"
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # PyPI publication
+      python_package: true
+      python_version_build: "3.9"
+      package_dirs: "optimade_client"
+      version_update_changes_separator: ";"
+      version_update_changes: |
+        optimade_client/__init__.py;__version__ = .+;__version__ = "{version}"
+        setup.py;version=([^,]+),;version="{version}",
+        optimade_client/informational.py;Client version.*</code>;Client version</b>: <code>{version}</code>
+        optimade_client/cli/run.py;VERSION = \".+\";VERSION = "{version}"
+      build_libs: "build"
+      build_cmd: "python -m build"
+      publish_on_pypi: true
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.9"
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -U setuptools wheel
-
-        while IFS="" read -r line || [ -n "${line}" ]; do
-          if [[ "${line}" =~ ^invoke.*$ ]]; then
-            invoke="${line}"
-          fi
-        done < requirements/requirements_dev.txt
-
-        pip install ${invoke}
-
-    - name: Update changelog
-      uses: CharMixer/auto-changelog-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        release_branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
-
-    - name: Update version and tag
-      run: .github/utils/update_version.sh
-
-    - name: Push updates to '${{ env.PUBLISH_UPDATE_BRANCH }}'
-      uses: CasperWA/push-protected@v2
-      with:
-        token: ${{ secrets.RELEASE_PAT }}
-        branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
-        force: true
-        tags: true
-
-    - name: Get tagged versions
-      run: echo "PREVIOUS_VERSION=$(git tag -l --sort -version:refname | grep -E ^[^v] | sed -n 2p)" >> $GITHUB_ENV
-
-    - name: Create release-specific changelog
-      uses: CharMixer/auto-changelog-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        release_branch: ${{ env.PUBLISH_UPDATE_BRANCH }}
-        since_tag: "${{ env.PREVIOUS_VERSION }}"
-        output: "release_changelog.md"
-
-    - name: Append changelog to release body
-      run: |
-        gh api /repos/${{ github.repository }}/releases/${{ github.event.release.id }} --jq '.body' > release_body.md
-        cat release_changelog.md >> release_body.md
-        gh api /repos/${{ github.repository }}/releases/${{ github.event.release.id }} -X PATCH -F body='@release_body.md'
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-
-    - name: Build source distribution
-      run: python ./setup.py sdist
-
-    - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.test_pypi_password }}
-        repository_url: https://test.pypi.org/legacy/
-
-    - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+      # Documentation
+      update_docs: false
+    secrets:
+      PyPI_token: ${{ secrets.pypi_password }}
+      PAT: ${{ secrets.RELEASE_PAT }}
 
   update-stable:
     name: Update `stable` branch
@@ -105,11 +52,11 @@ jobs:
 
     - name: Setup git config
       run: |
-        git config --global user.name "${GIT_USER_NAME}"
-        git config --global user.email "${GIT_USER_EMAIL}"
+        git config --global user.name "CasperWA"
+        git config --global user.email "casper+github@welzel.nu"
 
     - name: Make `stable` branch equal to `develop` branch
-      run: git merge --ff-only origin/${{ env.PUBLISH_UPDATE_BRANCH }}
+      run: git merge --ff-only origin/develop
 
     - name: Update `stable` branch
       uses: ad-m/github-push-action@master

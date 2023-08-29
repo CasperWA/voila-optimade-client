@@ -1,6 +1,0 @@
-### Update dependencies
-
-Automatically created PR from [`ci/dependabot-updates`](https://github.com/CasperWA/voila-optimade-client/tree/ci/dependabot-updates).
-It should be automagically merged into `develop` upon CI success.
-
-For more information see the ["Dependabot updates" workflow](https://github.com/CasperWA/voila-optimade-client/blob/develop/.github/workflows/ci_dependabot.yml).
