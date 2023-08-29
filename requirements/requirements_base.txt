@@ -6,5 +6,5 @@ nglview~=3.0
 optimade~=0.25.1
 pandas~=2.0
 requests~=2.31
-urllib3<2
+urllib3<3
 widget_periodictable~=3.1
