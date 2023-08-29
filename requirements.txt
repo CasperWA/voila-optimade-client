@@ -8,6 +8,5 @@ optimade~=0.25.1
 pandas~=2.0
 requests~=2.31
 setuptools>=49.4
-urllib3<2
 voila~=0.5.1
 widget_periodictable~=3.1
