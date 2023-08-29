@@ -1,5 +1,54 @@
 # Changelog
 
+## [2023.8.29](https://github.com/CasperWA/voila-optimade-client/tree/2023.8.29) (2023-08-29)
+
+[Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.9.19...2023.8.29)
+
+**Implemented enhancements:**
+
+- Update minimum Python requirement [\#511](https://github.com/CasperWA/voila-optimade-client/issues/511)
+
+**Fixed bugs:**
+
+- Explicitly add locations of requirements files [\#517](https://github.com/CasperWA/voila-optimade-client/pull/517) ([CasperWA](https://github.com/CasperWA))
+
+**Closed issues:**
+
+- Update `optimade` dependency to support Python 3.11 [\#506](https://github.com/CasperWA/voila-optimade-client/issues/506)
+- Re-update BIG-MAP acknowledgement [\#464](https://github.com/CasperWA/voila-optimade-client/issues/464)
+- Add BIG-MAP acknowledgement [\#462](https://github.com/CasperWA/voila-optimade-client/issues/462)
+
+**Merged pull requests:**
+
+- Update dependencies [\#527](https://github.com/CasperWA/voila-optimade-client/pull/527) ([CasperWA](https://github.com/CasperWA))
+- Seems there is no need for explicitly looking here [\#526](https://github.com/CasperWA/voila-optimade-client/pull/526) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#516](https://github.com/CasperWA/voila-optimade-client/pull/516) ([CasperWA](https://github.com/CasperWA))
+- Update min Python version to 3.9 [\#512](https://github.com/CasperWA/voila-optimade-client/pull/512) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#507](https://github.com/CasperWA/voila-optimade-client/pull/507) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#502](https://github.com/CasperWA/voila-optimade-client/pull/502) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#500](https://github.com/CasperWA/voila-optimade-client/pull/500) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#498](https://github.com/CasperWA/voila-optimade-client/pull/498) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#494](https://github.com/CasperWA/voila-optimade-client/pull/494) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#491](https://github.com/CasperWA/voila-optimade-client/pull/491) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#489](https://github.com/CasperWA/voila-optimade-client/pull/489) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#487](https://github.com/CasperWA/voila-optimade-client/pull/487) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#486](https://github.com/CasperWA/voila-optimade-client/pull/486) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#484](https://github.com/CasperWA/voila-optimade-client/pull/484) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#482](https://github.com/CasperWA/voila-optimade-client/pull/482) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#481](https://github.com/CasperWA/voila-optimade-client/pull/481) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#479](https://github.com/CasperWA/voila-optimade-client/pull/479) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#477](https://github.com/CasperWA/voila-optimade-client/pull/477) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#475](https://github.com/CasperWA/voila-optimade-client/pull/475) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#473](https://github.com/CasperWA/voila-optimade-client/pull/473) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#472](https://github.com/CasperWA/voila-optimade-client/pull/472) ([CasperWA](https://github.com/CasperWA))
+- Flake8 pre-commit fail fixed [\#471](https://github.com/CasperWA/voila-optimade-client/pull/471) ([unkcpz](https://github.com/unkcpz))
+- Update dependencies [\#470](https://github.com/CasperWA/voila-optimade-client/pull/470) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#467](https://github.com/CasperWA/voila-optimade-client/pull/467) ([CasperWA](https://github.com/CasperWA))
+- Re-update BIG-MAP acknowledgement [\#465](https://github.com/CasperWA/voila-optimade-client/pull/465) ([CasperWA](https://github.com/CasperWA))
+- Add BIG-MAP acknowledgement [\#463](https://github.com/CasperWA/voila-optimade-client/pull/463) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#461](https://github.com/CasperWA/voila-optimade-client/pull/461) ([CasperWA](https://github.com/CasperWA))
+- Update dependencies [\#460](https://github.com/CasperWA/voila-optimade-client/pull/460) ([CasperWA](https://github.com/CasperWA))
+
 ## [2022.9.19](https://github.com/CasperWA/voila-optimade-client/tree/2022.9.19) (2022-09-19)
 
 [Full Changelog](https://github.com/CasperWA/voila-optimade-client/compare/2022.6.23...2022.9.19)
