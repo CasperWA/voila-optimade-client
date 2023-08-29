@@ -22,17 +22,6 @@ updates:
   target-branch: ci/dependabot-updates
   labels:
   - dependencies
-- package-ecosystem: pip
-  directory: "requirements/"
-  schedule:
-    interval: weekly
-    day: monday
-    time: "05:00"
-  # Should be bigger than or equal to the total number of dependencies (currently 9)
-  open-pull-requests-limit: 30
-  target-branch: ci/dependabot-updates
-  labels:
-  - dependencies
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
