@@ -12,7 +12,7 @@ jobs:
   publish:
     name: External
     uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@test_release_workflow
-    # if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
+    if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
     with:
       # General
       git_username: CasperWA
