@@ -25,7 +25,7 @@ jobs:
       version_update_changes: |
         {package_dir}/__init__.py;__version__ = .+;__version__ = \"{version}\"
         setup.py;version=([^,]+),;version=\"{version}\",
-        {package_dir}/informational.py;Client version.*\</code\>;Client version\</b\>: \<code\>{version}\</code\>
+        {package_dir}/informational.py;Client version.*</code>;Client version</b>: <code>{version}</code>
         {package_dir}/cli/run.py;VERSION = \".+\";VERSION = \"{version}\"
       build_libs: "build"
       build_cmd: "python -m build"
