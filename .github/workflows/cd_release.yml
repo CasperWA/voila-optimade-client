@@ -1,17 +1,14 @@
 name: CD - Publish on PyPI
 
 on:
-  # release:
-  #   types:
-  #     - published
-  push:
-    branches:
-      - cwa/fix-532*
+  release:
+    types:
+      - published
 
 jobs:
   publish:
     name: External
-    uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@test_release_workflow
+    uses: SINTEF/ci-cd/.github/workflows/cd_release.yml@v2.5.1
     if: github.repository == 'CasperWA/voila-optimade-client' && startsWith(github.ref, 'refs/tags/20')
     with:
       # General
@@ -19,7 +16,6 @@ jobs:
       git_email: "casper+github@welzel.nu"
       release_branch: develop
       install_extras: "[dev]"
-      test: true
 
       # PyPI publication
       python_package: true
@@ -33,7 +29,7 @@ jobs:
         {package_dir}/cli/run.py;VERSION = \".+\";VERSION = \"{version}\"
       build_libs: "build"
       build_cmd: "python -m build"
-      publish_on_pypi: false
+      publish_on_pypi: true
 
       # Documentation
       update_docs: false
@@ -41,29 +37,29 @@ jobs:
       PyPI_token: ${{ secrets.pypi_password }}
       PAT: ${{ secrets.RELEASE_PAT }}
 
-  # update-stable:
-  #   name: Update `stable` branch
-  #   needs: publish
-  #   runs-on: ubuntu-latest
+  update-stable:
+    name: Update `stable` branch
+    needs: publish
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       fetch-depth: 0
-  #       ref: stable
-  #       persist-credentials: false
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        ref: stable
+        persist-credentials: false
 
-  #   - name: Setup git config
-  #     run: |
-  #       git config --global user.name "CasperWA"
-  #       git config --global user.email "casper+github@welzel.nu"
+    - name: Setup git config
+      run: |
+        git config --global user.name "CasperWA"
+        git config --global user.email "casper+github@welzel.nu"
 
-  #   - name: Make `stable` branch equal to `develop` branch
-  #     run: git merge --ff-only origin/develop
+    - name: Make `stable` branch equal to `develop` branch
+      run: git merge --ff-only origin/develop
 
-  #   - name: Update `stable` branch
-  #     uses: ad-m/github-push-action@master
-  #     with:
-  #       github_token: ${{ secrets.RELEASE_PAT }}
-  #       branch: stable
+    - name: Update `stable` branch
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.RELEASE_PAT }}
+        branch: stable
