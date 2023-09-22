@@ -41,7 +41,7 @@ PROVIDERS_URLS = [
     "/links/v1/providers.json",
 ]
 
-CACHE_DIR = Path(appdirs.user_cache_dir("optimade-client", "CasperWA"))
+CACHE_DIR = Path(appdirs.user_cache_dir("optimade-client", "ALLUSERS"))
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHED_PROVIDERS = CACHE_DIR / "cached_providers.json"
 

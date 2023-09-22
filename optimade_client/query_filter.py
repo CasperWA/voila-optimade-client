@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import json
 from typing import List, Union
 import traceback
 import traitlets
@@ -28,7 +29,40 @@ from optimade_client.utils import (
     get_sortable_fields,
     SESSION,
     TIMEOUT_SECONDS,
+    CACHE_DIR,
 )
+
+CACHED_RANGES = CACHE_DIR / "cached_ranges.json"
+
+
+def get_cached_ranges() -> dict:
+    """get the dict of cached data from caching folder
+    The source of caching data is set to `CACHED_RANGES` folder"""
+    if not CACHED_RANGES.exists():
+        # The caching file not created yet
+        return dict()
+    else:
+        with CACHED_RANGES.open("r") as fh:
+            cached_data = json.load(fh)
+
+        return cached_data
+
+
+def set_cached_ranges(value: dict):
+    """set the caching data to store file"""
+    if not CACHED_RANGES.exists():
+        # touch a new file
+        with CACHED_RANGES.open("w") as fh:
+            json.dump({}, fh, indent=2)
+
+    # update with a new dict
+    with CACHED_RANGES.open("r") as fh:
+        cached_data = json.load(fh)
+        cached_data = value
+
+    # write back to update
+    with CACHED_RANGES.open("w") as fh:
+        json.dump(cached_data, fh, indent=2)
 
 
 class QueryFilterWidgetOrder(Enum):
@@ -105,7 +139,7 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
         self.number = 1
         self._data_available = None
         self.__perform_query = True
-        self.__cached_ranges = {}
+        self.__cached_ranges = get_cached_ranges()
         self.__cached_versions = {}
         self.database_version = ""
 
@@ -372,6 +406,9 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
             checks=["sort"],
         )
 
+        # flag whether do update cached_ranges on .cache folder
+        flag_cached_ranges = False
+
         for response_field in sortable_fields:
             if response_field in self.__cached_ranges[db_base_url]:
                 # Use cached value(s)
@@ -419,6 +456,10 @@ class OptimadeQueryFilterWidget(  # pylint: disable=too-many-instance-attributes
                 {response_field: new_range},
             )
             self.__cached_ranges[db_base_url].update({response_field: new_range})
+            flag_cached_ranges = True
+
+        if flag_cached_ranges:
+            set_cached_ranges(value=self.__cached_ranges)
 
         if not self.__cached_ranges[db_base_url]:
             LOGGER.debug("No values found for %s, storing default values.", db_base_url)
