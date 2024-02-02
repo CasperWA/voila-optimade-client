@@ -70,6 +70,7 @@ jobs:
       if: matrix.python-version == '3.9' && github.repository == 'CasperWA/voila-optimade-client'
       uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         name: optimade-client
         file: ./coverage.xml
         flags: optimade-client
