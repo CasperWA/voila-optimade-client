@@ -6,7 +6,7 @@ cachecontrol[filecache]~=0.13.1
 ipywidgets~=7.7
 ipywidgets-extended>=1.1.1,<2,!=1.2.0,!=1.2.1
 nglview>=3.0
-optimade~=1.0.1
+optimade~=1.0.3
 pandas~=2.1
 requests~=2.31
 urllib3~=2.1
