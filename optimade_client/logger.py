@@ -1,4 +1,5 @@
 """Logging to both file and widget"""
+
 import logging
 from logging.handlers import RotatingFileHandler
 import os
