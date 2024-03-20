@@ -9,12 +9,16 @@ class OptimadeClientWarning(Warning):
     def __init__(self, *args: Tuple[Any]):
         LOGGER.warning(
             "%s warned.\nWarning message: %s\nAbout this warning: %s",
-            args[0].__class__.__name__
-            if args and isinstance(args[0], Exception)
-            else self.__class__.__name__,
+            (
+                args[0].__class__.__name__
+                if args and isinstance(args[0], Exception)
+                else self.__class__.__name__
+            ),
             str(args[0]) if args else "",
-            args[0].__doc__
-            if args and isinstance(args[0], Exception)
-            else self.__doc__,
+            (
+                args[0].__doc__
+                if args and isinstance(args[0], Exception)
+                else self.__doc__
+            ),
         )
         super().__init__(*args)
