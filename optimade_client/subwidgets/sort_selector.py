@@ -183,9 +183,9 @@ class SortSelector(ipw.HBox):
         """
         descending: bool = change["new"]
         self.order = Order.DESCENDING if descending else Order.ASCENDING
-        self.order_select.description = (
-            self.order_select.tooltip
-        ) = self.order.name.capitalize()
+        self.order_select.description = self.order_select.tooltip = (
+            self.order.name.capitalize()
+        )
         self.order_select.icon = self._get_order_icon()
         self._toggle_sort_availability()
 

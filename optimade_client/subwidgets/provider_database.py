@@ -303,9 +303,7 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
         new_data.insert(0, ("", [(first_choice, None)]))
         self.child_dbs.grouping = new_data
 
-    def _update_child_dbs(
-        self, data: List[dict], skip_dbs: List[str] = None
-    ) -> Tuple[
+    def _update_child_dbs(self, data: List[dict], skip_dbs: List[str] = None) -> Tuple[
         List[str],
         List[List[Union[str, List[Tuple[str, LinksResourceAttributes]]]]],
     ]:
@@ -510,9 +508,9 @@ class ProviderImplementationChooser(  # pylint: disable=too-many-instance-attrib
                     queries = {key: value[0] for key, value in queries.items()}
 
                     if "filter" in queries:
-                        queries[
-                            "filter"
-                        ] = f"( {queries['filter']} ) AND ( {filter_value} )"
+                        queries["filter"] = (
+                            f"( {queries['filter']} ) AND ( {filter_value} )"
+                        )
                     else:
                         queries["filter"] = filter_value
 
